@@ -21,7 +21,7 @@ final class Member {
     private final TokenStream docs;
     private final List<Attribute> attributes;
     private TokenStream rest;
-    private MemberKind kind;
+    private Kind kind;
     private int modifiersEnd;
     private int typeStart;
     private int nameAt;
@@ -35,7 +35,7 @@ final class Member {
         this.docs = docs;
         this.attributes = attributes;
         this.rest = rest;
-        this.kind = MemberKind.FIELD;
+        this.kind = Kind.FIELD;
         this.modifiersEnd = 0;
         this.typeStart = 0;
         this.nameAt = -1;
@@ -79,7 +79,7 @@ final class Member {
      *
      * @return the kind of member
      */
-    MemberKind kind() {
+    Kind kind() {
         return this.kind;
     }
 
@@ -89,7 +89,7 @@ final class Member {
      * @return {@code true} for a field that is not {@code static}
      */
     boolean isField() {
-        return this.kind == MemberKind.FIELD && !this.isStatic();
+        return this.kind == Kind.FIELD && !this.isStatic();
     }
 
     /**
@@ -98,7 +98,7 @@ final class Member {
      * @return {@code true} for a method
      */
     boolean isMethod() {
-        return this.kind == MemberKind.METHOD;
+        return this.kind == Kind.METHOD;
     }
 
     /**
@@ -147,7 +147,7 @@ final class Member {
      *         members
      */
     TokenStream type() {
-        if (this.kind != MemberKind.FIELD && this.kind != MemberKind.METHOD) {
+        if (this.kind != Kind.FIELD && this.kind != Kind.METHOD) {
             return new TokenStream();
         }
         return this.rest.slice(this.typeStart, this.nameAt);
@@ -215,7 +215,7 @@ final class Member {
      * @throws MacroError if this member has no body or is a nested type
      */
     mut void setBody(&TokenStream body) {
-        if (this.bodyOpen < 0 || this.kind == MemberKind.TYPE) {
+        if (this.bodyOpen < 0 || this.kind == Kind.TYPE) {
             throw new MacroError("only methods, constructors and initializers have a body",
                 &this.rest.get(0));
         }
@@ -320,14 +320,14 @@ final class Member {
         Token first = rest.get(at);
         if (first.isIdent("class") || first.isIdent("record") || first.isIdent("interface")
                 || first.isIdent("enum")) {
-            this.kind = MemberKind.TYPE;
+            this.kind = Kind.TYPE;
             this.nameAt = at + 1;
             this.bodyOpen = rest.indexOf("{", at);
             this.bodyClose = this.bodyOpen < 0 ? -1 : rest.matching(this.bodyOpen);
             return;
         }
         if (first.isPunct("{")) {
-            this.kind = MemberKind.INITIALIZER;
+            this.kind = Kind.INITIALIZER;
             this.bodyOpen = at;
             this.bodyClose = rest.matching(at);
             return;
@@ -349,8 +349,8 @@ final class Member {
                     throw new MacroError("this `(` is never closed", &token);
                 }
                 this.kind = this.nameAt == this.typeStart
-                    ? MemberKind.CONSTRUCTOR
-                    : MemberKind.METHOD;
+                    ? Kind.CONSTRUCTOR
+                    : Kind.METHOD;
                 for (int j = this.close + 1; j < rest.size(); j++) {
                     if (rest.get(j).isPunct("{")) {
                         this.bodyOpen = j;
@@ -364,13 +364,13 @@ final class Member {
                 return;
             }
             if (token.isPunct("=")) {
-                this.kind = MemberKind.FIELD;
+                this.kind = Kind.FIELD;
                 this.nameAt = i - 1;
                 this.initAt = i + 1;
                 return;
             }
             if (token.isPunct(";")) {
-                this.kind = MemberKind.FIELD;
+                this.kind = Kind.FIELD;
                 this.nameAt = i - 1;
                 return;
             }
@@ -383,5 +383,19 @@ final class Member {
             || token.isIdent("private") || token.isIdent("static")
             || token.isIdent("final") || token.isIdent("abstract") || token.isIdent("mut")
             || token.isIdent("move");
+    }
+
+    /** The kind of declaration a {@link Member} holds. */
+    enum Kind {
+        /** A field, with or without an initializer, or a record component. */
+        FIELD,
+        /** A method, with or without a body. */
+        METHOD,
+        /** A constructor. */
+        CONSTRUCTOR,
+        /** A nested class, record, interface or enum. */
+        TYPE,
+        /** An initializer block, {@code { ... }}, in a class body. */
+        INITIALIZER
     }
 }

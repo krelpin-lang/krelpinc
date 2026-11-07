@@ -2,7 +2,6 @@ import std.sync.AtomicBool;
 import std.sync.AtomicInt;
 import std.sync.AtomicLong;
 import std.sync.Mutex;
-import std.sync.MutexGuard;
 import std.util.ArrayList;
 import std.util.List;
 
@@ -14,7 +13,7 @@ class Main {
         for (int i = 0; i < 1000; i++) {
             Main.HITS.increment();
         }
-        MutexGuard<List<String>> guard = Main.LOG.lock();
+        Mutex.Guard<List<String>> guard = Main.LOG.lock();
         guard.getMut().add(name);
     }
 
@@ -31,7 +30,7 @@ class Main {
             thread.join();
         }
         Console.println(Main.HITS.get());
-        MutexGuard<List<String>> guard = Main.LOG.lock();
+        Mutex.Guard<List<String>> guard = Main.LOG.lock();
         Console.println(guard.get().size());
         AtomicLong total = new AtomicLong(5);
         Console.println(total.addAndGet(10) + " " + total.compareAndSet(15, 1) + " " + total.get());

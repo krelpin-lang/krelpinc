@@ -33,7 +33,7 @@ final class Item {
     private final TokenStream docs;
     private final List<Attribute> attributes;
     private final TokenStream head;
-    private final ItemKind kind;
+    private final Kind kind;
     private final Token name;
     private final Token open;
     private TokenStream constants;
@@ -41,7 +41,7 @@ final class Item {
     private final List<Member> components;
     private final Token close;
 
-    private Item(TokenStream docs, List<Attribute> attributes, TokenStream head, ItemKind kind,
+    private Item(TokenStream docs, List<Attribute> attributes, TokenStream head, Kind kind,
             Token name, Token open, Token close) {
         this.docs = docs;
         this.attributes = attributes;
@@ -103,7 +103,7 @@ final class Item {
      *
      * @return whether this is a class, record, interface or enum
      */
-    ItemKind kind() {
+    Kind kind() {
         return this.kind;
     }
 
@@ -207,7 +207,7 @@ final class Item {
     }
 
     private mut void readComponents(&TokenStream tokens, int from, int open) {
-        if (this.kind != ItemKind.RECORD) {
+        if (this.kind != Kind.RECORD) {
             return;
         }
         int at = from;
@@ -242,7 +242,7 @@ final class Item {
 
     private mut void readBody(&TokenStream tokens, int from, int close) {
         int at = from;
-        if (this.kind == ItemKind.ENUM) {
+        if (this.kind == Kind.ENUM) {
             int depth = 0;
             int end = close;
             for (int i = from; i < close; i++) {
@@ -294,16 +294,31 @@ final class Item {
             || token.isIdent("enum");
     }
 
-    private static ItemKind kindOf(Token token) {
+    private static Kind kindOf(Token token) {
         if (token.isIdent("record")) {
-            return ItemKind.RECORD;
+            return Kind.RECORD;
         }
         if (token.isIdent("interface")) {
-            return ItemKind.INTERFACE;
+            return Kind.INTERFACE;
         }
         if (token.isIdent("enum")) {
-            return ItemKind.ENUM;
+            return Kind.ENUM;
         }
-        return ItemKind.CLASS;
+        return Kind.CLASS;
+    }
+
+    /** The kind of type declaration an {@link Item} holds. */
+    enum Kind {
+        /** A class. */
+        CLASS,
+        /** A record, whose components {@link Item#components} returns. */
+        RECORD,
+        /** An interface. */
+        INTERFACE,
+        /**
+         * An enum. Its constants are not members, so {@link Item#members}
+         * omits them.
+         */
+        ENUM
     }
 }

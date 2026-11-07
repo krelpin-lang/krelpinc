@@ -1,6 +1,7 @@
 package std.net;
 
 import std.io.IOException;
+import std.net.Poller.Interest;
 
 /**
  * A TCP connection between a local and a remote socket, created with
@@ -480,7 +481,7 @@ final class TcpStream {
      *
      * @param poller the poller that reports the stream
      * @param token the token that identifies the stream in the poller's
-     *        {@link Event}s
+     *        {@link Poller.Event}s
      * @param interest the readiness to report
      * @throws IOException if the registration fails; on Linux this includes a
      *         stream that is already registered with {@code poller}, which

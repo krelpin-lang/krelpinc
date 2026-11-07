@@ -242,7 +242,7 @@ final class TokenStream implements Iterable<Token> {
         int depth = 0;
         for (int i = open; i < this.size(); i++) {
             Token token = this.get(i);
-            if (token.kind() != TokenKind.PUNCT) {
+            if (token.kind() != Token.Kind.PUNCT) {
                 continue;
             }
             if (token.text().equals(&opening)) {

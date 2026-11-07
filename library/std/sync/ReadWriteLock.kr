@@ -12,4 +12,21 @@ final class ReadWriteLock<T> {
 
     @Intrinsic
     WriteGuard<T> write();
+
+    static final class ReadGuard<T> borrows lock {
+        private ReadGuard() {}
+
+        @Intrinsic
+        &T get();
+    }
+
+    static final class WriteGuard<T> borrows lock {
+        private WriteGuard() {}
+
+        @Intrinsic
+        &T get();
+
+        @Intrinsic
+        mut &mut T getMut();
+    }
 }

@@ -1,5 +1,5 @@
 import std.io.IOException;
-import std.net.Datagram;
+import std.net.UdpSocket.Datagram;
 import std.net.SocketAddr;
 import std.net.TcpListener;
 import std.net.TcpStream;

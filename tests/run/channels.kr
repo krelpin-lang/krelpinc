@@ -1,7 +1,6 @@
 import std.sync.AtomicInt;
 import std.sync.Channel;
 import std.sync.Mutex;
-import std.sync.MutexGuard;
 import std.util.ArrayList;
 import std.util.List;
 
@@ -20,7 +19,7 @@ class Main {
             Main.RESULTS.send("job " + job + " squared " + (job * job));
         }
         Main.DONE.increment();
-        MutexGuard<int[]> guard = Main.READY.lock();
+        Mutex.Guard<int[]> guard = Main.READY.lock();
         guard.getMut()[0] += 1;
         Main.READY.notifyAll();
     }
@@ -38,7 +37,7 @@ class Main {
         }
         Main.JOBS.close();
         {
-            MutexGuard<int[]> guard = Main.READY.lock();
+            Mutex.Guard<int[]> guard = Main.READY.lock();
             while (guard.get()[0] < 3) {
                 guard.wait();
             }
@@ -55,7 +54,7 @@ class Main {
         Console.println(lines);
         Console.println(Main.DONE.get() + " " + Main.JOBS.isClosed() + " " + Main.JOBS.receive());
         Console.println(Main.RESULTS.receive(20L));
-        MutexGuard<int[]> guard = Main.READY.lock();
+        Mutex.Guard<int[]> guard = Main.READY.lock();
         Console.println(guard.wait(10L));
         while (!workers.isEmpty()) {
             Thread thread = workers.remove(0);

@@ -122,4 +122,58 @@ final class Poller {
 
     @Intrinsic
     private static String lastError();
+
+    /**
+     * A readiness event reported by {@link Poller#poll} for a registered
+     * socket.
+     *
+     * <p>{@code closed} and {@code error} are reported together with
+     * {@code readable} or {@code writable}, so a handler that reads when the
+     * socket is readable observes the end of the stream, or the error, from the
+     * read itself.
+     *
+     * @param token the token the socket was registered with
+     * @param readable whether the socket can be read without blocking
+     * @param writable whether the socket can be written without blocking
+     * @param closed whether the peer has closed the connection
+     * @param error whether an error is pending on the socket
+     */
+    record Event(int token, boolean readable, boolean writable, boolean closed, boolean error) {}
+
+    enum Interest {
+        READABLE,
+        WRITABLE,
+        READ_WRITE;
+
+        boolean readable() {
+            return switch (this) {
+                case READABLE, READ_WRITE -> true;
+                case WRITABLE -> false;
+            };
+        }
+
+        boolean writable() {
+            return switch (this) {
+                case WRITABLE, READ_WRITE -> true;
+                case READABLE -> false;
+            };
+        }
+
+        Interest or(Interest other) {
+            return Interest.of(this.readable() || other.readable(), this.writable() || other.writable());
+        }
+
+        static Interest of(boolean readable, boolean writable) {
+            if (readable && writable) {
+                return Interest.READ_WRITE;
+            }
+            if (readable) {
+                return Interest.READABLE;
+            }
+            if (writable) {
+                return Interest.WRITABLE;
+            }
+            throw new IllegalArgumentException("an interest must include reading, writing or both");
+        }
+    }
 }

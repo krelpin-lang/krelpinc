@@ -11,7 +11,7 @@ package std.macros;
  * <pre>{@code
  * macro Getters(TokenStream args, TokenStream input) {
  *     Item item = Item.parse(&input);
- *     if (item.kind() == ItemKind.INTERFACE) {
+ *     if (item.kind() == Item.Kind.INTERFACE) {
  *         throw new MacroError("`@Getters` can't go on an interface", &item.name());
  *     }
  *     ...

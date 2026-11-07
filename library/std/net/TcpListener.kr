@@ -1,6 +1,7 @@
 package std.net;
 
 import std.io.IOException;
+import std.net.Poller.Interest;
 
 /**
  * A TCP socket server, which listens for incoming connections.
@@ -132,7 +133,7 @@ final class TcpListener {
      *
      * @param poller the poller that reports the listener
      * @param token the token that identifies the listener in the poller's
-     *        {@link Event}s
+     *        {@link Poller.Event}s
      * @param interest the readiness to report
      * @throws IOException if the registration fails; on Linux this includes a
      *         listener that is already registered with {@code poller}, which

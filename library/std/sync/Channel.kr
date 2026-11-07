@@ -19,7 +19,7 @@ final class Channel<T> {
     }
 
     void send(T value) {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         while (!guard.get().closed && guard.get().items.size() >= this.capacity) {
             guard.wait();
         }
@@ -31,7 +31,7 @@ final class Channel<T> {
     }
 
     boolean trySend(T value) {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         if (guard.get().closed) {
             throw new IllegalStateException("cannot send on a closed channel");
         }
@@ -44,7 +44,7 @@ final class Channel<T> {
     }
 
     T? receive() {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         while (guard.get().items.isEmpty() && !guard.get().closed) {
             guard.wait();
         }
@@ -55,7 +55,7 @@ final class Channel<T> {
 
     T? receive(long timeoutMillis) {
         long deadline = System.currentTimeMillis() + timeoutMillis;
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         while (guard.get().items.isEmpty() && !guard.get().closed) {
             long left = deadline - System.currentTimeMillis();
             if (left <= 0L) {
@@ -69,7 +69,7 @@ final class Channel<T> {
     }
 
     T? tryReceive() {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         T? value = guard.getMut().items.pollFirst();
         if (value != null) {
             this.state.notifyAll();
@@ -78,18 +78,18 @@ final class Channel<T> {
     }
 
     void close() {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         guard.getMut().closed = true;
         this.state.notifyAll();
     }
 
     boolean isClosed() {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         return guard.get().closed;
     }
 
     int size() {
-        MutexGuard<State<T>> guard = this.state.lock();
+        Mutex.Guard<State<T>> guard = this.state.lock();
         return guard.get().items.size();
     }
 

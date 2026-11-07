@@ -62,8 +62,10 @@ impl ItemTable {
     }
 
     pub fn lookup_path(&self, path: &str) -> Option<DefId> {
-        let (package, name) = path.rsplit_once('.')?;
-        self.lookup(&PackagePath::parse(package), Symbol::intern(name))
+        let (outer, name) = path.rsplit_once('.')?;
+        let name = Symbol::intern(name);
+        self.lookup(&PackagePath::parse(outer), name)
+            .or_else(|| self.nested(self.lookup_path(outer)?, name))
     }
 
     pub fn items<'u>(

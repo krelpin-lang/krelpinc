@@ -1,7 +1,7 @@
 import std.io.IOException;
-import std.net.Datagram;
-import std.net.Event;
-import std.net.Interest;
+import std.net.UdpSocket.Datagram;
+import std.net.Poller.Event;
+import std.net.Poller.Interest;
 import std.net.Poller;
 import std.net.TcpListener;
 import std.net.TcpStream;

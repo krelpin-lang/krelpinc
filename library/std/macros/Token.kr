@@ -14,7 +14,7 @@ package std.macros;
  * @param text the source text of the token
  * @param span the location of the token
  */
-record Token(TokenKind kind, String text, Span span) {
+record Token(Kind kind, String text, Span span) {
     /**
      * Creates an identifier or keyword token. The name is not validated.
      *
@@ -22,7 +22,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return the token
      */
     static Token ident(String name) {
-        return new Token(TokenKind.IDENT, name, Span.callSite());
+        return new Token(Kind.IDENT, name, Span.callSite());
     }
 
     /**
@@ -33,7 +33,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return the token
      */
     static Token punct(String text) {
-        return new Token(TokenKind.PUNCT, text, Span.callSite());
+        return new Token(Kind.PUNCT, text, Span.callSite());
     }
 
     /**
@@ -46,7 +46,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return the token
      */
     static Token literal(String text) {
-        return new Token(TokenKind.LITERAL, text, Span.callSite());
+        return new Token(Kind.LITERAL, text, Span.callSite());
     }
 
     /**
@@ -84,7 +84,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return {@code true} for an identifier or keyword
      */
     boolean isIdent() {
-        return this.kind == TokenKind.IDENT;
+        return this.kind == Kind.IDENT;
     }
 
     /**
@@ -94,7 +94,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return {@code true} if this token is {@code name}
      */
     boolean isIdent(String name) {
-        return this.kind == TokenKind.IDENT && this.text.equals(&name);
+        return this.kind == Kind.IDENT && this.text.equals(&name);
     }
 
     /**
@@ -104,7 +104,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return {@code true} if this token is {@code text}
      */
     boolean isPunct(String text) {
-        return this.kind == TokenKind.PUNCT && this.text.equals(&text);
+        return this.kind == Kind.PUNCT && this.text.equals(&text);
     }
 
     /**
@@ -113,7 +113,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return {@code true} for a literal
      */
     boolean isLiteral() {
-        return this.kind == TokenKind.LITERAL;
+        return this.kind == Kind.LITERAL;
     }
 
     /**
@@ -122,7 +122,7 @@ record Token(TokenKind kind, String text, Span span) {
      * @return {@code true} for a doc comment
      */
     boolean isDoc() {
-        return this.kind == TokenKind.DOC;
+        return this.kind == Kind.DOC;
     }
 
     /**
@@ -144,5 +144,26 @@ record Token(TokenKind kind, String text, Span span) {
     @Override
     String toString() {
         return this.text;
+    }
+
+    /** The kind of a {@link Token}. */
+    enum Kind {
+        /**
+         * An identifier or keyword, such as {@code count}, {@code String} or
+         * {@code class}.
+         */
+        IDENT,
+        /**
+         * A number, character, string or boolean literal, as written in the
+         * source.
+         */
+        LITERAL,
+        /**
+         * An operator or punctuation token, such as <code>{</code>, {@code ->}
+         * or {@code >>=}.
+         */
+        PUNCT,
+        /** A documentation comment, which begins with two asterisks. */
+        DOC
     }
 }

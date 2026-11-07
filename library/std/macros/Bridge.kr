@@ -144,20 +144,20 @@ final class Bridge {
         return stream;
     }
 
-    private static TokenKind kindOf(String name) {
+    private static Token.Kind kindOf(String name) {
         if (name.equals(&"ident")) {
-            return TokenKind.IDENT;
+            return Token.Kind.IDENT;
         }
         if (name.equals(&"literal")) {
-            return TokenKind.LITERAL;
+            return Token.Kind.LITERAL;
         }
         if (name.equals(&"doc")) {
-            return TokenKind.DOC;
+            return Token.Kind.DOC;
         }
-        return TokenKind.PUNCT;
+        return Token.Kind.PUNCT;
     }
 
-    private static String kindName(TokenKind kind) {
+    private static String kindName(Token.Kind kind) {
         return switch (kind) {
             case IDENT -> "ident";
             case LITERAL -> "literal";

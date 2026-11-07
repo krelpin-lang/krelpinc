@@ -1,7 +1,7 @@
 import std.sync.AtomicInt;
-import std.sync.ReadGuard;
+import std.sync.ReadWriteLock.ReadGuard;
 import std.sync.ReadWriteLock;
-import std.sync.WriteGuard;
+import std.sync.ReadWriteLock.WriteGuard;
 import std.util.ArrayList;
 import std.util.HashMap;
 import std.util.List;

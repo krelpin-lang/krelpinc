@@ -1,5 +1,5 @@
 import std.math.BigDecimal;
-import std.math.RoundingMode;
+import std.math.BigDecimal.RoundingMode;
 
 class Main {
     static void main() {

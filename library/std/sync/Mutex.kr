@@ -5,13 +5,13 @@ package std.sync;
  * at a time can access it.
  *
  * <p>{@link #lock} blocks until no other thread holds the lock and returns a
- * {@link MutexGuard}. The protected value is accessed through the guard, and
+ * {@link Guard}. The protected value is accessed through the guard, and
  * the lock is released when the guard is dropped, so it cannot be left
  * locked by mistake:
  *
  * <pre>{@code
  * Mutex<List<String>> log = new Mutex<>(new ArrayList<>());
- * MutexGuard<List<String>> guard = log.lock();
+ * Guard<List<String>> guard = log.lock();
  * guard.getMut().add("started");
  * }</pre>
  *
@@ -39,11 +39,45 @@ final class Mutex<T> {
      *         when dropped
      */
     @Intrinsic
-    MutexGuard<T> lock();
+    Guard<T> lock();
 
     @Intrinsic
     void notify();
 
     @Intrinsic
     void notifyAll();
+
+    /**
+     * Exclusive access to the value of a locked {@link Mutex}.
+     *
+     * <p>Dropping the guard releases the lock. The references a guard returns
+     * cannot outlive it.
+     *
+     * @param <T> the type of the protected value
+     */
+    static final class Guard<T> borrows mutex {
+        private Guard() {}
+
+        /**
+         * Returns the protected value.
+         *
+         * @return a reference to the value
+         */
+        @Intrinsic
+        &T get();
+
+        /**
+         * Returns the protected value for modification.
+         *
+         * @return a mutable reference to the value
+         */
+        @Intrinsic
+        mut &mut T getMut();
+
+        @Intrinsic
+        mut void wait();
+
+        @Intrinsic
+        mut boolean wait(long millis);
+    }
 }

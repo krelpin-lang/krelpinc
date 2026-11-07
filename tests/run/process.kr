@@ -1,7 +1,7 @@
 import std.io.Files;
 import std.io.IOException;
 import std.process.Command;
-import std.process.Output;
+import std.process.Command.Output;
 
 class Main {
     static void main() throws IOException {

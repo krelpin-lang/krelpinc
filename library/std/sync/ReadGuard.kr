@@ -1,8 +1,0 @@
-package std.sync;
-
-final class ReadGuard<T> borrows lock {
-    private ReadGuard() {}
-
-    @Intrinsic
-    &T get();
-}

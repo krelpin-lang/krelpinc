@@ -193,4 +193,24 @@ final class Command {
 
     @Intrinsic
     private static String lastError();
+
+    /**
+     * The result of a program run with {@link Command#output}: its exit status
+     * and everything it wrote.
+     *
+     * @param status the exit status of the program; if a signal terminated it,
+     *        128 plus the number of the signal
+     * @param stdout the text the program wrote to its standard output
+     * @param stderr the text the program wrote to its standard error
+     */
+    record Output(int status, String stdout, String stderr) {
+        /**
+         * Returns whether the program succeeded.
+         *
+         * @return {@code true} if the exit status is 0
+         */
+        boolean success() {
+            return this.status == 0;
+        }
+    }
 }

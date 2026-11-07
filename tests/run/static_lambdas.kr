@@ -1,6 +1,5 @@
 import std.function.Function;
 import std.sync.Mutex;
-import std.sync.MutexGuard;
 import std.util.ArrayList;
 import std.util.HashMap;
 import std.util.List;
@@ -12,7 +11,7 @@ class Main {
     static final Mutex<Map<String, int>> COUNTS = new Mutex<>(new HashMap<>());
 
     static void register(Runnable task) keeps task {
-        MutexGuard<List<Runnable>> guard = Main.TASKS.lock();
+        Mutex.Guard<List<Runnable>> guard = Main.TASKS.lock();
         guard.getMut().add(task);
     }
 
@@ -21,12 +20,12 @@ class Main {
         String word = "owned";
         Main.register(move () -> Console.println(word));
         {
-            MutexGuard<Map<String, int>> counts = Main.COUNTS.lock();
+            Mutex.Guard<Map<String, int>> counts = Main.COUNTS.lock();
             String key = "ada";
             counts.getMut().put(key, 1);
             Console.println(counts.get().get(&"ada"));
         }
-        MutexGuard<List<Runnable>> guard = Main.TASKS.lock();
+        Mutex.Guard<List<Runnable>> guard = Main.TASKS.lock();
         for (int i = 0; i < guard.get().size(); i++) {
             guard.getMut().getMut(i).run();
         }
