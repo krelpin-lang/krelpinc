@@ -21,7 +21,7 @@ error: cannot move out of `this.notes`, which is borrowed
    |                ^^^^^^^^^^ value moved here
    |
    = note: `List<String>` values are moved instead of copied
-   = help: borrow it instead: `&this.notes`
+   = help: borrow it instead: `&this.notes`, or take it and put a value back in the next statement: `this.notes = ...;`
 
 error: borrow of moved value: `first`
   --> tests/ui/borrowck/ownership_errors.kr:31:9

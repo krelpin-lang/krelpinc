@@ -74,6 +74,54 @@ impl Body {
     pub fn args(&self) -> impl Iterator<Item = Local> {
         (1..=self.arg_count).map(|index| Local(index as u32))
     }
+
+    /// When the statement at `index` moves a value out of a place behind a
+    /// reference, the statement that puts a new value back before anything
+    /// can throw or read the place. The new value must be a constant or a
+    /// local, so nothing runs between the two.
+    pub fn refill_after(&self, block: BasicBlock, index: usize) -> Option<usize> {
+        let statements = &self.block(block).statements;
+        let StatementKind::Assign(assign) = &statements.get(index)?.kind else {
+            return None;
+        };
+        let Rvalue::Use(Operand::Move(moved)) = &assign.1 else {
+            return None;
+        };
+        if !moved.projection.contains(&PlaceElem::Deref) {
+            return None;
+        }
+        for (next, statement) in statements.iter().enumerate().skip(index + 1) {
+            match &statement.kind {
+                StatementKind::StorageLive(_) => {}
+                StatementKind::Assign(refill) if refill.0 == *moved => {
+                    let simple = match &refill.1 {
+                        Rvalue::Use(Operand::Constant(_)) => true,
+                        Rvalue::Use(Operand::Copy(place) | Operand::Move(place)) => {
+                            place.as_local().is_some()
+                        }
+                        _ => false,
+                    };
+                    return simple.then_some(next);
+                }
+                _ => return None,
+            }
+        }
+        None
+    }
+
+    /// Whether the statement at `index` is the refill of a value moved out
+    /// just before it, so the old value it overwrites is already gone.
+    pub fn is_refill(&self, block: BasicBlock, index: usize) -> bool {
+        let statements = &self.block(block).statements;
+        let mut previous = index;
+        while previous > 0 {
+            previous -= 1;
+            if !matches!(statements[previous].kind, StatementKind::StorageLive(_)) {
+                return self.refill_after(block, previous) == Some(index);
+            }
+        }
+        false
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

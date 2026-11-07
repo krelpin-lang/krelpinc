@@ -101,6 +101,33 @@ fn copyable_values_are_copied() {
 }
 
 #[test]
+fn moved_out_fields_can_be_refilled_at_once() {
+    let header = "import std.util.ArrayList;\nimport std.util.List;\n";
+    assert_eq!(
+        errors(&format!(
+            "{header}class Box {{ private List<int>? value = null; private List<int> items = new ArrayList<>(); \
+             mut List<int>? take() {{ List<int>? out = this.value; this.value = null; return out; }} \
+             mut List<int> swap(List<int> next) {{ List<int> old = this.items; this.items = next; return old; }} }}"
+        )),
+        Vec::<String>::new()
+    );
+    assert_eq!(
+        errors(&format!(
+            "{header}class Box {{ private List<int>? value = null; \
+             mut List<int>? take() {{ List<int>? out = this.value; this.value = new ArrayList<>(); return out; }} }}"
+        )),
+        ["cannot move out of `this.value`, which is borrowed"]
+    );
+    assert_eq!(
+        errors(&format!(
+            "{header}class Box {{ private List<int>? value = null; \
+             mut List<int>? take() {{ List<int>? out = this.value; Console.println(1); this.value = null; return out; }} }}"
+        )),
+        ["cannot move out of `this.value`, which is borrowed"]
+    );
+}
+
+#[test]
 fn borrowed_values_cannot_be_moved_out() {
     assert_eq!(
         errors(

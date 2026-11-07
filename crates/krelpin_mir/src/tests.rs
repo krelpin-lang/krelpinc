@@ -314,3 +314,4 @@ fn every_body_ends_in_a_terminator() {
     assert!(printed.contains("field A.limit() -> int {"), "{printed}");
     assert!(!printed.contains("unreachable"), "{printed}");
 }
+
