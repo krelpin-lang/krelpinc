@@ -435,7 +435,7 @@ impl FnCx<'_, '_, '_> {
             let mutex = self.assign(format!("load ptr, ptr {mutex}"));
             let mutex_ty = Ty::Adt {
                 def: self.cx.lang(LangItem::Mutex),
-                name: krelpin_span::Symbol::intern("Mutex"),
+                name: self.cx.tcx.ty_name(self.cx.lang(LangItem::Mutex)),
                 args: args.clone(),
             };
             let handle = self.native_addr(&mutex, &mutex_ty, 0);
@@ -446,7 +446,7 @@ impl FnCx<'_, '_, '_> {
             let lock = self.assign(format!("load ptr, ptr {lock}"));
             let lock_ty = Ty::Adt {
                 def: self.cx.lang(LangItem::ReadWriteLock),
-                name: krelpin_span::Symbol::intern("ReadWriteLock"),
+                name: self.cx.tcx.ty_name(self.cx.lang(LangItem::ReadWriteLock)),
                 args: args.clone(),
             };
             let handle = self.native_addr(&lock, &lock_ty, 0);
@@ -486,7 +486,7 @@ impl FnCx<'_, '_, '_> {
         let selector = Selector {
             owner: Ty::Adt {
                 def: closeable,
-                name: self.cx.tcx.sig(closeable).name.name,
+                name: self.cx.tcx.ty_name(closeable),
                 args: Vec::new(),
             },
             name: krelpin_span::Symbol::intern("close"),

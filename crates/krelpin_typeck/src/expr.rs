@@ -368,11 +368,7 @@ impl FnCtxt<'_, '_> {
 
     pub(crate) fn type_of_ident(&self, name: Ident) -> Option<Ty> {
         match self.tcx.resolutions.get(name.span)? {
-            Res::Item(def) => Some(Ty::Adt {
-                def,
-                name: name.name,
-                args: Vec::new(),
-            }),
+            Res::Item(def) => Some(self.tcx.def_ty(def, Vec::new())),
             Res::TypeParam(_) => Some(Ty::Param(name.name)),
             Res::PrimTy(primitive) => Some(Ty::Primitive(primitive)),
             Res::Local(_) | Res::BorrowSource(_) => None,

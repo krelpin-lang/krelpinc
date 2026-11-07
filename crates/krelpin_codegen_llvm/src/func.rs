@@ -865,7 +865,7 @@ impl<'c, 'a, 'tcx> FnCx<'c, 'a, 'tcx> {
         Selector {
             owner: Ty::Adt {
                 def,
-                name: self.cx.tcx.sig(def).name.name,
+                name: self.cx.tcx.ty_name(def),
                 args: vec![arg.clone()],
             },
             name: krelpin_span::Symbol::intern(name),

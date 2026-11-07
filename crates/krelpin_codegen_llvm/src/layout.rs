@@ -134,7 +134,7 @@ impl Cx<'_, '_> {
     fn record_type(&mut self, def: DefId, args: &[Ty]) -> String {
         let key = Ty::Adt {
             def,
-            name: self.tcx.sig(def).name.name,
+            name: self.tcx.ty_name(def),
             args: args.to_vec(),
         };
         if let Some(name) = self.named_types.get(&key) {
@@ -155,7 +155,7 @@ impl Cx<'_, '_> {
     fn enum_type(&mut self, def: DefId, args: &[Ty]) -> String {
         let key = Ty::Adt {
             def,
-            name: self.tcx.sig(def).name.name,
+            name: self.tcx.ty_name(def),
             args: args.to_vec(),
         };
         if let Some(name) = self.named_types.get(&key) {
@@ -190,7 +190,7 @@ impl Cx<'_, '_> {
     pub(crate) fn variant_type(&mut self, def: DefId, args: &[Ty], index: usize) -> String {
         let key = Ty::Adt {
             def,
-            name: self.tcx.sig(def).name.name,
+            name: self.tcx.ty_name(def),
             args: args.to_vec(),
         };
         self.enum_type(def, args);

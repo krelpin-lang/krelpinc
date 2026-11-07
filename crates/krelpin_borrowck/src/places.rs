@@ -369,7 +369,7 @@ impl PlaceTys<'_, '_> {
                 .name
                 .map_or_else(|| "value".to_owned(), |name| name.to_string()),
             PlaceBase::Static { owner, name } => {
-                format!("{}.{name}", self.tcx.sig(owner).name.name)
+                format!("{}.{name}", self.tcx.ty_name(owner))
             }
         };
         for elem in &place.projection {

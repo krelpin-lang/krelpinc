@@ -331,7 +331,7 @@ impl<'a, 'tcx> Cx<'a, 'tcx> {
         Selector {
             owner: Ty::Adt {
                 def: method.owner,
-                name: self.tcx.sig(method.owner).name.name,
+                name: self.tcx.ty_name(method.owner),
                 args: owner_args,
             },
             name: method.name.name,

@@ -22,6 +22,7 @@ pub struct ItemTable {
 pub struct TypeDef {
     pub def: DefId,
     pub name: Ident,
+    pub qualified: Symbol,
     pub package: PackagePath,
     pub unit: usize,
     pub path: Vec<usize>,
@@ -125,9 +126,18 @@ fn collect_type(
     parent: Option<DefId>,
 ) -> DefId {
     let def = DefId::from_index(table.defs.len());
+    let qualified = match parent {
+        Some(parent) => Symbol::intern(&format!(
+            "{}.{}",
+            table.def(parent).qualified,
+            item.name.name
+        )),
+        None => item.name.name,
+    };
     let mut type_def = TypeDef {
         def,
         name: item.name,
+        qualified,
         package: package.clone(),
         unit,
         path: path.clone(),

@@ -411,11 +411,7 @@ impl FnCtxt<'_, '_> {
             return PatPath::Error;
         };
         if let Some(nested) = self.tcx.nested_type(def, name.name) {
-            return PatPath::Type(Ty::Adt {
-                def: nested,
-                name: name.name,
-                args: Vec::new(),
-            });
+            return PatPath::Type(self.tcx.def_ty(nested, Vec::new()));
         }
         if let Some(index) = self.variant_index(def, name) {
             let args = match self.enum_def(expected) {

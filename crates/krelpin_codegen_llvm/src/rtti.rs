@@ -158,7 +158,7 @@ impl Cx<'_, '_> {
                 .collect();
             let iface = Ty::Adt {
                 def: parent,
-                name: self.tcx.sig(parent).name.name,
+                name: self.tcx.ty_name(parent),
                 args: parent_args,
             };
             let holds = matches!(key, RtKey::Interface(_))

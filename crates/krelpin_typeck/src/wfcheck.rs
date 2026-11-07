@@ -188,7 +188,7 @@ impl Tcx<'_> {
     fn check_generic_args(&self, env: &ParamEnv, def: DefId, args: &[ast::Ty], span: Span) {
         let generics = &self.sig(def).generics;
         if args.is_empty() && !generics.is_empty() {
-            let name = self.sig(def).name.name;
+            let name = self.ty_name(def);
             let params: Vec<String> = generics
                 .iter()
                 .map(|param| param.name.to_string())
@@ -209,7 +209,7 @@ impl Tcx<'_> {
             self.dcx.emit(
                 Diagnostic::error(format!(
                     "`{}` takes {} but {} {supplied} supplied",
-                    self.sig(def).name.name,
+                    self.ty_name(def),
                     plural(generics.len(), "type argument"),
                     args.len()
                 ))

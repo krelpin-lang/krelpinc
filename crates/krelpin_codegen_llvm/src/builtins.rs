@@ -1759,7 +1759,7 @@ impl FnCx<'_, '_, '_> {
             let mutex_def = self.cx.lang(LangItem::Mutex);
             let mutex_ty = Ty::Adt {
                 def: mutex_def,
-                name: self.cx.tcx.sig(mutex_def).name.name,
+                name: self.cx.tcx.ty_name(mutex_def),
                 args: args.clone(),
             };
             let handle = self.native_addr(&mutex, &mutex_ty, 0);
@@ -1788,7 +1788,7 @@ impl FnCx<'_, '_, '_> {
             let mutex_def = self.cx.lang(LangItem::Mutex);
             let mutex_ty = Ty::Adt {
                 def: mutex_def,
-                name: self.cx.tcx.sig(mutex_def).name.name,
+                name: self.cx.tcx.ty_name(mutex_def),
                 args: args.clone(),
             };
             let value = krelpin_span::Symbol::intern("value");
@@ -1835,7 +1835,7 @@ impl FnCx<'_, '_, '_> {
             let lock_def = self.cx.lang(LangItem::ReadWriteLock);
             let lock_ty = Ty::Adt {
                 def: lock_def,
-                name: self.cx.tcx.sig(lock_def).name.name,
+                name: self.cx.tcx.ty_name(lock_def),
                 args: args.clone(),
             };
             let value = krelpin_span::Symbol::intern("value");
@@ -2192,7 +2192,7 @@ impl FnCx<'_, '_, '_> {
                 let collection_def = self.cx.lang(item);
                 let collection_ty = Ty::Adt {
                     def: collection_def,
-                    name: self.cx.tcx.sig(collection_def).name.name,
+                    name: self.cx.tcx.ty_name(collection_def),
                     args: vec![reference.clone()],
                 };
                 let collection = self.new_object(&collection_ty, None);

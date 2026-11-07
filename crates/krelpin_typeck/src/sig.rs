@@ -200,9 +200,13 @@ impl<'a> Tcx<'a> {
     pub(crate) fn def_ty(&self, def: DefId, args: Vec<Ty>) -> Ty {
         Ty::Adt {
             def,
-            name: self.items.def(def).name.name,
+            name: self.ty_name(def),
             args,
         }
+    }
+
+    pub fn ty_name(&self, def: DefId) -> Symbol {
+        self.items.def(def).qualified
     }
 
     pub fn lower_ty(&self, ty: &ast::Ty) -> Ty {
