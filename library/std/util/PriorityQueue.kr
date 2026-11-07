@@ -1,0 +1,96 @@
+package std.util;
+
+class PriorityQueue<T> implements Queue<T> {
+    private final List<T> heap;
+    private final Comparator<T> order;
+
+    PriorityQueue(Comparator<T> order) {
+        this.heap = new ArrayList<>();
+        this.order = order;
+    }
+
+    static <T extends Comparable<T>> PriorityQueue<T> natural() {
+        return new PriorityQueue<>(Comparator.naturalOrder());
+    }
+
+    @Override
+    int size() {
+        return this.heap.size();
+    }
+
+    @Override
+    mut void add(T value) {
+        this.heap.add(value);
+        this.siftUp(this.heap.size() - 1);
+    }
+
+    @Override
+    mut T? poll() {
+        if (this.heap.isEmpty()) {
+            return null;
+        }
+        int last = this.heap.size() - 1;
+        this.heap.swap(0, last);
+        T top = this.heap.remove(last);
+        if (!this.heap.isEmpty()) {
+            this.siftDown(0);
+        }
+        return top;
+    }
+
+    @Override
+    (&T)? peek() {
+        if (this.heap.isEmpty()) {
+            return null;
+        }
+        return this.heap.get(0);
+    }
+
+    @Override
+    mut void clear() {
+        this.heap.clear();
+    }
+
+    @Override
+    Iterator<T> iterator() {
+        return this.heap.iterator();
+    }
+
+    @Override
+    String toString() {
+        return this.heap.toString();
+    }
+
+    private mut void siftUp(int start) {
+        int index = start;
+        while (index > 0) {
+            int parent = (index - 1) / 2;
+            if (this.order.compare(this.heap.get(index), this.heap.get(parent)) >= 0) {
+                return;
+            }
+            this.heap.swap(index, parent);
+            index = parent;
+        }
+    }
+
+    private mut void siftDown(int start) {
+        int index = start;
+        int size = this.heap.size();
+        while (true) {
+            int left = index * 2 + 1;
+            if (left >= size) {
+                return;
+            }
+            int smallest = left;
+            int right = left + 1;
+            if (right < size && this.order.compare(this.heap.get(right), this.heap.get(left)) < 0) {
+                smallest = right;
+            }
+            if (this.order.compare(this.heap.get(smallest), this.heap.get(index)) >= 0) {
+                return;
+            }
+            this.heap.swap(index, smallest);
+            index = smallest;
+        }
+    }
+}

@@ -292,6 +292,29 @@ bool kr_file_write(void *file, const KrString *text) {
     return true;
 }
 
+bool kr_file_write_bytes(void *file, const KrArray *bytes) {
+    errno = 0;
+    if (bytes->len > 0 && fwrite(bytes->data, 1, (size_t)bytes->len, file) != (size_t)bytes->len) {
+        return failed();
+    }
+    return true;
+}
+
+KrArray *kr_file_read_bytes(void *file, int32_t max, const KrType *array_type) {
+    KrArray *array = kr_alloc((int64_t)sizeof(KrArray) + max);
+    array->type = array_type;
+    errno = 0;
+    last_error = 0;
+    size_t got = fread(array->data, 1, (size_t)max, file);
+    if (got == 0 && ferror(file)) {
+        kr_free(array);
+        failed();
+        return NULL;
+    }
+    array->len = (int64_t)got;
+    return array;
+}
+
 bool kr_file_flush(void *file) {
     errno = 0;
     return fflush(file) == 0 || failed();

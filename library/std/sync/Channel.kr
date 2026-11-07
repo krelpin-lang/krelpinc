@@ -1,0 +1,105 @@
+package std.sync;
+
+import std.util.ArrayDeque;
+
+final class Channel<T> {
+    private final Mutex<State<T>> state;
+    private final int capacity;
+
+    Channel() {
+        this(int.MAX_VALUE);
+    }
+
+    Channel(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("a channel needs room for at least one value, but the capacity is $capacity");
+        }
+        this.state = new Mutex<>(new State<>());
+        this.capacity = capacity;
+    }
+
+    void send(T value) {
+        MutexGuard<State<T>> guard = this.state.lock();
+        while (!guard.get().closed && guard.get().items.size() >= this.capacity) {
+            guard.wait();
+        }
+        if (guard.get().closed) {
+            throw new IllegalStateException("cannot send on a closed channel");
+        }
+        guard.getMut().items.addLast(value);
+        this.state.notifyAll();
+    }
+
+    boolean trySend(T value) {
+        MutexGuard<State<T>> guard = this.state.lock();
+        if (guard.get().closed) {
+            throw new IllegalStateException("cannot send on a closed channel");
+        }
+        if (guard.get().items.size() >= this.capacity) {
+            return false;
+        }
+        guard.getMut().items.addLast(value);
+        this.state.notifyAll();
+        return true;
+    }
+
+    T? receive() {
+        MutexGuard<State<T>> guard = this.state.lock();
+        while (guard.get().items.isEmpty() && !guard.get().closed) {
+            guard.wait();
+        }
+        T? value = guard.getMut().items.pollFirst();
+        this.state.notifyAll();
+        return value;
+    }
+
+    T? receive(long timeoutMillis) {
+        long deadline = System.currentTimeMillis() + timeoutMillis;
+        MutexGuard<State<T>> guard = this.state.lock();
+        while (guard.get().items.isEmpty() && !guard.get().closed) {
+            long left = deadline - System.currentTimeMillis();
+            if (left <= 0L) {
+                return null;
+            }
+            guard.wait(left);
+        }
+        T? value = guard.getMut().items.pollFirst();
+        this.state.notifyAll();
+        return value;
+    }
+
+    T? tryReceive() {
+        MutexGuard<State<T>> guard = this.state.lock();
+        T? value = guard.getMut().items.pollFirst();
+        if (value != null) {
+            this.state.notifyAll();
+        }
+        return value;
+    }
+
+    void close() {
+        MutexGuard<State<T>> guard = this.state.lock();
+        guard.getMut().closed = true;
+        this.state.notifyAll();
+    }
+
+    boolean isClosed() {
+        MutexGuard<State<T>> guard = this.state.lock();
+        return guard.get().closed;
+    }
+
+    int size() {
+        MutexGuard<State<T>> guard = this.state.lock();
+        return guard.get().items.size();
+    }
+
+    private static final class State<T> {
+        private final ArrayDeque<T> items;
+        private boolean closed;
+
+        State() {
+            this.items = new ArrayDeque<>();
+            this.closed = false;
+        }
+    }
+}

@@ -369,6 +369,9 @@ impl Cx<'_, '_> {
             || items.is(def, LangItem::Poller)
             || items.is(def, LangItem::Mutex)
             || items.is(def, LangItem::MutexGuard)
+            || items.is(def, LangItem::ReadWriteLock)
+            || items.is(def, LangItem::ReadGuard)
+            || items.is(def, LangItem::WriteGuard)
         {
             vec!["ptr"]
         } else {

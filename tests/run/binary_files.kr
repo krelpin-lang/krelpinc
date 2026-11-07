@@ -1,0 +1,46 @@
+import std.crypto.Sha256;
+import std.io.FileReader;
+import std.io.FileWriter;
+import std.io.Files;
+import std.io.IOException;
+import std.io.Path;
+import std.util.Hex;
+
+class Main {
+    static void main() throws IOException {
+        String path = Path.join(System.env("TMPDIR") ?: "/tmp", "krelpin-bin-${System.nanoTime()}");
+        {
+            FileWriter writer = FileWriter.create(path);
+            byte[] chunk = new byte[256];
+            for (int i = 0; i < 256; i++) {
+                chunk[i] = (byte) i;
+            }
+            for (int round = 0; round < 40; round++) {
+                writer.write(&chunk);
+            }
+            writer.write("tail");
+        }
+        Sha256 digest = new Sha256();
+        long total = 0L;
+        int chunks = 0;
+        FileReader reader = FileReader.open(path);
+        while (true) {
+            byte[] part = reader.read(1000);
+            if (part.length == 0) {
+                break;
+            }
+            total += part.length;
+            chunks++;
+            digest.update(&part);
+        }
+        Console.println(total + " " + chunks + " " + Files.size(path));
+        Console.println(Hex.encode(&digest.digest()) == Hex.encode(&Sha256.hash(&Files.readBytes(path))));
+        try {
+            reader.read(0);
+        } catch (IllegalArgumentException e) {
+            Console.println(e.getMessage());
+        }
+        Files.delete(path);
+        Console.println(Files.exists(path));
+    }
+}

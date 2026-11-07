@@ -40,4 +40,10 @@ final class Mutex<T> {
      */
     @Intrinsic
     MutexGuard<T> lock();
+
+    @Intrinsic
+    void notify();
+
+    @Intrinsic
+    void notifyAll();
 }

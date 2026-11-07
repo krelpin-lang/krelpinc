@@ -187,6 +187,12 @@ impl FnCx<'_, '_, '_> {
         if items.is(owner, LangItem::Mutex) || items.is(owner, LangItem::MutexGuard) {
             return self.mutex_builtin(owner, name, builtin);
         }
+        if items.is(owner, LangItem::ReadWriteLock)
+            || items.is(owner, LangItem::ReadGuard)
+            || items.is(owner, LangItem::WriteGuard)
+        {
+            return self.rwlock_builtin(owner, name, builtin);
+        }
         if items.is(owner, LangItem::ArrayList) {
             return self.list_builtin(name, builtin);
         }
@@ -1358,6 +1364,27 @@ impl FnCx<'_, '_, '_> {
                 self.drop_value("%a1", &string);
                 self.line(format!("ret i1 {written}"));
             }
+            "writeBytesRaw" => {
+                let bytes = self.assign("load ptr, ptr %a1");
+                let written = self.runtime(
+                    "i1",
+                    "kr_file_write_bytes",
+                    &format!("ptr {handle}, ptr {bytes}"),
+                );
+                self.line(format!("ret i1 {written}"));
+            }
+            "readBytesRaw" => {
+                let array = Ty::Array(Box::new(Ty::Primitive(PrimitiveTy::Byte)));
+                let descriptor = self.cx.rt_global(RtKey::Array(array.clone()));
+                self.cx.drop_array_fn(&array);
+                let bytes = self.runtime(
+                    "ptr",
+                    "kr_file_read_bytes",
+                    &format!("ptr {handle}, i32 %a1, ptr {descriptor}"),
+                );
+                let ret = self.ret_ty.clone();
+                self.ret(&bytes, &ret);
+            }
             "flushRaw" => {
                 let flushed = self.runtime("i1", "kr_file_flush", &format!("ptr {handle}"));
                 self.line(format!("ret i1 {flushed}"));
@@ -1709,6 +1736,48 @@ impl FnCx<'_, '_, '_> {
             self.ret(&guard, &guard_ty);
             return true;
         }
+        if items.is(owner, LangItem::Mutex) && matches!(name, "notify" | "notifyAll") {
+            let object = self.assign("load ptr, ptr %a0");
+            let handle = self.native_addr(&object, &ty, 0);
+            let handle = self.assign(format!("load ptr, ptr {handle}"));
+            let function = if name == "notify" {
+                "kr_mutex_notify"
+            } else {
+                "kr_mutex_notify_all"
+            };
+            self.runtime("void", function, &format!("ptr {handle}"));
+            self.line("ret void");
+            return true;
+        }
+        if items.is(owner, LangItem::MutexGuard) && name == "wait" {
+            let Ty::Adt { args, .. } = &ty else {
+                return false;
+            };
+            let guard = self.assign("load ptr, ptr %a0");
+            let mutex = self.native_addr(&guard, &ty, 0);
+            let mutex = self.assign(format!("load ptr, ptr {mutex}"));
+            let mutex_def = self.cx.lang(LangItem::Mutex);
+            let mutex_ty = Ty::Adt {
+                def: mutex_def,
+                name: self.cx.tcx.sig(mutex_def).name.name,
+                args: args.clone(),
+            };
+            let handle = self.native_addr(&mutex, &mutex_ty, 0);
+            let handle = self.assign(format!("load ptr, ptr {handle}"));
+            if builtin.params.len() == 1 {
+                self.runtime("void", "kr_mutex_wait", &format!("ptr {handle}"));
+                self.line("ret void");
+            } else {
+                let millis = builtin.arg(0);
+                let woken = self.runtime(
+                    "i1",
+                    "kr_mutex_wait_millis",
+                    &format!("ptr {handle}, i64 {millis}"),
+                );
+                self.line(format!("ret i1 {woken}"));
+            }
+            return true;
+        }
         if items.is(owner, LangItem::MutexGuard) && matches!(name, "get" | "getMut") {
             let Ty::Adt { args, .. } = &ty else {
                 return false;
@@ -1727,6 +1796,53 @@ impl FnCx<'_, '_, '_> {
             let object_ll = self.cx.object_type(&mutex_ty);
             let address = self.assign(format!(
                 "getelementptr inbounds {object_ll}, ptr {mutex}, i32 0, i32 {index}"
+            ));
+            self.line(format!("ret ptr {address}"));
+            return true;
+        }
+        false
+    }
+
+    fn rwlock_builtin(&mut self, owner: DefId, name: &str, builtin: &Builtin) -> bool {
+        let ty = builtin.self_ty.clone();
+        let items = &self.cx.tcx.lang_items;
+        if items.is(owner, LangItem::ReadWriteLock) && matches!(name, "read" | "write") {
+            let object = self.assign("load ptr, ptr %a0");
+            let handle = self.native_addr(&object, &ty, 0);
+            let handle = self.assign(format!("load ptr, ptr {handle}"));
+            let function = if name == "read" {
+                "kr_rwlock_read"
+            } else {
+                "kr_rwlock_write"
+            };
+            self.runtime("void", function, &format!("ptr {handle}"));
+            let guard_ty = self.ret_ty.clone();
+            let guard = self.new_object(&guard_ty, None);
+            let slot = self.native_addr(&guard, &guard_ty, 0);
+            self.line(format!("store ptr {object}, ptr {slot}"));
+            self.ret(&guard, &guard_ty);
+            return true;
+        }
+        let is_guard =
+            items.is(owner, LangItem::ReadGuard) || items.is(owner, LangItem::WriteGuard);
+        if is_guard && matches!(name, "get" | "getMut") {
+            let Ty::Adt { args, .. } = &ty else {
+                return false;
+            };
+            let guard = self.assign("load ptr, ptr %a0");
+            let lock = self.native_addr(&guard, &ty, 0);
+            let lock = self.assign(format!("load ptr, ptr {lock}"));
+            let lock_def = self.cx.lang(LangItem::ReadWriteLock);
+            let lock_ty = Ty::Adt {
+                def: lock_def,
+                name: self.cx.tcx.sig(lock_def).name.name,
+                args: args.clone(),
+            };
+            let value = krelpin_span::Symbol::intern("value");
+            let index = self.cx.field_index(&lock_ty, lock_def, value);
+            let object_ll = self.cx.object_type(&lock_ty);
+            let address = self.assign(format!(
+                "getelementptr inbounds {object_ll}, ptr {lock}, i32 0, i32 {index}"
             ));
             self.line(format!("ret ptr {address}"));
             return true;

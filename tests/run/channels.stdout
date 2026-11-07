@@ -1,0 +1,5 @@
+[job 1 squared 1, job 2 squared 4, job 3 squared 9, job 4 squared 16, job 5 squared 25, job 6 squared 36]
+3 true null
+null
+false
+cannot send on a closed channel

@@ -147,26 +147,89 @@ void kr_thread_sleep(int64_t millis) {
     }
 }
 
+typedef struct {
+    pthread_mutex_t mutex;
+    pthread_cond_t ready;
+} KrMonitor;
+
 void *kr_mutex_new(void) {
-    pthread_mutex_t *mutex = kr_alloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(mutex, NULL);
-    return mutex;
+    KrMonitor *monitor = kr_alloc(sizeof(KrMonitor));
+    pthread_mutex_init(&monitor->mutex, NULL);
+    pthread_cond_init(&monitor->ready, NULL);
+    return monitor;
 }
 
-void kr_mutex_lock(void *mutex) {
-    pthread_mutex_lock(mutex);
+void kr_mutex_lock(void *monitor) {
+    pthread_mutex_lock(&((KrMonitor *)monitor)->mutex);
 }
 
-void kr_mutex_unlock(void *mutex) {
-    pthread_mutex_unlock(mutex);
+void kr_mutex_unlock(void *monitor) {
+    pthread_mutex_unlock(&((KrMonitor *)monitor)->mutex);
 }
 
-void kr_mutex_free(void *mutex) {
-    if (mutex == NULL) {
+void kr_mutex_wait(void *handle) {
+    KrMonitor *monitor = handle;
+    pthread_cond_wait(&monitor->ready, &monitor->mutex);
+}
+
+bool kr_mutex_wait_millis(void *handle, int64_t millis) {
+    KrMonitor *monitor = handle;
+    if (millis < 0) {
+        millis = 0;
+    }
+    struct timespec deadline;
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec += millis / 1000;
+    deadline.tv_nsec += (millis % 1000) * 1000000;
+    if (deadline.tv_nsec >= 1000000000) {
+        deadline.tv_sec += 1;
+        deadline.tv_nsec -= 1000000000;
+    }
+    return pthread_cond_timedwait(&monitor->ready, &monitor->mutex, &deadline) == 0;
+}
+
+void kr_mutex_notify(void *handle) {
+    pthread_cond_signal(&((KrMonitor *)handle)->ready);
+}
+
+void kr_mutex_notify_all(void *handle) {
+    pthread_cond_broadcast(&((KrMonitor *)handle)->ready);
+}
+
+void kr_mutex_free(void *handle) {
+    if (handle == NULL) {
         return;
     }
-    pthread_mutex_destroy(mutex);
-    kr_free(mutex);
+    KrMonitor *monitor = handle;
+    pthread_cond_destroy(&monitor->ready);
+    pthread_mutex_destroy(&monitor->mutex);
+    kr_free(monitor);
+}
+
+void *kr_rwlock_new(void) {
+    pthread_rwlock_t *lock = kr_alloc(sizeof(pthread_rwlock_t));
+    pthread_rwlock_init(lock, NULL);
+    return lock;
+}
+
+void kr_rwlock_read(void *lock) {
+    pthread_rwlock_rdlock(lock);
+}
+
+void kr_rwlock_write(void *lock) {
+    pthread_rwlock_wrlock(lock);
+}
+
+void kr_rwlock_unlock(void *lock) {
+    pthread_rwlock_unlock(lock);
+}
+
+void kr_rwlock_free(void *lock) {
+    if (lock == NULL) {
+        return;
+    }
+    pthread_rwlock_destroy(lock);
+    kr_free(lock);
 }
 
 static int64_t tests_total;

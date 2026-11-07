@@ -1,0 +1,84 @@
+package std.util;
+
+final class Base64 {
+    private static final String STANDARD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    private static final String URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+    private Base64() {}
+
+    static String encode(&byte[] bytes) {
+        return Base64.encodeWith(bytes, &Base64.STANDARD, true);
+    }
+
+    static String encodeUrl(&byte[] bytes) {
+        return Base64.encodeWith(bytes, &Base64.URL, false);
+    }
+
+    static byte[] decode(String text) {
+        return Base64.decodeWith(&text, &Base64.STANDARD);
+    }
+
+    static byte[] decodeUrl(String text) {
+        return Base64.decodeWith(&text, &Base64.URL);
+    }
+
+    private static String encodeWith(&byte[] bytes, &String alphabet, boolean pad) {
+        StringBuilder text = new StringBuilder();
+        int index = 0;
+        while (index + 2 < bytes.length) {
+            int group = ((bytes[index] & 0xFF) << 16) | ((bytes[index + 1] & 0xFF) << 8) | (bytes[index + 2] & 0xFF);
+            text.append(alphabet.charAt((group >>> 18) & 0x3F));
+            text.append(alphabet.charAt((group >>> 12) & 0x3F));
+            text.append(alphabet.charAt((group >>> 6) & 0x3F));
+            text.append(alphabet.charAt(group & 0x3F));
+            index += 3;
+        }
+        int left = bytes.length - index;
+        if (left > 0) {
+            int group = (bytes[index] & 0xFF) << 16;
+            if (left == 2) {
+                group = group | ((bytes[index + 1] & 0xFF) << 8);
+            }
+            text.append(alphabet.charAt((group >>> 18) & 0x3F));
+            text.append(alphabet.charAt((group >>> 12) & 0x3F));
+            if (left == 2) {
+                text.append(alphabet.charAt((group >>> 6) & 0x3F));
+            } else if (pad) {
+                text.append('=');
+            }
+            if (pad) {
+                text.append('=');
+            }
+        }
+        return text.toString();
+    }
+
+    private static byte[] decodeWith(&String text, &String alphabet) {
+        int end = text.length();
+        while (end > 0 && text.charAt(end - 1) == '=') {
+            end--;
+        }
+        if (text.length() - end > 2 || end % 4 == 1) {
+            throw new IllegalArgumentException("`$text` is not valid Base64");
+        }
+        byte[] bytes = new byte[end * 3 / 4];
+        int group = 0;
+        int bits = 0;
+        int out = 0;
+        for (int index = 0; index < end; index++) {
+            char c = text.charAt(index);
+            int value = alphabet.indexOf(c);
+            if (value < 0) {
+                throw new IllegalArgumentException("`$c` at index $index is not a Base64 character");
+            }
+            group = (group << 6) | value;
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                bytes[out] = (byte) ((group >>> bits) & 0xFF);
+                out++;
+            }
+        }
+        return bytes;
+    }
+}

@@ -1,0 +1,44 @@
+package std.util;
+
+final class Hex {
+    private static final String DIGITS = "0123456789abcdef";
+
+    private Hex() {}
+
+    static String encode(&byte[] bytes) {
+        StringBuilder text = new StringBuilder();
+        for (int index = 0; index < bytes.length; index++) {
+            int value = bytes[index] & 0xFF;
+            text.append(Hex.DIGITS.charAt(value >>> 4));
+            text.append(Hex.DIGITS.charAt(value & 0xF));
+        }
+        return text.toString();
+    }
+
+    static byte[] decode(String text) {
+        if (text.length() % 2 != 0) {
+            throw new IllegalArgumentException("hex text must have an even length, but has ${text.length()} characters");
+        }
+        byte[] bytes = new byte[text.length() / 2];
+        for (int index = 0; index < bytes.length; index++) {
+            int high = Hex.digit(text, index * 2);
+            int low = Hex.digit(text, index * 2 + 1);
+            bytes[index] = (byte) ((high << 4) | low);
+        }
+        return bytes;
+    }
+
+    private static int digit(&String text, int at) {
+        char c = text.charAt(at);
+        if (c >= '0' && c <= '9') {
+            return c - '0';
+        }
+        if (c >= 'a' && c <= 'f') {
+            return c - 'a' + 10;
+        }
+        if (c >= 'A' && c <= 'F') {
+            return c - 'A' + 10;
+        }
+        throw new IllegalArgumentException("`$c` at index $at is not a hex digit");
+    }
+}

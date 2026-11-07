@@ -59,6 +59,12 @@ final class FileWriter {
      * @param text the text to write
      * @throws IOException if writing fails
      */
+    mut void write(&byte[] bytes) throws IOException {
+        if (!this.writeBytesRaw(bytes)) {
+            throw new IOException("couldn't write: ${FileWriter.lastError()}");
+        }
+    }
+
     mut void writeLine(String text) throws IOException {
         this.write(text);
         this.write("\n");
@@ -91,6 +97,9 @@ final class FileWriter {
 
     @Intrinsic
     private mut boolean flushRaw();
+
+    @Intrinsic
+    private mut boolean writeBytesRaw(&byte[] bytes);
 
     @Intrinsic
     private static String lastError();

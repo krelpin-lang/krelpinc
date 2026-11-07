@@ -1,0 +1,15 @@
+package std.sync;
+
+final class ReadWriteLock<T> {
+    private T value;
+
+    ReadWriteLock(T value) {
+        this.value = value;
+    }
+
+    @Intrinsic
+    ReadGuard<T> read();
+
+    @Intrinsic
+    WriteGuard<T> write();
+}

@@ -1,0 +1,56 @@
+import std.sync.AtomicInt;
+import std.sync.ReadGuard;
+import std.sync.ReadWriteLock;
+import std.sync.WriteGuard;
+import std.util.ArrayList;
+import std.util.HashMap;
+import std.util.List;
+import std.util.Map;
+
+class Main {
+    static final ReadWriteLock<Map<String, int>> SCORES = new ReadWriteLock<>(new HashMap<>());
+    static final AtomicInt READS = new AtomicInt(0);
+
+    static void writer(int id) {
+        for (int i = 0; i < 100; i++) {
+            WriteGuard<Map<String, int>> guard = Main.SCORES.write();
+            String key = "w" + id;
+            int old = guard.get().getOrDefault(&key, 0);
+            guard.getMut().put(key, old + 1);
+        }
+    }
+
+    static void reader() {
+        for (int i = 0; i < 100; i++) {
+            ReadGuard<Map<String, int>> guard = Main.SCORES.read();
+            if (guard.get().size() >= 0) {
+                Main.READS.increment();
+            }
+        }
+    }
+
+    static void main() {
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            int id = i;
+            Thread writer = new Thread(() -> Main.writer(id));
+            writer.start();
+            threads.add(writer);
+            Thread reader = new Thread(() -> Main.reader());
+            reader.start();
+            threads.add(reader);
+        }
+        while (!threads.isEmpty()) {
+            Thread thread = threads.remove(0);
+            thread.join();
+        }
+        ReadGuard<Map<String, int>> first = Main.SCORES.read();
+        ReadGuard<Map<String, int>> second = Main.SCORES.read();
+        int total = 0;
+        for (int i = 0; i < 4; i++) {
+            String key = "w" + i;
+            total += first.get().getOrDefault(&key, 0);
+        }
+        Console.println(total + " " + second.get().size() + " " + Main.READS.get());
+    }
+}

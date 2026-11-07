@@ -26,4 +26,10 @@ final class MutexGuard<T> borrows mutex {
      */
     @Intrinsic
     mut &mut T getMut();
+
+    @Intrinsic
+    mut void wait();
+
+    @Intrinsic
+    mut boolean wait(long millis);
 }

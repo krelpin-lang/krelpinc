@@ -240,8 +240,15 @@ impl<'c, 'a, 'tcx> FnCx<'c, 'a, 'tcx> {
         let Ty::Adt { def, args, .. } = ty else {
             panic!("`{ty}` is not a class");
         };
-        if self.cx.tcx.lang_items.is(*def, LangItem::Mutex) {
-            let mutex = self.runtime("ptr", "kr_mutex_new", "");
+        let native_new = if self.cx.tcx.lang_items.is(*def, LangItem::Mutex) {
+            Some("kr_mutex_new")
+        } else if self.cx.tcx.lang_items.is(*def, LangItem::ReadWriteLock) {
+            Some("kr_rwlock_new")
+        } else {
+            None
+        };
+        if let Some(native_new) = native_new {
+            let mutex = self.runtime("ptr", native_new, "");
             let object_ty = self.cx.object_type(ty);
             let index = self.cx.native_index(ty, 0);
             let field = self.assign(format!(
@@ -1258,6 +1265,8 @@ pub(crate) fn runtime_signature(name: &str) -> &'static str {
         "kr_string_from_utf8" => "declare ptr @kr_string_from_utf8(ptr)",
         "kr_file_write" => "declare i1 @kr_file_write(ptr, ptr)",
         "kr_file_flush" => "declare i1 @kr_file_flush(ptr)",
+        "kr_file_write_bytes" => "declare i1 @kr_file_write_bytes(ptr, ptr)",
+        "kr_file_read_bytes" => "declare ptr @kr_file_read_bytes(ptr, i32, ptr)",
         "kr_file_read_line" => "declare ptr @kr_file_read_line(ptr)",
         "kr_file_read_all" => "declare ptr @kr_file_read_all(ptr)",
         "kr_file_close" => "declare void @kr_file_close(ptr)",
@@ -1305,6 +1314,15 @@ pub(crate) fn runtime_signature(name: &str) -> &'static str {
         "kr_mutex_lock" => "declare void @kr_mutex_lock(ptr)",
         "kr_mutex_unlock" => "declare void @kr_mutex_unlock(ptr)",
         "kr_mutex_free" => "declare void @kr_mutex_free(ptr)",
+        "kr_mutex_wait" => "declare void @kr_mutex_wait(ptr)",
+        "kr_mutex_wait_millis" => "declare zeroext i1 @kr_mutex_wait_millis(ptr, i64)",
+        "kr_mutex_notify" => "declare void @kr_mutex_notify(ptr)",
+        "kr_mutex_notify_all" => "declare void @kr_mutex_notify_all(ptr)",
+        "kr_rwlock_new" => "declare ptr @kr_rwlock_new()",
+        "kr_rwlock_read" => "declare void @kr_rwlock_read(ptr)",
+        "kr_rwlock_write" => "declare void @kr_rwlock_write(ptr)",
+        "kr_rwlock_unlock" => "declare void @kr_rwlock_unlock(ptr)",
+        "kr_rwlock_free" => "declare void @kr_rwlock_free(ptr)",
         "kr_table_free" => "declare void @kr_table_free(ptr, ptr)",
         "kr_table_clear" => "declare void @kr_table_clear(ptr, ptr)",
         "kr_table_find" => "declare ptr @kr_table_find(ptr, ptr, ptr)",

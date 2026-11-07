@@ -441,6 +441,17 @@ impl FnCx<'_, '_, '_> {
             let handle = self.native_addr(&mutex, &mutex_ty, 0);
             let handle = self.assign(format!("load ptr, ptr {handle}"));
             self.runtime("void", "kr_mutex_unlock", &format!("ptr {handle}"));
+        } else if items.is(def, LangItem::ReadGuard) || items.is(def, LangItem::WriteGuard) {
+            let lock = self.native_addr(object, ty, 0);
+            let lock = self.assign(format!("load ptr, ptr {lock}"));
+            let lock_ty = Ty::Adt {
+                def: self.cx.lang(LangItem::ReadWriteLock),
+                name: krelpin_span::Symbol::intern("ReadWriteLock"),
+                args: args.clone(),
+            };
+            let handle = self.native_addr(&lock, &lock_ty, 0);
+            let handle = self.assign(format!("load ptr, ptr {handle}"));
+            self.runtime("void", "kr_rwlock_unlock", &format!("ptr {handle}"));
         }
         if self.cx.tcx.closes_itself(def) {
             self.call_close(object, ty);
@@ -449,6 +460,11 @@ impl FnCx<'_, '_, '_> {
             let handle = self.native_addr(object, ty, 0);
             let handle = self.assign(format!("load ptr, ptr {handle}"));
             self.runtime("void", "kr_mutex_free", &format!("ptr {handle}"));
+        }
+        if items.is(def, LangItem::ReadWriteLock) {
+            let handle = self.native_addr(object, ty, 0);
+            let handle = self.assign(format!("load ptr, ptr {handle}"));
+            self.runtime("void", "kr_rwlock_free", &format!("ptr {handle}"));
         }
         for (index, field) in self.cx.class_fields(def, args).iter().enumerate() {
             if !self.cx.needs_drop(&field.ty) {

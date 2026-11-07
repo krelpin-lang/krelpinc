@@ -1,0 +1,50 @@
+import std.crypto.Sha256;
+import std.util.Base64;
+import std.util.Hex;
+import std.util.PriorityQueue;
+import std.util.Comparator;
+
+class Main {
+    static void main() {
+        Console.println(Hex.encode(&Sha256.hash("")));
+        Console.println(Hex.encode(&Sha256.hash("abc")));
+        Console.println(Hex.encode(&Sha256.hash("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")));
+        Sha256 digest = new Sha256();
+        for (int i = 0; i < 1000; i++) {
+            digest.update("a");
+        }
+        Console.println(Hex.encode(&digest.digest()));
+        Console.println(Hex.encode(&Hex.decode("00ff10Ab")));
+        for (String s : new String[] { "", "f", "fo", "foo", "foob", "fooba", "foobar" }) {
+            String encoded = Base64.encode(&s.bytes());
+            Console.println("[" + encoded + "] " + String.fromUtf8(&Base64.decode(encoded)));
+        }
+        byte[] raw = { (byte) 0xfb, (byte) 0xff };
+        Console.println(Base64.encode(&raw) + " " + Base64.encodeUrl(&raw) + " " + Hex.encode(&Base64.decodeUrl("-_8")));
+        PriorityQueue<int> numbers = PriorityQueue.natural();
+        for (int n : new int[] { 5, 1, 4, 1, 9, 2, 6 }) {
+            numbers.add(n);
+        }
+        Console.println(numbers.size() + " peek " + numbers.peek());
+        StringBuilder out = new StringBuilder();
+        while (!numbers.isEmpty()) {
+            out.append(numbers.remove() + " ");
+        }
+        Console.println(out.toString());
+        PriorityQueue<String> words = new PriorityQueue<>(Comparator.<String, int>comparing(w -> w.length()).reversed());
+        words.add("bb");
+        words.add("a");
+        words.add("cccc");
+        Console.println(words.poll() + " " + words.poll() + " " + words.poll() + " " + words.poll());
+        try {
+            Hex.decode("abc");
+        } catch (IllegalArgumentException e) {
+            Console.println(e.getMessage());
+        }
+        try {
+            Base64.decode("a$==");
+        } catch (IllegalArgumentException e) {
+            Console.println(e.getMessage());
+        }
+    }
+}

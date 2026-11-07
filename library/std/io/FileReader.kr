@@ -66,8 +66,22 @@ final class FileReader {
         return text;
     }
 
+    mut byte[] read(int max) throws IOException {
+        if (max <= 0) {
+            throw new IllegalArgumentException("read: `max` must be positive, not $max");
+        }
+        byte[]? bytes = this.readBytesRaw(max);
+        if (bytes == null) {
+            throw new IOException("couldn't read the file: ${FileReader.lastError()}");
+        }
+        return bytes;
+    }
+
     @Intrinsic
     private mut boolean openRaw(String path);
+
+    @Intrinsic
+    private mut byte[]? readBytesRaw(int max);
 
     @Intrinsic
     private mut String? readLineRaw();
