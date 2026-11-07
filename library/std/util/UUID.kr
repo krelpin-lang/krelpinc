@@ -1,0 +1,51 @@
+package std.util;
+
+import std.crypto.SecureRandom;
+
+record UUID(long mostSignificant, long leastSignificant) {
+    static UUID randomUUID() {
+        long most = (SecureRandom.nextLong() & 0xFFFFFFFFFFFF0FFFL) | 0x0000000000004000L;
+        long least = (SecureRandom.nextLong() & 0x3FFFFFFFFFFFFFFFL) | 0x8000000000000000L;
+        return new UUID(most, least);
+    }
+
+    static UUID fromString(String text) {
+        if (text.length() != 36 || text.charAt(8) != '-' || text.charAt(13) != '-'
+                || text.charAt(18) != '-' || text.charAt(23) != '-') {
+            throw new IllegalArgumentException("`$text` is not a UUID like `123e4567-e89b-12d3-a456-426614174000`");
+        }
+        String digits = text.toLowerCase().substring(0, 8) + text.substring(9, 13) + text.substring(14, 18)
+            + text.substring(19, 23) + text.substring(24);
+        byte[] bytes;
+        try {
+            bytes = Hex.decode(digits);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("`$text` is not a UUID: it has a character that isn't a hex digit");
+        }
+        return new UUID(UUID.readLong(&bytes, 0), UUID.readLong(&bytes, 8));
+    }
+
+    int version() {
+        return (int) ((this.mostSignificant >>> 12) & 0xFL);
+    }
+
+    @Override
+    String toString() {
+        byte[] bytes = new byte[16];
+        for (int index = 0; index < 8; index++) {
+            bytes[index] = (byte) (this.mostSignificant >>> (56 - index * 8));
+            bytes[index + 8] = (byte) (this.leastSignificant >>> (56 - index * 8));
+        }
+        String hex = Hex.encode(&bytes);
+        return hex.substring(0, 8) + "-" + hex.substring(8, 12) + "-" + hex.substring(12, 16) + "-"
+            + hex.substring(16, 20) + "-" + hex.substring(20);
+    }
+
+    private static long readLong(&byte[] bytes, int offset) {
+        long value = 0L;
+        for (int index = 0; index < 8; index++) {
+            value = (value << 8) | ((long) bytes[offset + index] & 0xFFL);
+        }
+        return value;
+    }
+}

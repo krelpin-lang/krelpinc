@@ -1,5 +1,9 @@
 package std.lang;
 
+import std.function.Supplier;
+import std.util.ArrayList;
+import std.util.List;
+
 /**
  * A thread of execution that runs a task concurrently with the rest of the
  * program.
@@ -43,4 +47,36 @@ final class Thread {
      */
     @Intrinsic
     static void sleep(long millis);
+
+    @Intrinsic
+    static long currentId();
+
+    static final class Task<T> implements Runnable {
+        private final Supplier<T> work;
+        private final List<T> result;
+
+        Task(Supplier<T> work) {
+            this.work = work;
+            this.result = new ArrayList<>();
+        }
+
+        @Override
+        mut void run() {
+            this.result.add(this.work.get());
+        }
+
+        @Intrinsic
+        mut void start();
+
+        mut T join() {
+            this.joinRaw();
+            if (this.result.isEmpty()) {
+                throw new IllegalStateException("the task has no value: it was never started, it threw, or it was already joined");
+            }
+            return this.result.remove(0);
+        }
+
+        @Intrinsic
+        private mut void joinRaw();
+    }
 }

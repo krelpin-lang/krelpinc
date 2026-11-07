@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include <pthread.h>
+#include <stdatomic.h>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,4 +324,14 @@ void kr_secure_random_fill(KrArray *bytes) {
 #else
 #error "no secure random source for this platform"
 #endif
+}
+
+static _Atomic int64_t next_thread_id = 1;
+static _Thread_local int64_t current_thread_id = 0;
+
+int64_t kr_thread_current_id(void) {
+    if (current_thread_id == 0) {
+        current_thread_id = atomic_fetch_add(&next_thread_id, 1);
+    }
+    return current_thread_id;
 }

@@ -141,6 +141,9 @@ impl FnCx<'_, '_, '_> {
         if items.is(owner, LangItem::Thread) {
             return self.thread_builtin(name, builtin);
         }
+        if items.is(owner, LangItem::ThreadTask) {
+            return self.task_builtin(name, builtin);
+        }
         if items.is(owner, LangItem::MacroBridge) {
             return self.bridge_builtin(name);
         }
@@ -1279,6 +1282,10 @@ impl FnCx<'_, '_, '_> {
             "makeDirectories" => ("kr_io_create_directories", "i1"),
             "makeDirectory" => ("kr_io_create_directory", "i1"),
             "isSymlink" => ("kr_io_is_symlink", "i1"),
+            "modifiedRaw" => ("kr_io_modified", "i64"),
+            "setModifiedRaw" => ("kr_io_set_modified", "i1"),
+            "accessRaw" => ("kr_io_access", "i1"),
+            "setPermissionRaw" => ("kr_io_set_permission", "i1"),
             "renameFile" => ("kr_io_rename", "i1"),
             "copyFile" => ("kr_io_copy", "i1"),
             "writeBytesRaw" => {
@@ -1613,11 +1620,44 @@ impl FnCx<'_, '_, '_> {
         true
     }
 
+    fn task_builtin(&mut self, name: &str, builtin: &Builtin) -> bool {
+        let ty = builtin.self_ty.clone();
+        let object = self.assign("load ptr, ptr %a0");
+        let handle_addr = self.native_addr(&object, &ty, 0);
+        let previous = self.assign(format!("load ptr, ptr {handle_addr}"));
+        self.runtime("void", "kr_thread_join", &format!("ptr {previous}"));
+        match name {
+            "start" => {
+                let self_addr = self.native_addr(&object, &ty, 1);
+                self.line(format!("store ptr {object}, ptr {self_addr}"));
+                let entry = self
+                    .cx
+                    .instance(Instance::Thunk(Thunk::ThreadEntry { runnable: ty }));
+                let entry = self.cx.fn_name(entry);
+                let handle = self.runtime(
+                    "ptr",
+                    "kr_thread_spawn",
+                    &format!("ptr {entry}, ptr {self_addr}"),
+                );
+                self.line(format!("store ptr {handle}, ptr {handle_addr}"));
+            }
+            "joinRaw" => self.line(format!("store ptr null, ptr {handle_addr}")),
+            _ => return false,
+        }
+        self.line("ret void");
+        true
+    }
+
     fn thread_builtin(&mut self, name: &str, builtin: &Builtin) -> bool {
         match name {
             "sleep" => {
                 self.runtime("void", "kr_thread_sleep", "i64 %a0");
                 self.line("ret void");
+                true
+            }
+            "currentId" => {
+                let id = self.runtime("i64", "kr_thread_current_id", "");
+                self.line(format!("ret i64 {id}"));
                 true
             }
             "start" | "join" => {

@@ -1,0 +1,49 @@
+package std.sync;
+
+final class CountDownLatch {
+    private final Mutex<int[]> count;
+
+    CountDownLatch(int count) {
+        if (count < 0) {
+            throw new IllegalArgumentException("the count can't be negative, but it is $count");
+        }
+        int[] start = new int[1];
+        start[0] = count;
+        this.count = new Mutex<>(start);
+    }
+
+    void countDown() {
+        Mutex.Guard<int[]> guard = this.count.lock();
+        if (guard.get()[0] > 0) {
+            guard.getMut()[0] -= 1;
+            if (guard.get()[0] == 0) {
+                this.count.notifyAll();
+            }
+        }
+    }
+
+    void waitForZero() {
+        Mutex.Guard<int[]> guard = this.count.lock();
+        while (guard.get()[0] > 0) {
+            guard.wait();
+        }
+    }
+
+    boolean waitForZero(long timeoutMillis) {
+        long deadline = System.currentTimeMillis() + timeoutMillis;
+        Mutex.Guard<int[]> guard = this.count.lock();
+        while (guard.get()[0] > 0) {
+            long left = deadline - System.currentTimeMillis();
+            if (left <= 0L) {
+                return false;
+            }
+            guard.wait(left);
+        }
+        return true;
+    }
+
+    int getCount() {
+        Mutex.Guard<int[]> guard = this.count.lock();
+        return guard.get()[0];
+    }
+}

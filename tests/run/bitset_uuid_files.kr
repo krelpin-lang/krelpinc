@@ -1,0 +1,61 @@
+import std.io.Files;
+import std.io.IOException;
+import std.io.Path;
+import std.util.BitSet;
+import std.util.HashSet;
+import std.util.Set;
+import std.util.UUID;
+
+class Main {
+    static void main() throws IOException {
+        BitSet bits = new BitSet();
+        bits.set(1);
+        bits.set(3);
+        bits.set(200);
+        bits.flip(3);
+        bits.set(64, true);
+        Console.println(bits.toString() + " " + bits.cardinality() + " " + bits.length() + " " + bits.get(200) + " " + bits.get(5000));
+        Console.println(bits.nextSetBit(2) + " " + bits.nextClearBit(1) + " " + bits.nextSetBit(201));
+        BitSet other = new BitSet();
+        other.set(1);
+        other.set(2);
+        BitSet joined = new BitSet();
+        joined.or(&bits);
+        joined.and(&other);
+        Console.println(joined.toString());
+        joined.xor(&other);
+        Console.println(joined.toString() + " " + joined.isEmpty());
+        bits.andNot(&other);
+        Console.println(bits);
+        UUID id = UUID.fromString("123E4567-E89B-12D3-A456-426614174000");
+        Console.println(id.toString() + " " + id.version() + " " + (UUID.fromString(id.toString()) == id));
+        Set<UUID> ids = new HashSet<>();
+        for (int i = 0; i < 1000; i++) {
+            UUID random = UUID.randomUUID();
+            if (random.version() == 4 && random.toString().charAt(14) == '4') {
+                ids.add(random);
+            }
+        }
+        Console.println(ids.size());
+        try {
+            UUID.fromString("not-a-uuid");
+        } catch (IllegalArgumentException e) {
+            Console.println(e.getMessage());
+        }
+        String path = Path.join(System.env("TMPDIR") ?: "/tmp", "krelpin-meta-${System.nanoTime()}");
+        Files.writeString(path, "x");
+        Files.setLastModified(path, 1700000000123L);
+        Console.println(Files.lastModified(path));
+        Console.println(Files.isReadable(path) + " " + Files.isWritable(path) + " " + Files.isExecutable(path));
+        Files.setExecutable(path, true);
+        Files.setWritable(path, false);
+        Console.println(Files.isExecutable(path) + " " + Files.isWritable(path));
+        Files.setWritable(path, true);
+        Files.delete(path);
+        try {
+            Files.lastModified(path);
+        } catch (IOException e) {
+            Console.println("missing");
+        }
+    }
+}

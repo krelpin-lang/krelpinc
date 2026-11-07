@@ -1,0 +1,158 @@
+package std.util;
+
+final class BitSet {
+    private long[] words;
+
+    BitSet() {
+        this.words = new long[1];
+    }
+
+    mut void set(int index) {
+        BitSet.check(index);
+        this.grow(index >>> 6);
+        this.words[index >>> 6] |= 1L << (index & 63);
+    }
+
+    mut void set(int index, boolean value) {
+        if (value) {
+            this.set(index);
+        } else {
+            this.clear(index);
+        }
+    }
+
+    mut void clear(int index) {
+        BitSet.check(index);
+        if ((index >>> 6) < this.words.length) {
+            this.words[index >>> 6] &= ~(1L << (index & 63));
+        }
+    }
+
+    mut void clear() {
+        this.words = new long[1];
+    }
+
+    mut void flip(int index) {
+        this.set(index, !this.get(index));
+    }
+
+    boolean get(int index) {
+        BitSet.check(index);
+        int word = index >>> 6;
+        return word < this.words.length && (this.words[word] & (1L << (index & 63))) != 0L;
+    }
+
+    int cardinality() {
+        int count = 0;
+        for (int word = 0; word < this.words.length; word++) {
+            long bits = this.words[word];
+            while (bits != 0L) {
+                bits &= bits - 1L;
+                count++;
+            }
+        }
+        return count;
+    }
+
+    int length() {
+        for (int word = this.words.length - 1; word >= 0; word--) {
+            long bits = this.words[word];
+            if (bits != 0L) {
+                int top = 63;
+                while ((bits & (1L << top)) == 0L) {
+                    top--;
+                }
+                return word * 64 + top + 1;
+            }
+        }
+        return 0;
+    }
+
+    boolean isEmpty() {
+        return this.length() == 0;
+    }
+
+    int nextSetBit(int from) {
+        BitSet.check(from);
+        int end = this.words.length * 64;
+        for (int index = from; index < end; index++) {
+            if (this.get(index)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    int nextClearBit(int from) {
+        BitSet.check(from);
+        int index = from;
+        while (this.get(index)) {
+            index++;
+        }
+        return index;
+    }
+
+    mut void and(&BitSet other) {
+        for (int word = 0; word < this.words.length; word++) {
+            this.words[word] &= word < other.words.length ? other.words[word] : 0L;
+        }
+    }
+
+    mut void or(&BitSet other) {
+        this.grow(other.words.length - 1);
+        for (int word = 0; word < other.words.length; word++) {
+            this.words[word] |= other.words[word];
+        }
+    }
+
+    mut void xor(&BitSet other) {
+        this.grow(other.words.length - 1);
+        for (int word = 0; word < other.words.length; word++) {
+            this.words[word] ^= other.words[word];
+        }
+    }
+
+    mut void andNot(&BitSet other) {
+        int shared = this.words.length < other.words.length ? this.words.length : other.words.length;
+        for (int word = 0; word < shared; word++) {
+            this.words[word] &= ~other.words[word];
+        }
+    }
+
+    @Override
+    String toString() {
+        StringBuilder out = new StringBuilder();
+        out.append("{");
+        int index = this.nextSetBit(0);
+        while (index >= 0) {
+            if (out.length() > 1) {
+                out.append(", ");
+            }
+            out.append("$index");
+            index = this.nextSetBit(index + 1);
+        }
+        out.append("}");
+        return out.toString();
+    }
+
+    private mut void grow(int word) {
+        if (word < this.words.length) {
+            return;
+        }
+        int size = this.words.length * 2;
+        if (size <= word) {
+            size = word + 1;
+        }
+        long[] larger = new long[size];
+        for (int index = 0; index < this.words.length; index++) {
+            larger[index] = this.words[index];
+        }
+        this.words = larger;
+    }
+
+    private static void check(int index) {
+        if (index < 0) {
+            throw new IndexOutOfBoundsException("a bit index can't be negative, but it is $index");
+        }
+    }
+}

@@ -426,7 +426,7 @@ impl FnCx<'_, '_, '_> {
         } else if items.is(def, LangItem::StringBuilder) {
             let builder = self.native_addr(object, ty, 0);
             self.runtime("void", "kr_builder_free", &format!("ptr {builder}"));
-        } else if items.is(def, LangItem::Thread) {
+        } else if items.is(def, LangItem::Thread) || items.is(def, LangItem::ThreadTask) {
             let handle = self.native_addr(object, ty, 0);
             let handle = self.assign(format!("load ptr, ptr {handle}"));
             self.runtime("void", "kr_thread_join", &format!("ptr {handle}"));

@@ -1,0 +1,12 @@
+{1, 64, 200} 3 201 true false
+64 2 -1
+{1}
+{2} false
+{64, 200}
+123e4567-e89b-12d3-a456-426614174000 1 true
+1000
+`not-a-uuid` is not a UUID like `123e4567-e89b-12d3-a456-426614174000`
+1700000000123
+true true false
+true false
+missing

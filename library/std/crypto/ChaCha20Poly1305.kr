@@ -1,0 +1,300 @@
+package std.crypto;
+
+final class ChaCha20Poly1305 {
+    static final int KEY_LENGTH = 32;
+    static final int NONCE_LENGTH = 12;
+    static final int TAG_LENGTH = 16;
+    private static final long MASK = 0x3ffffffL;
+
+    private final byte[] key;
+
+    ChaCha20Poly1305(&byte[] key) {
+        if (key.length != ChaCha20Poly1305.KEY_LENGTH) {
+            throw new IllegalArgumentException("a ChaCha20-Poly1305 key has 32 bytes, but this one has ${key.length}");
+        }
+        byte[] copy = new byte[ChaCha20Poly1305.KEY_LENGTH];
+        for (int index = 0; index < copy.length; index++) {
+            copy[index] = key[index];
+        }
+        this.key = copy;
+    }
+
+    static byte[] newKey() {
+        return SecureRandom.bytes(ChaCha20Poly1305.KEY_LENGTH);
+    }
+
+    static byte[] newNonce() {
+        return SecureRandom.bytes(ChaCha20Poly1305.NONCE_LENGTH);
+    }
+
+    byte[] encrypt(&byte[] nonce, &byte[] plaintext) {
+        return this.encrypt(nonce, plaintext, &new byte[0]);
+    }
+
+    byte[] encrypt(&byte[] nonce, &byte[] plaintext, &byte[] associated) {
+        ChaCha20Poly1305.checkNonce(nonce);
+        byte[] out = new byte[plaintext.length + ChaCha20Poly1305.TAG_LENGTH];
+        this.xorStream(nonce, plaintext, &mut out);
+        byte[] tag = this.tag(nonce, associated, &out, plaintext.length);
+        for (int index = 0; index < ChaCha20Poly1305.TAG_LENGTH; index++) {
+            out[plaintext.length + index] = tag[index];
+        }
+        return out;
+    }
+
+    byte[]? decrypt(&byte[] nonce, &byte[] ciphertext) {
+        return this.decrypt(nonce, ciphertext, &new byte[0]);
+    }
+
+    byte[]? decrypt(&byte[] nonce, &byte[] ciphertext, &byte[] associated) {
+        ChaCha20Poly1305.checkNonce(nonce);
+        if (ciphertext.length < ChaCha20Poly1305.TAG_LENGTH) {
+            return null;
+        }
+        int length = ciphertext.length - ChaCha20Poly1305.TAG_LENGTH;
+        byte[] expected = this.tag(nonce, associated, ciphertext, length);
+        byte[] given = new byte[ChaCha20Poly1305.TAG_LENGTH];
+        for (int index = 0; index < given.length; index++) {
+            given[index] = ciphertext[length + index];
+        }
+        if (!ConstantTime.isEqual(&expected, &given)) {
+            return null;
+        }
+        byte[] body = new byte[length];
+        for (int index = 0; index < length; index++) {
+            body[index] = ciphertext[index];
+        }
+        byte[] out = new byte[length];
+        this.xorStream(nonce, &body, &mut out);
+        return out;
+    }
+
+    byte[] seal(&byte[] plaintext) {
+        byte[] nonce = ChaCha20Poly1305.newNonce();
+        byte[] sealed = this.encrypt(&nonce, plaintext);
+        byte[] out = new byte[ChaCha20Poly1305.NONCE_LENGTH + sealed.length];
+        for (int index = 0; index < nonce.length; index++) {
+            out[index] = nonce[index];
+        }
+        for (int index = 0; index < sealed.length; index++) {
+            out[ChaCha20Poly1305.NONCE_LENGTH + index] = sealed[index];
+        }
+        return out;
+    }
+
+    byte[]? open(&byte[] sealed) {
+        if (sealed.length < ChaCha20Poly1305.NONCE_LENGTH + ChaCha20Poly1305.TAG_LENGTH) {
+            return null;
+        }
+        byte[] nonce = new byte[ChaCha20Poly1305.NONCE_LENGTH];
+        for (int index = 0; index < nonce.length; index++) {
+            nonce[index] = sealed[index];
+        }
+        byte[] rest = new byte[sealed.length - ChaCha20Poly1305.NONCE_LENGTH];
+        for (int index = 0; index < rest.length; index++) {
+            rest[index] = sealed[ChaCha20Poly1305.NONCE_LENGTH + index];
+        }
+        return this.decrypt(&nonce, &rest);
+    }
+
+    private void xorStream(&byte[] nonce, &byte[] input, &mut byte[] out) {
+        int counter = 1;
+        byte[] stream = new byte[64];
+        for (int offset = 0; offset < input.length; offset += 64) {
+            this.block(nonce, counter, &mut stream);
+            counter++;
+            for (int index = 0; index < 64 && offset + index < input.length; index++) {
+                out[offset + index] = (byte) (input[offset + index] ^ stream[index]);
+            }
+        }
+    }
+
+    private void block(&byte[] nonce, int counter, &mut byte[] out) {
+        int[] state = new int[16];
+        state[0] = 0x61707865;
+        state[1] = 0x3320646e;
+        state[2] = 0x79622d32;
+        state[3] = 0x6b206574;
+        for (int index = 0; index < 8; index++) {
+            state[4 + index] = ChaCha20Poly1305.le32(&this.key, index * 4);
+        }
+        state[12] = counter;
+        for (int index = 0; index < 3; index++) {
+            state[13 + index] = ChaCha20Poly1305.le32(nonce, index * 4);
+        }
+        int[] work = new int[16];
+        for (int index = 0; index < 16; index++) {
+            work[index] = state[index];
+        }
+        for (int round = 0; round < 10; round++) {
+            ChaCha20Poly1305.quarter(&mut work, 0, 4, 8, 12);
+            ChaCha20Poly1305.quarter(&mut work, 1, 5, 9, 13);
+            ChaCha20Poly1305.quarter(&mut work, 2, 6, 10, 14);
+            ChaCha20Poly1305.quarter(&mut work, 3, 7, 11, 15);
+            ChaCha20Poly1305.quarter(&mut work, 0, 5, 10, 15);
+            ChaCha20Poly1305.quarter(&mut work, 1, 6, 11, 12);
+            ChaCha20Poly1305.quarter(&mut work, 2, 7, 8, 13);
+            ChaCha20Poly1305.quarter(&mut work, 3, 4, 9, 14);
+        }
+        for (int index = 0; index < 16; index++) {
+            int value = work[index] + state[index];
+            out[index * 4] = (byte) value;
+            out[index * 4 + 1] = (byte) (value >>> 8);
+            out[index * 4 + 2] = (byte) (value >>> 16);
+            out[index * 4 + 3] = (byte) (value >>> 24);
+        }
+    }
+
+    private static void quarter(&mut int[] s, int a, int b, int c, int d) {
+        s[a] += s[b];
+        s[d] = ChaCha20Poly1305.rotate(s[d] ^ s[a], 16);
+        s[c] += s[d];
+        s[b] = ChaCha20Poly1305.rotate(s[b] ^ s[c], 12);
+        s[a] += s[b];
+        s[d] = ChaCha20Poly1305.rotate(s[d] ^ s[a], 8);
+        s[c] += s[d];
+        s[b] = ChaCha20Poly1305.rotate(s[b] ^ s[c], 7);
+    }
+
+    private static int rotate(int value, int bits) {
+        return (value << bits) | (value >>> (32 - bits));
+    }
+
+    private byte[] tag(&byte[] nonce, &byte[] associated, &byte[] ciphertext, int length) {
+        byte[] polyKey = new byte[64];
+        this.block(nonce, 0, &mut polyKey);
+        int associatedPadded = (associated.length + 15) / 16 * 16;
+        int cipherPadded = (length + 15) / 16 * 16;
+        byte[] data = new byte[associatedPadded + cipherPadded + 16];
+        for (int index = 0; index < associated.length; index++) {
+            data[index] = associated[index];
+        }
+        for (int index = 0; index < length; index++) {
+            data[associatedPadded + index] = ciphertext[index];
+        }
+        int end = associatedPadded + cipherPadded;
+        for (int index = 0; index < 8; index++) {
+            data[end + index] = (byte) ((long) associated.length >>> (index * 8));
+            data[end + 8 + index] = (byte) ((long) length >>> (index * 8));
+        }
+        return ChaCha20Poly1305.poly1305(&polyKey, &data);
+    }
+
+    private static byte[] poly1305(&byte[] key, &byte[] data) {
+        long mask = ChaCha20Poly1305.MASK;
+        long r0 = ChaCha20Poly1305.ule32(key, 0) & 0x3ffffffL;
+        long r1 = (ChaCha20Poly1305.ule32(key, 3) >>> 2) & 0x3ffff03L;
+        long r2 = (ChaCha20Poly1305.ule32(key, 6) >>> 4) & 0x3ffc0ffL;
+        long r3 = (ChaCha20Poly1305.ule32(key, 9) >>> 6) & 0x3f03fffL;
+        long r4 = (ChaCha20Poly1305.ule32(key, 12) >>> 8) & 0x00fffffL;
+        long s1 = r1 * 5L;
+        long s2 = r2 * 5L;
+        long s3 = r3 * 5L;
+        long s4 = r4 * 5L;
+        long h0 = 0L;
+        long h1 = 0L;
+        long h2 = 0L;
+        long h3 = 0L;
+        long h4 = 0L;
+        for (int offset = 0; offset < data.length; offset += 16) {
+            h0 += ChaCha20Poly1305.ule32(data, offset) & mask;
+            h1 += (ChaCha20Poly1305.ule32(data, offset + 3) >>> 2) & mask;
+            h2 += (ChaCha20Poly1305.ule32(data, offset + 6) >>> 4) & mask;
+            h3 += (ChaCha20Poly1305.ule32(data, offset + 9) >>> 6) & mask;
+            h4 += (ChaCha20Poly1305.ule32(data, offset + 12) >>> 8) | (1L << 24);
+            long d0 = h0 * r0 + h1 * s4 + h2 * s3 + h3 * s2 + h4 * s1;
+            long d1 = h0 * r1 + h1 * r0 + h2 * s4 + h3 * s3 + h4 * s2;
+            long d2 = h0 * r2 + h1 * r1 + h2 * r0 + h3 * s4 + h4 * s3;
+            long d3 = h0 * r3 + h1 * r2 + h2 * r1 + h3 * r0 + h4 * s4;
+            long d4 = h0 * r4 + h1 * r3 + h2 * r2 + h3 * r1 + h4 * r0;
+            long carry = d0 >>> 26;
+            h0 = d0 & mask;
+            d1 += carry;
+            carry = d1 >>> 26;
+            h1 = d1 & mask;
+            d2 += carry;
+            carry = d2 >>> 26;
+            h2 = d2 & mask;
+            d3 += carry;
+            carry = d3 >>> 26;
+            h3 = d3 & mask;
+            d4 += carry;
+            carry = d4 >>> 26;
+            h4 = d4 & mask;
+            h0 += carry * 5L;
+            carry = h0 >>> 26;
+            h0 &= mask;
+            h1 += carry;
+        }
+        long carry = h1 >>> 26;
+        h1 &= mask;
+        h2 += carry;
+        carry = h2 >>> 26;
+        h2 &= mask;
+        h3 += carry;
+        carry = h3 >>> 26;
+        h3 &= mask;
+        h4 += carry;
+        carry = h4 >>> 26;
+        h4 &= mask;
+        h0 += carry * 5L;
+        carry = h0 >>> 26;
+        h0 &= mask;
+        h1 += carry;
+        long g0 = h0 + 5L;
+        carry = g0 >>> 26;
+        g0 &= mask;
+        long g1 = h1 + carry;
+        carry = g1 >>> 26;
+        g1 &= mask;
+        long g2 = h2 + carry;
+        carry = g2 >>> 26;
+        g2 &= mask;
+        long g3 = h3 + carry;
+        carry = g3 >>> 26;
+        g3 &= mask;
+        long g4 = h4 + carry - (1L << 26);
+        long select = (g4 >>> 63) - 1L;
+        long keep = ~select;
+        h0 = (h0 & keep) | (g0 & select);
+        h1 = (h1 & keep) | (g1 & select);
+        h2 = (h2 & keep) | (g2 & select);
+        h3 = (h3 & keep) | (g3 & select);
+        h4 = (h4 & keep) | (g4 & select);
+        long w0 = (h0 | (h1 << 26)) & 0xffffffffL;
+        long w1 = ((h1 >>> 6) | (h2 << 20)) & 0xffffffffL;
+        long w2 = ((h2 >>> 12) | (h3 << 14)) & 0xffffffffL;
+        long w3 = ((h3 >>> 18) | (h4 << 8)) & 0xffffffffL;
+        long f = w0 + ChaCha20Poly1305.ule32(key, 16);
+        w0 = f & 0xffffffffL;
+        f = w1 + ChaCha20Poly1305.ule32(key, 20) + (f >>> 32);
+        w1 = f & 0xffffffffL;
+        f = w2 + ChaCha20Poly1305.ule32(key, 24) + (f >>> 32);
+        w2 = f & 0xffffffffL;
+        f = w3 + ChaCha20Poly1305.ule32(key, 28) + (f >>> 32);
+        w3 = f & 0xffffffffL;
+        byte[] out = new byte[16];
+        long[] words = {w0, w1, w2, w3};
+        for (int word = 0; word < 4; word++) {
+            for (int part = 0; part < 4; part++) {
+                out[word * 4 + part] = (byte) (words[word] >>> (part * 8));
+            }
+        }
+        return out;
+    }
+
+    private static int le32(&byte[] bytes, int offset) {
+        return (bytes[offset] & 0xFF) | ((bytes[offset + 1] & 0xFF) << 8)
+            | ((bytes[offset + 2] & 0xFF) << 16) | ((bytes[offset + 3] & 0xFF) << 24);
+    }
+
+    private static long ule32(&byte[] bytes, int offset) {
+        return (long) ChaCha20Poly1305.le32(bytes, offset) & 0xffffffffL;
+    }
+
+    private static void checkNonce(&byte[] nonce) {
+        if (nonce.length != ChaCha20Poly1305.NONCE_LENGTH) {
+            throw new IllegalArgumentException("a ChaCha20-Poly1305 nonce has 12 bytes, but this one has ${nonce.length}");
+        }
+    }
+}

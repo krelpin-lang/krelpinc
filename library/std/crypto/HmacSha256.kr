@@ -6,6 +6,7 @@ final class HmacSha256 {
     private final byte[] outerKey;
     private final byte[] innerKey;
     private final Sha256 inner;
+    private final Sha256 outer;
 
     HmacSha256(&byte[] key) {
         byte[] block = new byte[HmacSha256.BLOCK];
@@ -29,6 +30,7 @@ final class HmacSha256 {
         this.innerKey = innerPad;
         this.inner = new Sha256();
         this.inner.update(&this.innerKey);
+        this.outer = new Sha256();
     }
 
     static byte[] mac(&byte[] key, &byte[] message) {
@@ -56,9 +58,8 @@ final class HmacSha256 {
     mut byte[] digest() {
         byte[] innerHash = this.inner.digest();
         this.inner.update(&this.innerKey);
-        Sha256 outer = new Sha256();
-        outer.update(&this.outerKey);
-        outer.update(&innerHash);
-        return outer.digest();
+        this.outer.update(&this.outerKey);
+        this.outer.update(&innerHash);
+        return this.outer.digest();
     }
 }

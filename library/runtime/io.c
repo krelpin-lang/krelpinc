@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -175,6 +176,64 @@ int64_t kr_io_size(const KrString *path) {
         return -1;
     }
     return (int64_t)info.st_size;
+}
+
+int64_t kr_io_modified(const KrString *path) {
+    struct stat info;
+    errno = 0;
+    if (status(path, &info) != 0) {
+        failed();
+        return INT64_MIN;
+    }
+#if defined(__APPLE__)
+    struct timespec time = info.st_mtimespec;
+#else
+    struct timespec time = info.st_mtim;
+#endif
+    return (int64_t)time.tv_sec * 1000 + time.tv_nsec / 1000000;
+}
+
+bool kr_io_set_modified(const KrString *path, int64_t millis) {
+    char *name = c_path(path);
+    if (name == NULL) {
+        return false;
+    }
+    struct timeval times[2];
+    times[0].tv_sec = (time_t)(millis / 1000);
+    times[0].tv_usec = (suseconds_t)((millis % 1000) * 1000);
+    times[1] = times[0];
+    errno = 0;
+    int result = utimes(name, times);
+    kr_free(name);
+    return result == 0 || failed();
+}
+
+bool kr_io_access(const KrString *path, int32_t mode) {
+    char *name = c_path(path);
+    if (name == NULL) {
+        return false;
+    }
+    int flag = mode == 0 ? R_OK : mode == 1 ? W_OK : X_OK;
+    bool allowed = access(name, flag) == 0;
+    kr_free(name);
+    return allowed;
+}
+
+bool kr_io_set_permission(const KrString *path, int32_t mode, bool on) {
+    struct stat info;
+    errno = 0;
+    if (status(path, &info) != 0) {
+        return failed();
+    }
+    mode_t bit = mode == 0 ? S_IRUSR : mode == 1 ? S_IWUSR : S_IXUSR;
+    mode_t next = on ? (info.st_mode | bit) : (info.st_mode & ~bit);
+    char *name = c_path(path);
+    if (name == NULL) {
+        return false;
+    }
+    int result = chmod(name, next & 07777);
+    kr_free(name);
+    return result == 0 || failed();
 }
 
 bool kr_io_remove(const KrString *path) {

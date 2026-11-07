@@ -203,6 +203,50 @@ final class Files {
     @Intrinsic
     static boolean isSymlink(String path);
 
+    static long lastModified(String path) throws IOException {
+        long millis = modifiedRaw(path);
+        if (millis == long.MIN_VALUE) {
+            throw failure("read the modification time of", path);
+        }
+        return millis;
+    }
+
+    static void setLastModified(String path, long millis) throws IOException {
+        if (!setModifiedRaw(path, millis)) {
+            throw failure("set the modification time of", path);
+        }
+    }
+
+    static boolean isReadable(String path) {
+        return accessRaw(path, 0);
+    }
+
+    static boolean isWritable(String path) {
+        return accessRaw(path, 1);
+    }
+
+    static boolean isExecutable(String path) {
+        return accessRaw(path, 2);
+    }
+
+    static void setReadable(String path, boolean readable) throws IOException {
+        if (!setPermissionRaw(path, 0, readable)) {
+            throw failure("change the permissions of", path);
+        }
+    }
+
+    static void setWritable(String path, boolean writable) throws IOException {
+        if (!setPermissionRaw(path, 1, writable)) {
+            throw failure("change the permissions of", path);
+        }
+    }
+
+    static void setExecutable(String path, boolean executable) throws IOException {
+        if (!setPermissionRaw(path, 2, executable)) {
+            throw failure("change the permissions of", path);
+        }
+    }
+
     static void createDirectory(String path) throws IOException {
         if (!makeDirectory(path)) {
             throw failure("create the directory", path);
@@ -270,6 +314,18 @@ final class Files {
 
     @Intrinsic
     private static long sizeOf(String path);
+
+    @Intrinsic
+    private static long modifiedRaw(String path);
+
+    @Intrinsic
+    private static boolean setModifiedRaw(String path, long millis);
+
+    @Intrinsic
+    private static boolean accessRaw(String path, int mode);
+
+    @Intrinsic
+    private static boolean setPermissionRaw(String path, int mode, boolean on);
 
     @Intrinsic
     private static String? canonicalize(String path);

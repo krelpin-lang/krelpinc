@@ -45,6 +45,7 @@ lang_items! {
     Console: "std.lang.Console",
     Math: "std.lang.Math",
     Thread: "std.lang.Thread",
+    ThreadTask: "std.lang.Thread.Task",
     MacroBridge: "std.macros.Bridge",
     Format: "std.lang.Format",
     StringBuilder: "std.lang.StringBuilder",

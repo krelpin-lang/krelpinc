@@ -1,0 +1,79 @@
+package std.crypto;
+
+import std.util.Base64;
+
+final class Pbkdf2 {
+    static final int DEFAULT_ITERATIONS = 600000;
+    private static final String PREFIX = "pbkdf2-sha256";
+
+    private Pbkdf2() {}
+
+    static byte[] deriveKey(&byte[] password, &byte[] salt, int iterations, int length) {
+        if (iterations <= 0) {
+            throw new IllegalArgumentException("the iteration count must be positive, but it is $iterations");
+        }
+        if (length <= 0) {
+            throw new IllegalArgumentException("the key length must be positive, but it is $length");
+        }
+        HmacSha256 hmac = new HmacSha256(password);
+        byte[] key = new byte[length];
+        int filled = 0;
+        int blockIndex = 1;
+        while (filled < length) {
+            hmac.update(salt);
+            byte[] counter = new byte[4];
+            counter[0] = (byte) (blockIndex >>> 24);
+            counter[1] = (byte) (blockIndex >>> 16);
+            counter[2] = (byte) (blockIndex >>> 8);
+            counter[3] = (byte) blockIndex;
+            hmac.update(&counter);
+            byte[] block = hmac.digest();
+            byte[] mixed = new byte[block.length];
+            for (int index = 0; index < block.length; index++) {
+                mixed[index] = block[index];
+            }
+            for (int round = 1; round < iterations; round++) {
+                hmac.update(&block);
+                block = hmac.digest();
+                for (int index = 0; index < block.length; index++) {
+                    mixed[index] = (byte) (mixed[index] ^ block[index]);
+                }
+            }
+            for (int index = 0; index < mixed.length && filled < length; index++) {
+                key[filled] = mixed[index];
+                filled++;
+            }
+            blockIndex++;
+        }
+        return key;
+    }
+
+    static String hashPassword(String password) {
+        return Pbkdf2.hashPassword(password, Pbkdf2.DEFAULT_ITERATIONS);
+    }
+
+    static String hashPassword(String password, int iterations) {
+        byte[] salt = SecureRandom.bytes(16);
+        byte[] hash = Pbkdf2.deriveKey(&password.bytes(), &salt, iterations, 32);
+        return Pbkdf2.PREFIX + ":" + iterations + ":" + Base64.encode(&salt) + ":" + Base64.encode(&hash);
+    }
+
+    static boolean verifyPassword(String password, String stored) {
+        String[] parts = stored.split(":");
+        if (parts.length != 4 || parts[0] != Pbkdf2.PREFIX) {
+            throw new IllegalArgumentException("`$stored` is not a hash made by `Pbkdf2.hashPassword`");
+        }
+        int iterations;
+        byte[] salt;
+        byte[] expected;
+        try {
+            iterations = int.parse(parts[1]);
+            salt = Base64.decode(parts[2]);
+            expected = Base64.decode(parts[3]);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("`$stored` is not a hash made by `Pbkdf2.hashPassword`");
+        }
+        byte[] actual = Pbkdf2.deriveKey(&password.bytes(), &salt, iterations, expected.length);
+        return ConstantTime.isEqual(&actual, &expected);
+    }
+}

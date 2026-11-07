@@ -1,0 +1,48 @@
+import std.sync.AtomicLong;
+import std.sync.CountDownLatch;
+import std.util.ArrayList;
+import std.util.List;
+
+class Main {
+    static final CountDownLatch READY = new CountDownLatch(3);
+    static final AtomicLong IDS = new AtomicLong(0L);
+
+    static long sum(int from, int to) {
+        long total = 0L;
+        for (int i = from; i < to; i++) {
+            total += (long) i;
+        }
+        Main.IDS.addAndGet(Thread.currentId());
+        Main.READY.countDown();
+        return total;
+    }
+
+    static void main() {
+        List<Thread.Task<long>> tasks = new ArrayList<>();
+        for (int part = 0; part < 3; part++) {
+            int from = part * 1000;
+            Thread.Task<long> task = new Thread.Task<>(() -> Main.sum(from, from + 1000));
+            task.start();
+            tasks.add(task);
+        }
+        Main.READY.waitForZero();
+        Console.println(Main.READY.getCount() + " " + Main.READY.waitForZero(5L));
+        long total = 0L;
+        for (int i = 0; i < 3; i++) {
+            total += tasks.getMut(i).join();
+        }
+        Console.println(total);
+        long mainId = Thread.currentId();
+        Thread.Task<String> named = new Thread.Task<>(() -> "id differs: " + (Thread.currentId() != mainId));
+        named.start();
+        Console.println(named.join());
+        try {
+            named.join();
+        } catch (IllegalStateException e) {
+            Console.println(e.getMessage());
+        }
+        CountDownLatch never = new CountDownLatch(1);
+        Console.println(never.waitForZero(10L));
+        Console.println(Thread.currentId() == Thread.currentId());
+    }
+}
