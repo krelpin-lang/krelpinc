@@ -69,6 +69,7 @@ final class Double implements Comparable<double>, Hashable<double>, Cloneable<do
      * @return a negative number, zero or a positive number if this value sorts
      *         before, equal to or after {@code other}
      */
+    @Override
     int compareTo(&double other) {
         if (this < other) {
             return -1;
@@ -116,6 +117,7 @@ final class Double implements Comparable<double>, Hashable<double>, Cloneable<do
      * @param other the value to compare with
      * @return {@code true} if {@link #compareTo} returns 0
      */
+    @Override
     boolean equals(&double other) {
         return this.compareTo(other) == 0;
     }
@@ -126,6 +128,7 @@ final class Double implements Comparable<double>, Hashable<double>, Cloneable<do
      * @return a hash code for this value
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -144,10 +147,12 @@ final class Double implements Comparable<double>, Hashable<double>, Cloneable<do
      * @throws IllegalArgumentException if {@code spec} is malformed or does
      *         not apply to floating-point numbers
      */
+    @Override
     String format(String spec) {
         return Format.decimal(this, spec);
     }
 
+    @Override
     double clone() {
         return this;
     }

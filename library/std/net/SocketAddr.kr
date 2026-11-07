@@ -178,6 +178,7 @@ record SocketAddr(String ip, int port) {
      *
      * @return the address as text
      */
+    @Override
     String toString() {
         return this.isIpv6() ? "[${this.ip}]:${this.port}" : "${this.ip}:${this.port}";
     }

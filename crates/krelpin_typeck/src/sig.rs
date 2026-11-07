@@ -8,7 +8,7 @@ use krelpin_ast::ast::{
 use krelpin_errors::DiagCtxt;
 use krelpin_resolve::{ItemTable, Res, Resolutions, ResolverOutput};
 use krelpin_span::def_id::DefId;
-use krelpin_span::{Symbol, kw};
+use krelpin_span::{Span, Symbol, kw};
 
 use crate::lang_items::{LangItem, LangItems};
 use crate::param_env::ParamEnv;
@@ -87,6 +87,7 @@ pub struct MethodSig {
     pub borrows: RetBorrows,
     pub storage: Vec<Storage>,
     pub member: Option<u32>,
+    pub is_override: Option<Span>,
     /// For an `async` method, the type its body returns; `ret` is then the
     /// `Future` of it that a call gives. `async void` methods produce `Unit`.
     pub output: Option<Ty>,
@@ -1033,6 +1034,11 @@ impl<'a> Tcx<'a> {
             borrows,
             storage,
             member: None,
+            is_override: member
+                .annotations
+                .iter()
+                .find(|annotation| annotation.is("Override"))
+                .map(|annotation| annotation.span),
             output,
         }
     }
@@ -1185,6 +1191,7 @@ impl<'a> Tcx<'a> {
             borrows: RetBorrows::default(),
             storage: self.param_storage(&ctor.params, &ctor.keeps),
             member: None,
+            is_override: None,
             output: None,
         }
     }
@@ -1258,6 +1265,7 @@ fn synthesized_method(
         borrows: RetBorrows::default(),
         storage: Vec::new(),
         member: None,
+        is_override: None,
         output: None,
     }
 }

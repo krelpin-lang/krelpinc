@@ -33,6 +33,7 @@ class Student implements Comparable<Student> {
         return this.name + ": " + grade.name() + " (" + grade.ordinal() + ")";
     }
 
+    @Override
     int compareTo(&Student other) {
         return this.name.compareTo(&other.name);
     }

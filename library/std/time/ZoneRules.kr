@@ -211,6 +211,7 @@ final class ZoneRules {
         return new ZoneRules(this.transitions.clone(), this.offsets.clone(), this.daylight.clone(), this.names.clone(), tail);
     }
 
+    @Override
     String toString() {
         if (this.isFixedOffset()) {
             return "ZoneRules[fixed=${new ZoneOffset(this.offsets.get(0))}]";

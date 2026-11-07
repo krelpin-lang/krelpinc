@@ -172,6 +172,7 @@ record OffsetDateTime(LocalDateTime dateTime, ZoneOffset offset) implements Comp
         return this.toInstant().compareTo(&other.toInstant()) == 0;
     }
 
+    @Override
     int compareTo(&OffsetDateTime other) {
         int order = this.toInstant().compareTo(&other.toInstant());
         return order != 0 ? order : this.dateTime.compareTo(&other.dateTime());
@@ -181,6 +182,7 @@ record OffsetDateTime(LocalDateTime dateTime, ZoneOffset offset) implements Comp
         return formatter.format(this);
     }
 
+    @Override
     String toString() {
         return "${this.dateTime}${this.offset}";
     }

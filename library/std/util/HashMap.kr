@@ -23,30 +23,39 @@ class HashMap<K extends Hashable<K>, V> implements Map<K, V> {
     HashMap() {}
 
     @Intrinsic
+    @Override
     int size();
 
     @Intrinsic
+    @Override
     (&V)? get(&K key) borrows this;
 
     @Intrinsic
+    @Override
     mut (&mut V)? getMut(&K key) borrows this;
 
     @Intrinsic
+    @Override
     mut V? put(K key, V value);
 
     @Intrinsic
+    @Override
     mut V? remove(&K key);
 
     @Intrinsic
+    @Override
     boolean containsKey(&K key);
 
     @Intrinsic
+    @Override
     mut void clear();
 
     @Intrinsic
+    @Override
     Set<&K> keySet();
 
     @Intrinsic
+    @Override
     List<&V> values();
 
     /**
@@ -57,6 +66,7 @@ class HashMap<K extends Hashable<K>, V> implements Map<K, V> {
      *
      * @return a string representation of this map
      */
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("{");

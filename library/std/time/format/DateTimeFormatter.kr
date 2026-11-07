@@ -119,6 +119,7 @@ final class DateTimeFormatter {
         return parsed;
     }
 
+    @Override
     String toString() {
         return this.pattern.clone();
     }
@@ -1175,6 +1176,7 @@ final class DateTimeFormatter {
             return new Parsed(this.text.clone(), this.values.clone(), this.offset, copy);
         }
 
+        @Override
         String toString() {
             return "Parsed[${this.text}]";
         }

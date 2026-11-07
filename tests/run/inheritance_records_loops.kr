@@ -28,6 +28,7 @@ class Square extends Shape {
         this.side = side;
     }
 
+    @Override
     double area() {
         return this.side * this.side;
     }
@@ -39,6 +40,7 @@ class Cube extends Square {
         this.label = "cube";
     }
 
+    @Override
     double area() {
         return super.area() * 6;
     }
@@ -65,10 +67,12 @@ interface Stack<T> {
 class ArrayStack<T> implements Stack<T> {
     private List<T> items = new ArrayList<>();
 
+    @Override
     mut void push(T value) {
         this.items.add(value);
     }
 
+    @Override
     mut T? pop() {
         if (this.items.size() == 0) {
             return null;
@@ -76,6 +80,7 @@ class ArrayStack<T> implements Stack<T> {
         return this.items.remove(this.items.size() - 1);
     }
 
+    @Override
     int size() {
         return this.items.size();
     }

@@ -28,6 +28,7 @@ class BankAccount implements Account {
         BankAccount.opened.increment();
     }
 
+    @Override
     long balance() {
         return this.cents;
     }

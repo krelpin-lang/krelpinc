@@ -30,6 +30,7 @@ class Item implements Priced {
         Item.created.increment();
     }
 
+    @Override
     &Price price() {
         return &this.cost;
     }

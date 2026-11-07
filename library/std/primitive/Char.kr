@@ -33,6 +33,7 @@ final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
      *         code point is less than, equal to or greater than that of
      *         {@code other}
      */
+    @Override
     int compareTo(&char other) {
         if (this < other) {
             return -1;
@@ -129,6 +130,7 @@ final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
      * @param other the character to compare with
      * @return {@code true} if the characters are equal
      */
+    @Override
     boolean equals(&char other) {
         return this == other;
     }
@@ -139,6 +141,7 @@ final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
      * @return the code point of this character
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -150,6 +153,7 @@ final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
      * @throws IllegalArgumentException if {@code spec} is malformed or does
      *         not apply to text
      */
+    @Override
     String format(String spec) {
         return Format.text("" + this, spec);
     }
@@ -176,6 +180,7 @@ final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
         return digit < 10 ? (char) ((int) '0' + digit) : (char) ((int) 'a' + digit - 10);
     }
 
+    @Override
     char clone() {
         return this;
     }

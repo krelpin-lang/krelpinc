@@ -4,24 +4,31 @@ class LinkedHashSet<T extends Hashable<T>> implements Set<T> {
     LinkedHashSet() {}
 
     @Intrinsic
+    @Override
     int size();
 
     @Intrinsic
+    @Override
     mut boolean add(T value);
 
     @Intrinsic
+    @Override
     mut boolean remove(&T value);
 
     @Intrinsic
+    @Override
     boolean contains(&T value);
 
     @Intrinsic
+    @Override
     mut void clear();
 
+    @Override
     Iterator<T> iterator() {
         return new Values<>(this);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("[");
@@ -52,6 +59,7 @@ class LinkedHashSet<T extends Hashable<T>> implements Set<T> {
             this.next = 0;
         }
 
+        @Override
         boolean hasNext() {
             int index = this.next;
             int count = this.set.slotCount();
@@ -61,6 +69,7 @@ class LinkedHashSet<T extends Hashable<T>> implements Set<T> {
             return index < count;
         }
 
+        @Override
         mut &T next() borrows src {
             int count = this.set.slotCount();
             while (this.next < count) {

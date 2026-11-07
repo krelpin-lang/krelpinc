@@ -29,14 +29,17 @@ interface Deque<T> extends Queue<T> {
         return value;
     }
 
+    @Override
     mut void add(T value) {
         this.addLast(value);
     }
 
+    @Override
     mut T? poll() {
         return this.pollFirst();
     }
 
+    @Override
     (&T)? peek() {
         return this.peekFirst();
     }

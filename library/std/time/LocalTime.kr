@@ -157,6 +157,7 @@ record LocalTime(int hour, int minute, int second, int nano) implements Comparab
         return this.compareTo(&other) > 0;
     }
 
+    @Override
     int compareTo(&LocalTime other) {
         return this.toNanoOfDay().compareTo(&other.toNanoOfDay());
     }
@@ -165,6 +166,7 @@ record LocalTime(int hour, int minute, int second, int nano) implements Comparab
         return formatter.format(this);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append(this.hour < 10 ? "0" : "");

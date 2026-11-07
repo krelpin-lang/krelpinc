@@ -11,6 +11,7 @@ interface Describe {
 }
 
 record Item(String name) implements Describe {
+    @Override
     String describe() {
         return "item " + this.name;
     }
@@ -23,6 +24,7 @@ class Box<T> implements Describe {
         this.value = value;
     }
 
+    @Override
     String describe() where T extends Describe {
         return "box of " + this.value.describe();
     }

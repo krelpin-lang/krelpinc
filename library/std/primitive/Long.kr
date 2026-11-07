@@ -33,6 +33,7 @@ final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
      * @return a negative number, zero or a positive number if this value is
      *         less than, equal to or greater than {@code other}
      */
+    @Override
     int compareTo(&long other) {
         if (this < other) {
             return -1;
@@ -62,6 +63,7 @@ final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
      * @param other the value to compare with
      * @return {@code true} if the values are equal
      */
+    @Override
     boolean equals(&long other) {
         return this == other;
     }
@@ -72,6 +74,7 @@ final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
      * @return a hash code for this value
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -91,6 +94,7 @@ final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
      * @throws IllegalArgumentException if {@code spec} is malformed or does
      *         not apply to integers
      */
+    @Override
     String format(String spec) {
         return Format.integer(this, spec);
     }
@@ -145,6 +149,7 @@ final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
         return digits.toString();
     }
 
+    @Override
     long clone() {
         return this;
     }

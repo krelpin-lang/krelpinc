@@ -17,10 +17,12 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         this.root = -1;
     }
 
+    @Override
     int size() {
         return this.keys.size();
     }
 
+    @Override
     (&V)? get(&K key) borrows this {
         int node = this.find(key);
         if (node < 0) {
@@ -29,6 +31,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return this.vals.get(node);
     }
 
+    @Override
     mut (&mut V)? getMut(&K key) borrows this {
         int node = this.find(key);
         if (node < 0) {
@@ -37,10 +40,12 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return this.vals.getMut(node);
     }
 
+    @Override
     boolean containsKey(&K key) {
         return this.find(key) >= 0;
     }
 
+    @Override
     mut V? put(K key, V value) {
         int node = this.find(&key);
         if (node >= 0) {
@@ -56,6 +61,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return null;
     }
 
+    @Override
     mut V? remove(&K key) {
         int node = this.find(key);
         if (node < 0) {
@@ -64,6 +70,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return TreeMap.valueOf(this.detach(node));
     }
 
+    @Override
     mut void clear() {
         this.keys.clear();
         this.vals.clear();
@@ -73,6 +80,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         this.root = -1;
     }
 
+    @Override
     Set<&K> keySet() {
         List<&K> ordered = new ArrayList<>();
         for (int node : this.inOrder()) {
@@ -81,6 +89,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return new Keys<>(ordered);
     }
 
+    @Override
     List<&V> values() {
         List<&V> ordered = new ArrayList<>();
         for (int node : this.inOrder()) {
@@ -141,6 +150,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
         return this.detach(node);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("{");
@@ -363,18 +373,22 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
             this.ordered = ordered;
         }
 
+        @Override
         int size() {
             return this.ordered.size();
         }
 
+        @Override
         mut boolean add(&K value) {
             throw new UnsupportedOperationException("the keys of a map can't be added to directly");
         }
 
+        @Override
         mut boolean remove(&&K value) {
             throw new UnsupportedOperationException("remove keys through the map");
         }
 
+        @Override
         boolean contains(&&K value) {
             int low = 0;
             int high = this.ordered.size() - 1;
@@ -394,14 +408,17 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
             return false;
         }
 
+        @Override
         mut void clear() {
             throw new UnsupportedOperationException("clear the map instead");
         }
 
+        @Override
         Iterator<&K> iterator() {
             return this.ordered.iterator();
         }
 
+        @Override
         String toString() {
             return this.ordered.toString();
         }

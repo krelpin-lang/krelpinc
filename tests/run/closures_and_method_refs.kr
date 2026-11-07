@@ -14,6 +14,7 @@ class Greeter {
         return this.greeting + ", " + name;
     }
 
+    @Override
     String toString() {
         return "Greeter(" + this.greeting + ") from " + super.toString().length();
     }
@@ -32,6 +33,7 @@ interface Transformer {
 }
 
 class Doubler implements Transformer {
+    @Override
     <R> R transform(int value, Function<int, R> f) {
         return f.apply(value * 2);
     }

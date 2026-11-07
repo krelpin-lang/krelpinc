@@ -1,19 +1,19 @@
 error: `draw` is `mut` but `Base.draw` only reads the object
-  --> tests/ui/typeck/inheritance_errors.kr:22:14
+  --> tests/ui/typeck/inheritance_errors.kr:24:14
    |
-22 |     mut void draw() {}
+24 |     mut void draw() {}
    |              ^^^^
 
 error: cannot override `Base.reset` because it is `final`
-  --> tests/ui/typeck/inheritance_errors.kr:24:10
+  --> tests/ui/typeck/inheritance_errors.kr:27:10
    |
-24 |     void reset() {}
+27 |     void reset() {}
    |          ^^^^^
 
 error: `copy` returns `String` but `Base.copy` returns `Base`
-  --> tests/ui/typeck/inheritance_errors.kr:26:12
+  --> tests/ui/typeck/inheritance_errors.kr:30:12
    |
-26 |     String copy() {
+30 |     String copy() {
    |            ^^^^
    |
    = help: an overriding method must return the same type or a subtype
@@ -28,15 +28,15 @@ error: `Square` does not implement every method of `Shape`
    = help: implement the missing methods, or mark `Square` as `abstract`
 
 error: cannot extend `String` because it is `final`
-  --> tests/ui/typeck/inheritance_errors.kr:31:20
+  --> tests/ui/typeck/inheritance_errors.kr:35:20
    |
-31 | class Text extends String {}
+35 | class Text extends String {}
    |                    ^^^^^^
 
 error: a class cannot extend an interface
-  --> tests/ui/typeck/inheritance_errors.kr:33:21
+  --> tests/ui/typeck/inheritance_errors.kr:37:21
    |
-33 | class Wrong extends Shape {}
+37 | class Wrong extends Shape {}
    |                     ^^^^^ `Shape` is an interface
    |
    = help: use `implements Shape` instead

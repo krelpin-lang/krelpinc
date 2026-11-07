@@ -147,6 +147,7 @@ final class Command {
      *
      * @return the command line
      */
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append(this.program);

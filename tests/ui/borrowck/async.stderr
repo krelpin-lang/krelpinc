@@ -1,16 +1,16 @@
 error: cannot let a reference to `text` escape the method
-  --> tests/ui/borrowck/async.kr:32:28
+  --> tests/ui/borrowck/async.kr:33:28
    |
-32 |         return Main.length(&text);
+33 |         return Main.length(&text);
    |         -------------------------- the reference is returned here
    |                            ^^^^^ `text` is borrowed here
    |
    = note: `text` stops existing when the method ends
 
 error: `detach` keeps its argument after this method ends, but the argument borrows `text`
-  --> tests/ui/borrowck/async.kr:37:9
+  --> tests/ui/borrowck/async.kr:38:9
    |
-37 |         Tasks.detach(Main.show(&text));
+38 |         Tasks.detach(Main.show(&text));
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `detach` keeps the argument here
    |                                ----- `text` is borrowed here
    |
@@ -18,9 +18,9 @@ error: `detach` keeps its argument after this method ends, but the argument borr
    = help: give the argument its own values instead of references
 
 error: `detach` keeps its argument after this method ends, but the argument borrows `text`
-  --> tests/ui/borrowck/async.kr:41:9
+  --> tests/ui/borrowck/async.kr:42:9
    |
-41 |         Tasks.detach(Main.show(&text));
+42 |         Tasks.detach(Main.show(&text));
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `detach` keeps the argument here
    |                                ----- `text` is borrowed here
    |
@@ -28,32 +28,32 @@ error: `detach` keeps its argument after this method ends, but the argument borr
    = help: give the argument its own values instead of references
 
 error: `detach` keeps `task` after `relay` ends, but `task` may borrow from the caller
-  --> tests/ui/borrowck/async.kr:47:9
+  --> tests/ui/borrowck/async.kr:48:9
    |
-46 |     static void relay(Future<Unit> task) {
+47 |     static void relay(Future<Unit> task) {
    |                                    ---- `task` comes from the caller
-47 |         Tasks.detach(task);
+48 |         Tasks.detach(task);
    |         ^^^^^^^^^^^^^^^^^^ `detach` keeps `task` here
    |
    = note: the caller's checks don't know that `relay` passes `task` on to be kept
    = help: write `keeps task` after the parameters of `relay`, so its callers can't pass anything borrowed
 
 error: `detach` keeps `task` after `relayLater` ends, but `task` may borrow from the caller
-  --> tests/ui/borrowck/async.kr:52:9
+  --> tests/ui/borrowck/async.kr:53:9
    |
-50 |     static void relayLater(Future<Unit> task) {
+51 |     static void relayLater(Future<Unit> task) {
    |                                         ---- `task` comes from the caller
 ...
-52 |         Tasks.detach(moved);
+53 |         Tasks.detach(moved);
    |         ^^^^^^^^^^^^^^^^^^^ `detach` keeps `task` here
    |
    = note: the caller's checks don't know that `relayLater` passes `task` on to be kept
    = help: write `keeps task` after the parameters of `relayLater`, so its callers can't pass anything borrowed
 
 error: `relayKept` keeps its argument after this method ends, but the argument borrows `text`
-  --> tests/ui/borrowck/async.kr:61:9
+  --> tests/ui/borrowck/async.kr:62:9
    |
-61 |         Main.relayKept(Main.show(&text));
+62 |         Main.relayKept(Main.show(&text));
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `relayKept` keeps the argument here
    |                                  ----- `text` is borrowed here
    |
@@ -61,24 +61,24 @@ error: `relayKept` keeps its argument after this method ends, but the argument b
    = help: give the argument its own values instead of references
 
 error: cannot assign to `text` because it is borrowed
-  --> tests/ui/borrowck/async.kr:78:9
+  --> tests/ui/borrowck/async.kr:79:9
    |
-76 |         &String view = &text;
+77 |         &String view = &text;
    |                        ----- shared borrow of `text` happens here
 ...
-78 |         text = "b";
+79 |         text = "b";
    |         ^^^^^^^^^^ `text` is assigned here while it is borrowed
-79 |         Console.println(view);
+80 |         Console.println(view);
    |         --------------------- the borrow is used later here
 
 error: cannot assign to `text` because it is borrowed
-  --> tests/ui/borrowck/async.kr:94:9
+  --> tests/ui/borrowck/async.kr:95:9
    |
-93 |         Future<int> future = Main.length(&text);
+94 |         Future<int> future = Main.length(&text);
    |                                          ----- shared borrow of `text` happens here
-94 |         text = "b";
+95 |         text = "b";
    |         ^^^^^^^^^^ `text` is assigned here while it is borrowed
-95 |         Console.println(future);
+96 |         Console.println(future);
    |         ----------------------- the borrow is used later here
 
 error: aborting due to 8 previous errors

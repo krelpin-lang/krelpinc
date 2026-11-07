@@ -11,6 +11,7 @@ interface Shape extends Comparable<Shape> {
         return "a shape with area " + this.area();
     }
 
+    @Override
     int compareTo(&Shape other) {
         return this.area().compareTo(&other.area());
     }
@@ -36,10 +37,12 @@ class Square extends Polygon {
         this.side = side;
     }
 
+    @Override
     double area() {
         return this.side * this.side;
     }
 
+    @Override
     String describe() {
         return "a square with side " + this.side;
     }
@@ -52,6 +55,7 @@ class Circle implements Shape {
         this.radius = radius;
     }
 
+    @Override
     double area() {
         return Math.PI * this.radius * this.radius;
     }

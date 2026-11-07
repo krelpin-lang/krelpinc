@@ -23,20 +23,24 @@ class Pair {
 }
 
 class Summer implements Visitor<int> {
+    @Override
     int visitNumber(int value) {
         return value;
     }
 
+    @Override
     int visitPair(&Pair pair) {
         return pair.left + pair.right;
     }
 }
 
 class Printer implements Visitor<String> {
+    @Override
     String visitNumber(int value) {
         return "#" + value;
     }
 
+    @Override
     String visitPair(&Pair pair) {
         return "(" + pair.left + ", " + pair.right + ")";
     }
@@ -49,10 +53,12 @@ class Temperature implements Comparable<Temperature> {
         this.celsius = celsius;
     }
 
+    @Override
     int compareTo(&Temperature other) {
         return this.celsius < other.celsius ? -1 : this.celsius > other.celsius ? 1 : 0;
     }
 
+    @Override
     String toString() {
         return this.celsius + "C";
     }

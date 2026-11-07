@@ -102,10 +102,12 @@ record ZoneOffset(int totalSeconds) implements Comparable<ZoneOffset> {
         return ZoneRules.of(this);
     }
 
+    @Override
     int compareTo(&ZoneOffset other) {
         return other.totalSeconds() - this.totalSeconds;
     }
 
+    @Override
     String toString() {
         return this.id();
     }

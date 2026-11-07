@@ -230,6 +230,7 @@ record LocalDateTime(LocalDate date, LocalTime time) implements Comparable<Local
         return this.compareTo(&other) == 0;
     }
 
+    @Override
     int compareTo(&LocalDateTime other) {
         int order = this.date.compareTo(&other.date());
         return order != 0 ? order : this.time.compareTo(&other.time());
@@ -239,6 +240,7 @@ record LocalDateTime(LocalDate date, LocalTime time) implements Comparable<Local
         return formatter.format(this);
     }
 
+    @Override
     String toString() {
         return "${this.date}T${this.time}";
     }

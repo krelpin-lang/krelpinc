@@ -101,6 +101,7 @@ record Duration(long nanos) implements Comparable<Duration> {
         return new Duration(Math.multiplyExact(this.nanos, factor));
     }
 
+    @Override
     String toString() {
         long magnitude = Math.abs(this.nanos);
         String sign = this.nanos < 0L ? "-" : "";
@@ -129,6 +130,7 @@ record Duration(long nanos) implements Comparable<Duration> {
         return "$whole.$fraction";
     }
 
+    @Override
     int compareTo(&Duration other) {
         return this.nanos.compareTo(&other.nanos());
     }

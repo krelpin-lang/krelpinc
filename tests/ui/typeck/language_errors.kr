@@ -4,6 +4,7 @@ enum Color {
 }
 
 class Resource implements AutoCloseable {
+    @Override
     public mut void close() {}
 
     mut void reset() {

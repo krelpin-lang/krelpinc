@@ -96,6 +96,7 @@ record Instant(long epochSecond, int nano) implements Comparable<Instant> {
         return this.compareTo(&other) > 0;
     }
 
+    @Override
     int compareTo(&Instant other) {
         if (this.epochSecond != other.epochSecond()) {
             return this.epochSecond < other.epochSecond() ? -1 : 1;
@@ -103,6 +104,7 @@ record Instant(long epochSecond, int nano) implements Comparable<Instant> {
         return this.nano.compareTo(&other.nano());
     }
 
+    @Override
     String toString() {
         return DateTimeFormatter.ISO_INSTANT.format(this);
     }

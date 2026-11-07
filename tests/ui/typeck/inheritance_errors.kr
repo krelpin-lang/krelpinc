@@ -15,14 +15,18 @@ class Base {
 }
 
 class Square extends Base implements Shape {
+    @Override
     double area() {
         return 1.0;
     }
 
+    @Override
     mut void draw() {}
 
+    @Override
     void reset() {}
 
+    @Override
     String copy() {
         return "";
     }

@@ -99,5 +99,6 @@ final class StringBuilder {
      * @return a new string containing the current contents
      */
     @Intrinsic
+    @Override
     String toString();
 }

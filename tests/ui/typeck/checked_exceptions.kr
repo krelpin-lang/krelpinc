@@ -16,6 +16,7 @@ class Base {
 }
 
 class Cache extends Base {
+    @Override
     void save() throws IOException {}
 }
 

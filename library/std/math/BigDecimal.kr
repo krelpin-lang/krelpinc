@@ -208,23 +208,28 @@ final class BigDecimal implements Comparable<BigDecimal>, Hashable<BigDecimal>, 
         return double.parse(this.toPlainString());
     }
 
+    @Override
     int compareTo(&BigDecimal other) {
         int scale = Math.max(this.scale, other.scale);
         return this.rescaled(scale).compareTo(&other.rescaled(scale));
     }
 
+    @Override
     boolean equals(&BigDecimal other) {
         return this.scale == other.scale && this.unscaled.equals(&other.unscaled);
     }
 
+    @Override
     int hashCode() {
         return 31 * this.unscaled.hashCode() + this.scale;
     }
 
+    @Override
     BigDecimal clone() {
         return new BigDecimal(&this.unscaled, this.scale);
     }
 
+    @Override
     String toString() {
         return this.toPlainString();
     }

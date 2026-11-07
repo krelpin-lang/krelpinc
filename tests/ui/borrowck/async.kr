@@ -6,6 +6,7 @@ import std.task.Unit;
 class Ready implements Future<Unit> {
     Ready() {}
 
+    @Override
     mut Poll<Unit> poll(&mut Context cx) {
         return Poll.Ready(new Unit());
     }

@@ -134,6 +134,7 @@ record Period(int years, int months, int days) {
         return new Period((int) (total / 12L), (int) (total % 12L), this.days);
     }
 
+    @Override
     String toString() {
         if (this.isZero()) {
             return "P0D";

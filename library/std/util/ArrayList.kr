@@ -23,33 +23,43 @@ class ArrayList<T> implements List<T> {
     ArrayList() {}
 
     @Intrinsic
+    @Override
     int size();
 
     @Intrinsic
+    @Override
     &T get(int index);
 
     @Intrinsic
+    @Override
     mut &mut T getMut(int index);
 
     @Intrinsic
+    @Override
     mut T set(int index, T value);
 
     @Intrinsic
+    @Override
     mut void add(T value);
 
     @Intrinsic
+    @Override
     mut void add(int index, T value);
 
     @Intrinsic
+    @Override
     mut T remove(int index);
 
     @Intrinsic
+    @Override
     mut void swap(int a, int b);
 
     @Intrinsic
+    @Override
     int indexOf(&T value) where T extends Equatable<T>;
 
     @Intrinsic
+    @Override
     mut void clear();
 
     /**
@@ -57,6 +67,7 @@ class ArrayList<T> implements List<T> {
      *
      * @return an iterator that borrows this list
      */
+    @Override
     Iterator<T> iterator() {
         return new Values<>(this);
     }
@@ -69,6 +80,7 @@ class ArrayList<T> implements List<T> {
      *
      * @return a string representation of this list
      */
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("[");
@@ -91,10 +103,12 @@ class ArrayList<T> implements List<T> {
             this.next = 0;
         }
 
+        @Override
         boolean hasNext() {
             return this.next < this.list.size();
         }
 
+        @Override
         mut &T next() borrows src {
             int index = this.next;
             if (index >= this.list.size()) {

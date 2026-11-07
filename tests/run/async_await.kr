@@ -13,10 +13,12 @@ class CountingWaker implements Waker {
 
     CountingWaker() {}
 
+    @Override
     void wake() {
         CountingWaker.WOKEN.addAndGet(1);
     }
 
+    @Override
     Waker copy() {
         return new CountingWaker();
     }
@@ -28,6 +30,7 @@ class YieldOnce implements Future<Unit> {
 
     YieldOnce() {}
 
+    @Override
     mut Poll<Unit> poll(&mut Context cx) {
         if (this.yielded) {
             return Poll.Ready(new Unit());
@@ -41,6 +44,7 @@ class YieldOnce implements Future<Unit> {
 class Never implements Future<int> {
     Never() {}
 
+    @Override
     mut Poll<int> poll(&mut Context cx) {
         return Poll.Pending;
     }
@@ -100,6 +104,7 @@ interface Source {
 }
 
 class Doubler implements Source {
+    @Override
     Future<String> fetch(int n) {
         return Doubler.make(n);
     }

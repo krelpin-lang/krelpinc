@@ -6,6 +6,7 @@ class Connection implements AutoCloseable {
         this.name = name;
         Console.println("open " + name);
     }
+    @Override
     public mut void close() {
         Console.println("close " + this.name);
     }

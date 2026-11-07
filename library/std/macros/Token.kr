@@ -141,6 +141,7 @@ record Token(TokenKind kind, String text, Span span) {
      *
      * @return the text of this token
      */
+    @Override
     String toString() {
         return this.text;
     }

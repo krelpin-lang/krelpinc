@@ -1,64 +1,64 @@
 error: an `async` method needs a body
-  --> tests/ui/typeck/async_errors.kr:16:14
+  --> tests/ui/typeck/async_errors.kr:17:14
    |
-16 |     abstract async String fetch();
+17 |     abstract async String fetch();
    |              ^^^^^
    |
    = help: to declare one without a body, return a future instead: `Future<...> fetch(...)`
 
 error: an `async` method can't name what it borrows
-  --> tests/ui/typeck/async_errors.kr:20:61
+  --> tests/ui/typeck/async_errors.kr:21:61
    |
-20 |     static async &String pick(&String a, &String b) borrows a {
+21 |     static async &String pick(&String a, &String b) borrows a {
    |                                                             ^
    |
    = note: its future holds every argument, so it borrows all of them
 
 error: `await` is only allowed inside an `async` method
-  --> tests/ui/typeck/async_errors.kr:25:9
+  --> tests/ui/typeck/async_errors.kr:26:9
    |
-25 |         await new Ready();
+26 |         await new Ready();
    |         ^^^^^^^^^^^^^^^^^
    |
    = help: mark the method `async`; a lambda can't be `async`
 
 error: cannot `await` a value of type `int`
-  --> tests/ui/typeck/async_errors.kr:30:28
+  --> tests/ui/typeck/async_errors.kr:31:28
    |
-30 |         int number = await 5;
+31 |         int number = await 5;
    |                            ^
    |
    = note: only a `Future` can be awaited
 
 error: cannot `await` a value of type `String?`
-  --> tests/ui/typeck/async_errors.kr:31:15
+  --> tests/ui/typeck/async_errors.kr:32:15
    |
-31 |         await text;
+32 |         await text;
    |               ^^^^
    |
    = note: only a `Future` can be awaited
 
 error: `await` is only allowed inside an `async` method
-  --> tests/ui/typeck/async_errors.kr:36:13
+  --> tests/ui/typeck/async_errors.kr:37:13
    |
-36 |             await new Ready();
+37 |             await new Ready();
    |             ^^^^^^^^^^^^^^^^^
    |
    = help: mark the method `async`; a lambda can't be `async`
 
 error: unreported exception `IOException`
-  --> tests/ui/typeck/async_errors.kr:45:9
+  --> tests/ui/typeck/async_errors.kr:46:9
    |
-45 |         await Main.fails();
+46 |         await Main.fails();
    |         ^^^^^^^^^^^^^^^^^^
    |
    = note: checked exceptions must be caught or declared with `throws`
    = help: catch it with `try`, or add `throws IOException` to the method
 
 error: `fetch` must be `async` because `Base.fetch` is
-  --> tests/ui/typeck/async_errors.kr:75:20
+  --> tests/ui/typeck/async_errors.kr:78:20
    |
-75 |     Future<String> fetch() {
+78 |     Future<String> fetch() {
    |                    ^^^^^
    |
    = note: `await` relies on the `throws` of `Base.fetch`, which a future returned any other way doesn't follow

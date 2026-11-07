@@ -6,6 +6,7 @@ interface Shape {
 }
 
 record Circle(double r) implements Shape {
+    @Override
     double area() {
         return 3.0 * this.r * this.r;
     }
@@ -35,10 +36,12 @@ class Money {
         this.cents = cents;
     }
 
+    @Override
     String toString() {
         return "${this.cents / 100}.${this.cents % 100:02} TL";
     }
 
+    @Override
     String format(String spec) {
         return "<" + this.toString().format(spec) + ">";
     }

@@ -7,6 +7,7 @@ import std.task.Unit;
 class Ready implements Future<Unit> {
     Ready() {}
 
+    @Override
     mut Poll<Unit> poll(&mut Context cx) {
         return Poll.Ready(new Unit());
     }
@@ -55,6 +56,7 @@ class Main {
 class Failing implements Future<String> {
     Failing() {}
 
+    @Override
     mut Poll<String> poll(&mut Context cx) throws IOException {
         throw new IOException("failed");
     }
@@ -72,11 +74,13 @@ class Base {
 
 class Sub extends Base {
     // Error: `await base.fetch()` relies on `Base.fetch` throwing nothing.
+    @Override
     Future<String> fetch() {
         return new Failing();
     }
 
     // Fine: callers of `load` already expect anything from `poll`.
+    @Override
     async String load() throws IOException {
         return "sub";
     }

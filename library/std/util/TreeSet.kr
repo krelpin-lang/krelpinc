@@ -7,10 +7,12 @@ class TreeSet<T extends Comparable<T>> implements Set<T> {
         this.map = new TreeMap<>();
     }
 
+    @Override
     int size() {
         return this.map.size();
     }
 
+    @Override
     mut boolean add(T value) {
         if (this.map.containsKey(&value)) {
             return false;
@@ -19,14 +21,17 @@ class TreeSet<T extends Comparable<T>> implements Set<T> {
         return true;
     }
 
+    @Override
     mut boolean remove(&T value) {
         return this.map.remove(value) != null;
     }
 
+    @Override
     boolean contains(&T value) {
         return this.map.containsKey(value);
     }
 
+    @Override
     mut void clear() {
         this.map.clear();
     }
@@ -71,10 +76,12 @@ class TreeSet<T extends Comparable<T>> implements Set<T> {
         return TreeSet.keyOf(entry);
     }
 
+    @Override
     Iterator<T> iterator() {
         return new Values<>(this);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("[");
@@ -105,10 +112,12 @@ class TreeSet<T extends Comparable<T>> implements Set<T> {
             this.next = set.first();
         }
 
+        @Override
         boolean hasNext() {
             return this.next != null;
         }
 
+        @Override
         mut &T next() borrows src {
             (&T)? current = this.next;
             if (current == null) {

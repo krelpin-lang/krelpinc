@@ -1,0 +1,23 @@
+interface Shape {
+    double area();
+
+    String describe() {
+        return "a shape";
+    }
+}
+
+class Circle implements Shape {
+    public double area() {
+        return 3.0;
+    }
+
+    @Override
+    public String descrbe() {
+        return "a circle";
+    }
+
+    @Override
+    static Circle unit() {
+        return new Circle();
+    }
+}

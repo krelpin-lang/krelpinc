@@ -30,6 +30,7 @@ final class Short implements Comparable<short>, Hashable<short>, Cloneable<short
      * @return a negative number, zero or a positive number if this value is
      *         less than, equal to or greater than {@code other}
      */
+    @Override
     int compareTo(&short other) {
         if (this < other) {
             return -1;
@@ -58,6 +59,7 @@ final class Short implements Comparable<short>, Hashable<short>, Cloneable<short
      * @param other the value to compare with
      * @return {@code true} if the values are equal
      */
+    @Override
     boolean equals(&short other) {
         return this == other;
     }
@@ -68,6 +70,7 @@ final class Short implements Comparable<short>, Hashable<short>, Cloneable<short
      * @return a hash code for this value
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -87,10 +90,12 @@ final class Short implements Comparable<short>, Hashable<short>, Cloneable<short
      * @throws IllegalArgumentException if {@code spec} is malformed or does
      *         not apply to integers
      */
+    @Override
     String format(String spec) {
         return Format.integer(this, spec);
     }
 
+    @Override
     short clone() {
         return this;
     }

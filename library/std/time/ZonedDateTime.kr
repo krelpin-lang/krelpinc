@@ -262,6 +262,7 @@ record ZonedDateTime(LocalDateTime dateTime, ZoneOffset offset, ZoneId zone) imp
         return this.toInstant().compareTo(&other.toInstant()) == 0;
     }
 
+    @Override
     int compareTo(&ZonedDateTime other) {
         int order = this.toInstant().compareTo(&other.toInstant());
         if (order != 0) {
@@ -278,6 +279,7 @@ record ZonedDateTime(LocalDateTime dateTime, ZoneOffset offset, ZoneId zone) imp
         return formatter.format(this);
     }
 
+    @Override
     String toString() {
         if (this.zone.asOffset() != null) {
             return "${this.dateTime}${this.offset}";

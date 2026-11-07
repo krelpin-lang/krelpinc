@@ -10,10 +10,12 @@ class Key implements Hashable<Key> {
         this.name = name;
     }
 
+    @Override
     boolean equals(&Key other) {
         return this.name.equals(&other.name);
     }
 
+    @Override
     int hashCode() {
         return this.name.length();
     }
@@ -38,6 +40,7 @@ abstract class Base<T> implements Labeled {
 
     abstract String describe(&T value);
 
+    @Override
     String name() {
         return this.describe(&this.payload);
     }
@@ -48,6 +51,7 @@ class IntBase extends Base<int> {
         super(value);
     }
 
+    @Override
     String describe(&int value) {
         return "int:" + value;
     }

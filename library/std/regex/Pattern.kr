@@ -110,6 +110,7 @@ final class Pattern {
         return parts;
     }
 
+    @Override
     String toString() {
         return this.source;
     }

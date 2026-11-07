@@ -1003,7 +1003,7 @@ fn shapes(code: &str) -> String {
 #[test]
 fn abstract_methods_are_implemented() {
     ok(&shapes(
-        "class Circle implements Shape { double area() { return 3.14; } }",
+        "class Circle implements Shape { @Override double area() { return 3.14; } }",
     ));
     ok(&shapes("abstract class Base implements Shape {}"));
     ok(&shapes(
@@ -1011,7 +1011,7 @@ fn abstract_methods_are_implemented() {
          class Square extends Base implements Shape {}",
     ));
     ok(&shapes(
-        "class IntBox implements Box<int> { int get() { return 1; } }",
+        "class IntBox implements Box<int> { @Override int get() { return 1; } }",
     ));
 
     let src = shapes("class Square implements Shape {}");
@@ -1056,14 +1056,14 @@ fn base(code: &str) -> String {
 fn overrides_keep_the_signature() {
     ok(&base(
         "class A extends Base {\n\
-         \x20   void f() {}\n\
+         \x20   @Override void f() {}\n\
          \x20   mut void f(int x) {}\n\
-         \x20   A copy() { return new A(); }\n\
-         \x20   String toString() { return \"a\"; }\n\
+         \x20   @Override A copy() { return new A(); }\n\
+         \x20   @Override String toString() { return \"a\"; }\n\
          }",
     ));
     assert_eq!(
-        errors(&base("class A extends Base { mut void f() {} }")),
+        errors(&base("class A extends Base { @Override mut void f() {} }")),
         ["`f` is `mut` but `Base.f` only reads the object"]
     );
     assert_eq!(
@@ -1071,32 +1071,70 @@ fn overrides_keep_the_signature() {
         ["`f` is `static` but `Base.f` only reads the object"]
     );
     assert_eq!(
-        errors(&base("class A extends Base { void g() {} }")),
+        errors(&base("class A extends Base { @Override void g() {} }")),
         ["cannot override `Base.g` because it is `final`"]
     );
     assert_eq!(
-        errors(&base("class A extends Base { private void h() {} }")),
+        errors(&base(
+            "class A extends Base { @Override private void h() {} }"
+        )),
         ["`h` cannot be less visible than `Base.h`"]
     );
     assert_eq!(
-        errors(&base("class A extends Base { int f() { return 1; } }")),
+        errors(&base(
+            "class A extends Base { @Override int f() { return 1; } }"
+        )),
         ["`f` returns `int` but `Base.f` returns `void`"]
     );
     assert_eq!(
         errors(&base(
-            "class A extends Base { String copy() { return \"\"; } }"
+            "class A extends Base { @Override String copy() { return \"\"; } }"
         )),
         ["`copy` returns `String` but `Base.copy` returns `Base`"]
     );
     assert_eq!(
-        errors("class A { int toString() { return 1; } }"),
+        errors("class A { @Override int toString() { return 1; } }"),
         ["`toString` returns `int` but `Object.toString` returns `String`"]
     );
     assert_eq!(
         errors(&shapes(
-            "class StrBox implements Box<String> { int get() { return 1; } }"
+            "class StrBox implements Box<String> { @Override int get() { return 1; } }"
         )),
         ["`get` returns `int` but `Box.get` returns `String`"]
+    );
+}
+
+#[test]
+fn overrides_are_marked() {
+    assert_eq!(
+        errors(&base("class A extends Base { void f() {} }")),
+        ["`f` overrides `Base.f` but is not marked `@Override`"]
+    );
+    assert_eq!(
+        errors(&shapes(
+            "class Circle implements Shape { double area() { return 1.0; } }"
+        )),
+        ["`area` overrides `Shape.area` but is not marked `@Override`"]
+    );
+    let typo = base("class A extends Base { @Override void ff() {} }");
+    assert_eq!(
+        errors(&typo),
+        ["`ff` is marked `@Override` but overrides nothing"]
+    );
+    assert_eq!(helps(&typo), ["did you mean `Base.f`?"]);
+    assert_eq!(
+        errors(&base("class A extends Base { @Override void f(int x) {} }")),
+        ["`f` is marked `@Override` but overrides nothing"]
+    );
+    assert_eq!(
+        errors(&base(
+            "class A extends Base { @Override static void k() {} }"
+        )),
+        ["static method `k` cannot be `@Override`"]
+    );
+    assert_eq!(
+        errors("class A { @Override int count; }"),
+        ["`@Override` can only be put on a method"]
     );
 }
 
@@ -1316,12 +1354,12 @@ fn overrides_cannot_throw_more() {
         )
     };
     ok(&src(
-        "class A extends Base { void g() throws IOException {} \
-         void f() throws IllegalStateException {} }",
+        "class A extends Base { @Override void g() throws IOException {} \
+         @Override void f() throws IllegalStateException {} }",
     ));
     assert_eq!(
         errors(&src(
-            "class A extends Base { void f() throws IOException {} }"
+            "class A extends Base { @Override void f() throws IOException {} }"
         )),
         ["`f` cannot throw `IOException` because `Base.f` does not"]
     );
@@ -1367,8 +1405,8 @@ fn points(code: &str) -> String {
         "class Point implements Hashable<Point> {{\n\
          \x20   int x;\n\
          \x20   Point(int x) {{ this.x = x; }}\n\
-         \x20   boolean equals(&Point other) {{ return this.x == other.x; }}\n\
-         \x20   int hashCode() {{ return this.x; }}\n\
+         \x20   @Override boolean equals(&Point other) {{ return this.x == other.x; }}\n\
+         \x20   @Override int hashCode() {{ return this.x; }}\n\
          }}\n\
          class Thing {{}}\n\
          enum Color {{ RED, GREEN }}\n\

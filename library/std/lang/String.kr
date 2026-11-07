@@ -363,6 +363,7 @@ final class String implements Comparable<String>, Hashable<String>, Cloneable<St
      *         sorts before, equal to or after {@code other}
      */
     @Intrinsic
+    @Override
     int compareTo(&String other);
 
     /**
@@ -373,6 +374,7 @@ final class String implements Comparable<String>, Hashable<String>, Cloneable<St
      * @return {@code true} if the strings are equal
      */
     @Intrinsic
+    @Override
     boolean equals(&String other);
 
     /**
@@ -381,6 +383,7 @@ final class String implements Comparable<String>, Hashable<String>, Cloneable<St
      * @return a hash code for this string
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -448,6 +451,7 @@ final class String implements Comparable<String>, Hashable<String>, Cloneable<St
     @Intrinsic
     static String valueOf(Object? value);
 
+    @Override
     String clone() {
         return this;
     }

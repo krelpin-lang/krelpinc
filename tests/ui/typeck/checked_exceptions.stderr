@@ -1,32 +1,32 @@
 error: `save` cannot throw `IOException` because `Base.save` does not
-  --> tests/ui/typeck/checked_exceptions.kr:19:10
+  --> tests/ui/typeck/checked_exceptions.kr:20:10
    |
-19 |     void save() throws IOException {}
+20 |     void save() throws IOException {}
    |          ^^^^
    |
    = help: an overriding method can only throw the checked exceptions of the method it overrides
 
 error: unreported exception `IOException`
-  --> tests/ui/typeck/checked_exceptions.kr:24:29
+  --> tests/ui/typeck/checked_exceptions.kr:25:29
    |
-24 |         String text = Files.read("notes.txt");
+25 |         String text = Files.read("notes.txt");
    |                             ^^^^
    |
    = note: checked exceptions must be caught or declared with `throws`
    = help: catch it with `try`, or add `throws IOException` to the method
 
 error: `IOException` is never thrown in the body of this `try`
-  --> tests/ui/typeck/checked_exceptions.kr:28:18
+  --> tests/ui/typeck/checked_exceptions.kr:29:18
    |
-28 |         } catch (IOException e) {
+29 |         } catch (IOException e) {
    |                  ^^^^^^^^^^^
    |
    = help: remove the `catch`, or catch an exception the body can throw
 
 error: unreported exception `IOException`
-  --> tests/ui/typeck/checked_exceptions.kr:32:37
+  --> tests/ui/typeck/checked_exceptions.kr:33:37
    |
-32 |         paths.forEach(path -> Files.read(path));
+33 |         paths.forEach(path -> Files.read(path));
    |                                     ^^^^
    |
    = note: checked exceptions must be caught or declared with `throws`

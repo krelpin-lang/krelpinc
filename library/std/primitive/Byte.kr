@@ -30,6 +30,7 @@ final class Byte implements Comparable<byte>, Hashable<byte>, Cloneable<byte> {
      * @return a negative number, zero or a positive number if this value is
      *         less than, equal to or greater than {@code other}
      */
+    @Override
     int compareTo(&byte other) {
         if (this < other) {
             return -1;
@@ -58,6 +59,7 @@ final class Byte implements Comparable<byte>, Hashable<byte>, Cloneable<byte> {
      * @param other the value to compare with
      * @return {@code true} if the values are equal
      */
+    @Override
     boolean equals(&byte other) {
         return this == other;
     }
@@ -68,6 +70,7 @@ final class Byte implements Comparable<byte>, Hashable<byte>, Cloneable<byte> {
      * @return a hash code for this value
      */
     @Intrinsic
+    @Override
     int hashCode();
 
     /**
@@ -87,10 +90,12 @@ final class Byte implements Comparable<byte>, Hashable<byte>, Cloneable<byte> {
      * @throws IllegalArgumentException if {@code spec} is malformed or does
      *         not apply to integers
      */
+    @Override
     String format(String spec) {
         return Format.integer(this, spec);
     }
 
+    @Override
     byte clone() {
         return this;
     }

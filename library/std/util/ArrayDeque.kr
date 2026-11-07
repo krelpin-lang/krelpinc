@@ -9,6 +9,7 @@ class ArrayDeque<T> implements Deque<T> {
         this.back = new ArrayList<>();
     }
 
+    @Override
     int size() {
         return this.front.size() + this.back.size();
     }
@@ -24,14 +25,17 @@ class ArrayDeque<T> implements Deque<T> {
         return this.back.get(index - split);
     }
 
+    @Override
     mut void addFirst(T value) {
         this.front.add(value);
     }
 
+    @Override
     mut void addLast(T value) {
         this.back.add(value);
     }
 
+    @Override
     mut T? pollFirst() {
         if (this.front.isEmpty()) {
             if (this.back.isEmpty()) {
@@ -42,6 +46,7 @@ class ArrayDeque<T> implements Deque<T> {
         return this.front.remove(this.front.size() - 1);
     }
 
+    @Override
     mut T? pollLast() {
         if (this.back.isEmpty()) {
             if (this.front.isEmpty()) {
@@ -52,6 +57,7 @@ class ArrayDeque<T> implements Deque<T> {
         return this.back.remove(this.back.size() - 1);
     }
 
+    @Override
     (&T)? peekFirst() {
         if (this.isEmpty()) {
             return null;
@@ -59,6 +65,7 @@ class ArrayDeque<T> implements Deque<T> {
         return this.get(0);
     }
 
+    @Override
     (&T)? peekLast() {
         if (this.isEmpty()) {
             return null;
@@ -66,6 +73,7 @@ class ArrayDeque<T> implements Deque<T> {
         return this.get(this.size() - 1);
     }
 
+    @Override
     mut void clear() {
         this.front.clear();
         this.back.clear();
@@ -108,10 +116,12 @@ class ArrayDeque<T> implements Deque<T> {
         return hash;
     }
 
+    @Override
     Iterator<T> iterator() {
         return new Values<>(this);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         text.append("[");
@@ -147,10 +157,12 @@ class ArrayDeque<T> implements Deque<T> {
             this.next = 0;
         }
 
+        @Override
         boolean hasNext() {
             return this.next < this.deque.size();
         }
 
+        @Override
         mut &T next() borrows src {
             int index = this.next;
             if (index >= this.deque.size()) {

@@ -1,0 +1,30 @@
+error: `area` overrides `Shape.area` but is not marked `@Override`
+  --> tests/ui/typeck/override_errors.kr:10:19
+   |
+10 |     public double area() {
+   |                   ^^^^
+   |
+   = note: every method that overrides or implements another must say so
+   = help: write `@Override` above `area`
+
+error: `descrbe` is marked `@Override` but overrides nothing
+  --> tests/ui/typeck/override_errors.kr:15:19
+   |
+14 |     @Override
+   |     --------- marked here
+15 |     public String descrbe() {
+   |                   ^^^^^^^
+   |
+   = help: did you mean `Shape.describe`?
+
+error: static method `unit` cannot be `@Override`
+  --> tests/ui/typeck/override_errors.kr:19:5
+   |
+19 |     @Override
+   |     ^^^^^^^^^
+   |
+   = note: only methods called on an object can override
+   = help: remove `@Override`
+
+error: aborting due to 3 previous errors
+

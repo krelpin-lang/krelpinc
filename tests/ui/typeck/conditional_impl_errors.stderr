@@ -1,37 +1,37 @@
 error: mismatched types
-  --> tests/ui/typeck/conditional_impl_errors.kr:31:16
+  --> tests/ui/typeck/conditional_impl_errors.kr:33:16
    |
-31 |         return this;
+33 |         return this;
    |                ^^^^ expected `Describe`, found `&Box<T>`
    |
    = note: `Box<T>` implements `Describe` only where `T extends Describe`
 
 error: type `Box<int>` does not satisfy the bound of `T`
-  --> tests/ui/typeck/conditional_impl_errors.kr:55:14
+  --> tests/ui/typeck/conditional_impl_errors.kr:57:14
    |
-55 |         Main.show(&plain);
+57 |         Main.show(&plain);
    |              ^^^^ `Box<int>` is not a `Describe`
    |
    = note: `Box<T>` implements `Describe` only where `T extends Describe`
 
 error: mismatched types
-  --> tests/ui/typeck/conditional_impl_errors.kr:56:24
+  --> tests/ui/typeck/conditional_impl_errors.kr:58:24
    |
-56 |         Describe bad = new Box<>(3);
+58 |         Describe bad = new Box<>(3);
    |                        ^^^^^^^^^^^^ expected `Describe`, found `Box<int>`
    |
    = note: `Box<T>` implements `Describe` only where `T extends Describe`
 
 error: type `int` does not satisfy the bound of `T`
-  --> tests/ui/typeck/conditional_impl_errors.kr:57:31
+  --> tests/ui/typeck/conditional_impl_errors.kr:59:31
    |
-57 |         Console.println(plain.describe());
+59 |         Console.println(plain.describe());
    |                               ^^^^^^^^ `int` is not a `Describe`
 
 error: `loud` is only available where `Box<int>` is a `Describe`
-  --> tests/ui/typeck/conditional_impl_errors.kr:58:31
+  --> tests/ui/typeck/conditional_impl_errors.kr:60:31
    |
-58 |         Console.println(plain.loud());
+60 |         Console.println(plain.loud());
    |                               ^^^^
    |
    = note: `Box<T>` implements `Describe` only where `T extends Describe`

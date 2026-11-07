@@ -16,6 +16,29 @@ impl Tcx<'_> {
         self.check_overrides(def);
         self.check_abstract_methods_implemented(def);
         self.check_closeable_kind(def, item);
+        self.check_override_placement(item);
+    }
+
+    fn check_override_placement(&self, item: &Item) {
+        let members = match &item.kind {
+            ItemKind::Class(class) => &class.members,
+            ItemKind::Record(def) => &def.members,
+            ItemKind::Interface(interface) => &interface.members,
+            ItemKind::Enum(def) => &def.members,
+        };
+        let misplaced = item.annotations.iter().chain(
+            members
+                .iter()
+                .filter(|member| !matches!(member.kind, ast::MemberKind::Method(_)))
+                .flat_map(|member| &member.annotations),
+        );
+        for annotation in misplaced.filter(|annotation| annotation.is("Override")) {
+            self.dcx.emit(
+                Diagnostic::error("`@Override` can only be put on a method")
+                    .with_span(annotation.span)
+                    .with_help("remove `@Override`"),
+            );
+        }
     }
 
     fn check_closeable_kind(&self, def: DefId, item: &Item) {
@@ -139,6 +162,7 @@ impl Tcx<'_> {
         methods.sort_by_key(|method| method.name.span.lo);
 
         for method in methods {
+            let mut overridden_owner = None;
             for (parent, subst) in &supertypes {
                 let overridden = self.sig(*parent).methods.get(&method.name.name);
                 for theirs in overridden.into_iter().flatten() {
@@ -149,10 +173,88 @@ impl Tcx<'_> {
                     }
                     let theirs_sig = instantiate(theirs, &override_subst(subst, theirs, method));
                     if same_params(&theirs_sig.params, &method.params) {
+                        overridden_owner.get_or_insert(theirs.owner);
                         self.check_override(method, theirs, &theirs_sig);
                     }
                 }
             }
+            if method.owner == def && method.member.is_some() {
+                self.check_override_marker(method, overridden_owner, &supertypes);
+            }
+        }
+    }
+
+    fn check_override_marker(
+        &self,
+        method: &MethodSig,
+        overridden: Option<DefId>,
+        supertypes: &[(DefId, Subst)],
+    ) {
+        let name = method.name;
+        if method.receiver.is_none() {
+            if let Some(marker) = method.is_override {
+                self.dcx.emit(
+                    Diagnostic::error(format!(
+                        "static method `{}` cannot be `@Override`",
+                        name.name
+                    ))
+                    .with_span(marker)
+                    .with_note("only methods called on an object can override")
+                    .with_help("remove `@Override`"),
+                );
+            }
+            return;
+        }
+        match (overridden, method.is_override) {
+            (Some(owner), None) => {
+                let owner = self.sig(owner).name.name;
+                self.dcx.emit(
+                    Diagnostic::error(format!(
+                        "`{}` overrides `{owner}.{}` but is not marked `@Override`",
+                        name.name, name.name
+                    ))
+                    .with_span(name.span)
+                    .with_note("every method that overrides or implements another must say so")
+                    .with_help(format!("write `@Override` above `{}`", name.name)),
+                );
+            }
+            (None, Some(marker)) => {
+                let mut diagnostic = Diagnostic::error(format!(
+                    "`{}` is marked `@Override` but overrides nothing",
+                    name.name
+                ))
+                .with_span(name.span)
+                .with_secondary(marker, "marked here");
+                let close = supertypes
+                    .iter()
+                    .flat_map(|(parent, _)| self.sig(*parent).methods.values().flatten())
+                    .filter(|theirs| {
+                        theirs.receiver.is_some() && !matches!(theirs.vis, Visibility::Private(_))
+                    })
+                    .map(|theirs| (theirs.name.name, self.sig(theirs.owner).name.name))
+                    .map(|(theirs, owner)| {
+                        (
+                            edit_distance(theirs.as_str(), name.name.as_str()),
+                            theirs,
+                            owner,
+                        )
+                    })
+                    .filter(|(distance, _, _)| *distance <= 2)
+                    .min_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.as_str().cmp(b.1.as_str())))
+                    .map(|(_, theirs, owner)| (theirs, owner));
+                diagnostic = match close {
+                    Some((theirs, owner)) if theirs == name.name => diagnostic
+                        .with_note(format!("`{owner}.{theirs}` takes different parameters")),
+                    Some((theirs, owner)) => {
+                        diagnostic.with_help(format!("did you mean `{owner}.{theirs}`?"))
+                    }
+                    None => {
+                        diagnostic.with_help("remove `@Override`, or fix the name or parameters")
+                    }
+                };
+                self.dcx.emit(diagnostic);
+            }
+            _ => {}
         }
     }
 
@@ -405,4 +507,23 @@ fn same_signature(a: &MethodSig, b: &MethodSig) -> bool {
         .iter()
         .zip(&b.params)
         .all(|(x, y)| *x == y.subst(&rename))
+}
+
+fn edit_distance(a: &str, b: &str) -> usize {
+    let b: Vec<char> = b.chars().collect();
+    let mut row: Vec<usize> = (0..=b.len()).collect();
+    for (i, ca) in a.chars().enumerate() {
+        let mut previous = row[0];
+        row[0] = i + 1;
+        for (j, cb) in b.iter().enumerate() {
+            let current = row[j + 1];
+            row[j + 1] = if ca == *cb {
+                previous
+            } else {
+                1 + previous.min(row[j]).min(current)
+            };
+            previous = current;
+        }
+    }
+    row[b.len()]
 }

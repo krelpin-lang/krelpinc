@@ -19,7 +19,7 @@ pub use crate::cfg::{CfgSet, WELL_KNOWN};
 pub use crate::proc_macro::{CallError, ProcMacroCrate, WireKind, WireToken};
 use crate::table::{MacroKind, MacroScope, MacroTable};
 
-const BUILTIN_ATTRIBUTES: &[&str] = &["Intrinsic", "Test"];
+const BUILTIN_ATTRIBUTES: &[&str] = &["Intrinsic", "Override", "Test"];
 const RECURSION_LIMIT: usize = 64;
 
 pub struct ExpandOptions<'a> {

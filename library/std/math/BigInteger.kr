@@ -286,6 +286,7 @@ final class BigInteger implements Comparable<BigInteger>, Hashable<BigInteger>, 
         return double.parse(this.toString());
     }
 
+    @Override
     int compareTo(&BigInteger other) {
         if (this.sign != other.sign) {
             return this.sign < other.sign ? -1 : 1;
@@ -294,10 +295,12 @@ final class BigInteger implements Comparable<BigInteger>, Hashable<BigInteger>, 
         return this.sign < 0 ? -order : order;
     }
 
+    @Override
     boolean equals(&BigInteger other) {
         return this.compareTo(other) == 0;
     }
 
+    @Override
     int hashCode() {
         int hash = this.sign;
         for (int index = 0; index < this.digits.length; index++) {
@@ -306,10 +309,12 @@ final class BigInteger implements Comparable<BigInteger>, Hashable<BigInteger>, 
         return hash;
     }
 
+    @Override
     BigInteger clone() {
         return new BigInteger(this.sign, BigInteger.copy(&this.digits));
     }
 
+    @Override
     String toString() {
         if (this.sign == 0) {
             return "0";

@@ -280,6 +280,7 @@ record LocalDate(int year, int monthValue, int dayOfMonth) implements Comparable
         return this.compareTo(&other) == 0;
     }
 
+    @Override
     int compareTo(&LocalDate other) {
         if (this.year != other.year()) {
             return this.year < other.year() ? -1 : 1;
@@ -297,6 +298,7 @@ record LocalDate(int year, int monthValue, int dayOfMonth) implements Comparable
         return formatter.format(this);
     }
 
+    @Override
     String toString() {
         StringBuilder text = new StringBuilder();
         int magnitude = Math.abs(this.year);
