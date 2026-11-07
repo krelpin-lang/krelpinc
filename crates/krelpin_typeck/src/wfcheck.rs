@@ -57,6 +57,7 @@ impl Tcx<'_> {
             .fields
             .values()
             .filter(|field| field.owner == def && matches!(field.storage, FieldStorage::Static(_)))
+            .filter(|field| !sig.variants.iter().any(|variant| variant.name.name == field.name.name))
             .collect();
         fields.sort_by_key(|field| field.name.span.lo);
         for field in fields {

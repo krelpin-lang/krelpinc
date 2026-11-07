@@ -1,9 +1,9 @@
 package std.regex;
 
 class PatternSyntaxException extends IllegalArgumentException {
-    private String description;
-    private String pattern;
-    private int index;
+    private final String description;
+    private final String pattern;
+    private final int index;
 
     PatternSyntaxException(String description, String pattern, int index) {
         super("$description near index $index\n$pattern");

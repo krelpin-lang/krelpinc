@@ -6,9 +6,9 @@ import std.util.ArrayList;
 import std.util.List;
 
 final class ZoneId {
-    private String id;
-    private ZoneRules rules;
-    private boolean fixed;
+    private final String id;
+    private final ZoneRules rules;
+    private final boolean fixed;
 
     private ZoneId(String id, ZoneRules rules, boolean fixed) {
         this.id = id;

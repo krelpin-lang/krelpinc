@@ -29,16 +29,30 @@ impl Tcx<'_> {
             let MemberKind::Field(field) = &member.kind else {
                 continue;
             };
-            if field.init.is_some() || matches!(field.storage, FieldStorage::Const(_)) {
+            if field.init.is_some() {
                 continue;
             }
             let Some(sig) = self.sig(def).fields.get(&field.name.name) else {
                 continue;
             };
+            let name = field.name;
+            if field.final_kw.is_some() && matches!(field.storage, FieldStorage::Instance) {
+                if ctors.is_empty() {
+                    self.dcx.emit(
+                        Diagnostic::error(format!(
+                            "`final` field `{}` is never given a value",
+                            name.name
+                        ))
+                        .with_span(name.span)
+                        .with_label("a `final` field is assigned exactly once")
+                        .with_help("give it an initial value or assign it in a constructor"),
+                    );
+                }
+                continue;
+            }
             if !needs_value(&sig.ty) || self.is_primitive_class(&sig.ty) {
                 continue;
             }
-            let name = field.name;
             if matches!(field.storage, FieldStorage::Static(_)) {
                 self.dcx.emit(
                     Diagnostic::error(format!(
@@ -103,7 +117,7 @@ fn needs_value(ty: &Ty) -> bool {
 
 /// A constructor that starts with `this(...)` leaves the fields to the one it
 /// calls.
-fn delegates(body: &Block) -> bool {
+pub(crate) fn delegates(body: &Block) -> bool {
     body.stmts.first().is_some_and(|stmt| {
         matches!(&stmt.kind, StmtKind::Expr(expr)
             if matches!(&expr.kind, ExprKind::Call { callee, .. }

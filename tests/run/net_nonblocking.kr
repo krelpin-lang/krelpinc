@@ -14,10 +14,10 @@ import std.util.List;
 import std.util.Map;
 
 class Main {
-    const int LISTENER = 0;
-    static AtomicInt CORRECT = new AtomicInt(0);
-    static AtomicBool START_READING = new AtomicBool(false);
-    static AtomicLong RECEIVED = new AtomicLong(0);
+    static final int LISTENER = 0;
+    static final AtomicInt CORRECT = new AtomicInt(0);
+    static final AtomicBool START_READING = new AtomicBool(false);
+    static final AtomicLong RECEIVED = new AtomicLong(0);
 
     // Waits for events, and fails instead of waiting forever when none
     // come, so a socket that is never reported ready fails the test.
@@ -264,7 +264,7 @@ class Main {
         }
 
         try {
-            receiver.register(&mut poller, 9, 0);
+            receiver.register(&mut poller, 9, Interest.of(false, false));
         } catch (IllegalArgumentException e) {
             Console.println(e.getMessage());
         }

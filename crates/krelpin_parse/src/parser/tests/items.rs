@@ -53,9 +53,9 @@ fn hello_world() {
 fn fields() {
     let members = members(
         "class Person {\n\
-         \x20   const int MAX = 64;\n\
-         \x20   static AtomicInt created = new AtomicInt(0);\n\
-         \x20   String name;\n\
+         \x20   static final int MAX = 64;\n\
+         \x20   static final AtomicInt created = new AtomicInt(0);\n\
+         \x20   final String name;\n\
          \x20   public int age;\n\
          \x20   private String? nickname;\n\
          }",
@@ -65,10 +65,11 @@ fn fields() {
         .iter()
         .map(|member| match &member.kind {
             MemberKind::Field(field) => {
-                let storage = match field.storage {
-                    FieldStorage::Instance => "instance",
-                    FieldStorage::Const(_) => "const",
-                    FieldStorage::Static(_) => "static",
+                let storage = match (field.storage, field.final_kw.is_some()) {
+                    (FieldStorage::Instance, false) => "instance",
+                    (FieldStorage::Instance, true) => "final",
+                    (FieldStorage::Static(_), false) => "static",
+                    (FieldStorage::Static(_), true) => "static final",
                 };
                 (
                     storage.to_owned(),
@@ -81,9 +82,9 @@ fn fields() {
         .collect();
 
     let expected = [
-        ("const", "int MAX", true),
-        ("static", "AtomicInt created", true),
-        ("instance", "String name", false),
+        ("static final", "int MAX", true),
+        ("static final", "AtomicInt created", true),
+        ("final", "String name", false),
         ("instance", "int age", false),
         ("instance", "String? nickname", false),
     ];
@@ -346,8 +347,8 @@ fn signature_errors() {
 #[test]
 fn modifier_errors() {
     assert_eq!(
-        errors("class A { const void f() {} }"),
-        ["`const` cannot be used on methods"]
+        errors("class A { const int x = 1; }"),
+        ["`const` is not a Krelpin modifier"]
     );
     assert_eq!(
         errors("static class A {}"),
@@ -358,8 +359,12 @@ fn modifier_errors() {
         ["multiple visibility modifiers"]
     );
     assert_eq!(
-        errors("class A { const static int x; }"),
-        ["only one of `const` and `static` can be used"]
+        errors("class A { static static final int x = 1; }"),
+        ["duplicate `static` modifier"]
+    );
+    assert_eq!(
+        errors("class A { static int x = 1; }"),
+        ["static field `x` must be `final`"]
     );
     assert_eq!(
         errors("class A { static mut void f() {} mut move void g() {} }"),

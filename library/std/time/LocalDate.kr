@@ -5,9 +5,9 @@ import std.util.ArrayList;
 import std.util.List;
 
 record LocalDate(int year, int monthValue, int dayOfMonth) implements Comparable<LocalDate> {
-    public const int MIN_YEAR = -999999999;
+    public static final int MIN_YEAR = -999999999;
 
-    public const int MAX_YEAR = 999999999;
+    public static final int MAX_YEAR = 999999999;
 
     public static final LocalDate EPOCH = new LocalDate(1970, 1, 1);
 
@@ -15,9 +15,9 @@ record LocalDate(int year, int monthValue, int dayOfMonth) implements Comparable
 
     public static final LocalDate MAX = new LocalDate(LocalDate.MAX_YEAR, 12, 31);
 
-    private const long DAYS_PER_CYCLE = 146097L;
+    private static final long DAYS_PER_CYCLE = 146097L;
 
-    private const long DAYS_0000_TO_1970 = 719468L;
+    private static final long DAYS_0000_TO_1970 = 719468L;
 
     LocalDate {
         LocalDate.check("Year", (long) year, (long) LocalDate.MIN_YEAR, (long) LocalDate.MAX_YEAR);

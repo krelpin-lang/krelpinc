@@ -3,7 +3,7 @@ record Limit(int value) {
 
     public static final Limit SECOND = Limit.make(7);
 
-    public const int MAX = 10;
+    public static final int MAX = 10;
 
     public static final String LABEL = "limit";
 

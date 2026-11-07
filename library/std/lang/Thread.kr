@@ -17,7 +17,7 @@ package std.lang;
  * @see Runnable
  */
 final class Thread {
-    private Runnable task;
+    private final Runnable task;
 
     /**
      * Constructs a thread that runs a task once it is started.

@@ -11,11 +11,11 @@ record LocalTime(int hour, int minute, int second, int nano) implements Comparab
 
     public static final LocalTime MAX = new LocalTime(23, 59, 59, 999999999);
 
-    public const int SECONDS_PER_DAY = 86400;
+    public static final int SECONDS_PER_DAY = 86400;
 
-    public const long NANOS_PER_SECOND = 1000000000L;
+    public static final long NANOS_PER_SECOND = 1000000000L;
 
-    public const long NANOS_PER_DAY = 86400000000000L;
+    public static final long NANOS_PER_DAY = 86400000000000L;
 
     LocalTime {
         LocalTime.check("HourOfDay", hour, 23);

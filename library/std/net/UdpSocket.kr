@@ -199,17 +199,13 @@ final class UdpSocket {
      * @param poller the poller that reports the socket
      * @param token the token that identifies the socket in the poller's
      *        {@link Event}s
-     * @param interest the readiness to report, a combination of the
-     *        {@link Interest} constants
-     * @throws IllegalArgumentException if {@code interest} is not a non-empty
-     *         combination of {@code Interest} constants
+     * @param interest the readiness to report
      * @throws IOException if the registration fails; on Linux this includes a
      *         socket that is already registered with {@code poller}, which
      *         {@link #reregister} must be used for
      */
-    void register(&mut Poller poller, int token, int interest) throws IOException {
-        Interest.check(interest);
-        if (!this.registerRaw(poller, token, interest, false)) {
+    void register(&mut Poller poller, int token, Interest interest) throws IOException {
+        if (!this.registerRaw(poller, token, interest.readable(), interest.writable(), false)) {
             throw new IOException("couldn't register with the poller: ${UdpSocket.lastError()}");
         }
     }
@@ -220,16 +216,12 @@ final class UdpSocket {
      *
      * @param poller the poller the socket is registered with
      * @param token the new token
-     * @param interest the new interest, a combination of the {@link Interest}
-     *        constants
-     * @throws IllegalArgumentException if {@code interest} is not a non-empty
-     *         combination of {@code Interest} constants
+     * @param interest the new readiness to report
      * @throws IOException if the registration fails; on Linux this includes a
      *         socket that is not registered with {@code poller}
      */
-    void reregister(&mut Poller poller, int token, int interest) throws IOException {
-        Interest.check(interest);
-        if (!this.registerRaw(poller, token, interest, true)) {
+    void reregister(&mut Poller poller, int token, Interest interest) throws IOException {
+        if (!this.registerRaw(poller, token, interest.readable(), interest.writable(), true)) {
             throw new IOException("couldn't register with the poller: ${UdpSocket.lastError()}");
         }
     }
@@ -251,7 +243,7 @@ final class UdpSocket {
     private mut boolean setNonBlockingRaw(boolean nonBlocking);
 
     @Intrinsic
-    private boolean registerRaw(&mut Poller poller, int token, int interest, boolean again);
+    private boolean registerRaw(&mut Poller poller, int token, boolean readable, boolean writable, boolean again);
 
     @Intrinsic
     private boolean deregisterRaw(&mut Poller poller);

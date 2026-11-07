@@ -12,7 +12,7 @@ import std.util.List;
  * are exchanged as lines of tab-separated text.
  */
 final class Bridge {
-    private List<String> macros;
+    private final List<String> macros;
     private String current;
 
     Bridge() {

@@ -1,7 +1,7 @@
 package std.util;
 
 class TreeSet<T extends Comparable<T>> implements Set<T> {
-    private TreeMap<T, boolean> map;
+    private final TreeMap<T, boolean> map;
 
     TreeSet() {
         this.map = new TreeMap<>();
@@ -97,7 +97,7 @@ class TreeSet<T extends Comparable<T>> implements Set<T> {
     }
 
     private static final class Values<T extends Comparable<T>> borrows src implements Iterator<T> {
-        private &TreeSet<T> set;
+        private final &TreeSet<T> set;
         private (&T)? next;
 
         Values(&TreeSet<T> set) keeps set {

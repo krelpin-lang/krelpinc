@@ -4,8 +4,8 @@ import example.test;
 
 /** A person with a name. */
 class Person {
-    const int MAX_NAME_LENGTH = 64;
-    static AtomicInt created = new AtomicInt(0);
+    static final int MAX_NAME_LENGTH = 64;
+    static final AtomicInt created = new AtomicInt(0);
 
     String name;
     String? nickname;

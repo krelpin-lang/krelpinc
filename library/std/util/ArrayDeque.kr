@@ -1,8 +1,8 @@
 package std.util;
 
 class ArrayDeque<T> implements Deque<T> {
-    private List<T> front;
-    private List<T> back;
+    private final List<T> front;
+    private final List<T> back;
 
     ArrayDeque() {
         this.front = new ArrayList<>();
@@ -139,7 +139,7 @@ class ArrayDeque<T> implements Deque<T> {
     }
 
     private static final class Values<T> borrows src implements Iterator<T> {
-        private &ArrayDeque<T> deque;
+        private final &ArrayDeque<T> deque;
         private int next;
 
         Values(&ArrayDeque<T> deque) keeps deque {

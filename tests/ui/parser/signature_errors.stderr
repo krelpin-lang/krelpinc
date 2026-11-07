@@ -13,13 +13,13 @@ error: `this` is not a parameter
   = note: `this` is available in constructors and in every method that is not `static`
   = help: remove it, and mark the method `mut` if it changes the object
 
-error: `const` cannot be used on methods
+error: `const` is not a Krelpin modifier
  --> tests/ui/parser/signature_errors.kr:4:5
   |
 4 |     const void constant() {}
   |     ^^^^^
   |
-  = help: `const` is only allowed on fields
+  = help: declare a constant with `static final`
 
 error: multiple visibility modifiers
  --> tests/ui/parser/signature_errors.kr:5:12

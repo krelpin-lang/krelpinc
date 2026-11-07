@@ -146,7 +146,7 @@ fn fields_need_explicit_this() {
         ["to use the field of this object, write `this.count`"]
     );
 
-    let resolved = resolve_str("class A { const int MAX = 1; int f() { return MAX; } }");
+    let resolved = resolve_str("class A { static final int MAX = 1; int f() { return MAX; } }");
     assert_eq!(
         resolved.helps,
         ["to use the field of the class, write `A.MAX`"]
@@ -161,7 +161,7 @@ fn this_is_only_available_with_a_receiver() {
         ["`this` is not available here"]
     );
     assert_eq!(
-        errors("class A { static A instance = this; }"),
+        errors("class A { static final A instance = this; }"),
         ["`this` is not available here"]
     );
 }
@@ -276,7 +276,7 @@ fn generics_and_borrow_sources() {
         ["cannot find parameter `b` to keep"]
     );
     assert_eq!(
-        errors("class Box<T> { static T instance = null; }"),
+        errors("class Box<T> { static final T instance = null; }"),
         ["generic parameter `T` cannot be used here"]
     );
     assert_eq!(

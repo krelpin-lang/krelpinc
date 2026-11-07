@@ -29,6 +29,7 @@ impl Parser<'_> {
     pub(crate) fn parse_field(
         &mut self,
         storage: FieldStorage,
+        final_kw: Option<Span>,
         ty: Ty,
         name: Ident,
     ) -> PResult<Field> {
@@ -41,6 +42,7 @@ impl Parser<'_> {
 
         Ok(Field {
             storage,
+            final_kw,
             ty,
             name,
             init,
@@ -181,11 +183,13 @@ impl Parser<'_> {
 
     fn parse_param(&mut self) -> PResult<Param> {
         let lo = self.token.span;
+        let final_kw = self.eat_keyword_noexpect(kw::Final).then_some(lo);
         let ty = self.parse_ty()?;
         let variadic = self.eat_noexpect(TokenKind::DotDotDot);
         let name = self.parse_ident()?;
 
         Ok(Param {
+            final_kw,
             ty,
             name,
             variadic,

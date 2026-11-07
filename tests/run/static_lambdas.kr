@@ -8,8 +8,8 @@ import std.util.Map;
 
 class Main {
     static final Function<int, int> DOUBLE = x -> x * 2;
-    static Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
-    static Mutex<Map<String, int>> COUNTS = new Mutex<>(new HashMap<>());
+    static final Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
+    static final Mutex<Map<String, int>> COUNTS = new Mutex<>(new HashMap<>());
 
     static void register(Runnable task) keeps task {
         MutexGuard<List<Runnable>> guard = Main.TASKS.lock();

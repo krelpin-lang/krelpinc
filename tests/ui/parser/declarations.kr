@@ -1,7 +1,7 @@
 package shapes;
 
 interface Shape extends Comparable<Shape> {
-    const int MAX_SIDES = 12;
+    static final int MAX_SIDES = 12;
 
     double area();
 
@@ -37,7 +37,7 @@ enum Paint {
     Gradient(String from, String to),
     Clear;
 
-    const String DEFAULT = "#000000";
+    static final String DEFAULT = "#000000";
 
     boolean isClear() {
         return this.ordinal() == 2;
@@ -50,8 +50,8 @@ enum Result<T, E> {
 }
 
 abstract class Polygon implements Shape {
-    static AtomicInt created = new AtomicInt(0);
-    public static AtomicInt drawn = new AtomicInt(0);
+    static final AtomicInt created = new AtomicInt(0);
+    public static final AtomicInt drawn = new AtomicInt(0);
 
     Point[] points;
 

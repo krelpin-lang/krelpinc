@@ -1,33 +1,38 @@
 package std.net;
 
-/**
- * Constants for the readiness a socket is registered for with a
- * {@link Poller}.
- *
- * <p>The constants can be combined with {@code |}:
- *
- * <pre>{@code
- * stream.register(&mut poller, 7, Interest.READABLE | Interest.WRITABLE);
- * }</pre>
- */
-final class Interest {
-    private Interest() {}
+enum Interest {
+    READABLE,
+    WRITABLE,
+    READ_WRITE;
 
-    /**
-     * Reports the socket when a read, {@code tryAccept} or
-     * {@code tryReceive} would not block.
-     */
-    public const int READABLE = 1;
+    boolean readable() {
+        return switch (this) {
+            case READABLE, READ_WRITE -> true;
+            case WRITABLE -> false;
+        };
+    }
 
-    /**
-     * Reports the socket when a write would not block, and when a connection
-     * started with {@link TcpStream#startConnect} has completed or failed.
-     */
-    public const int WRITABLE = 2;
+    boolean writable() {
+        return switch (this) {
+            case WRITABLE, READ_WRITE -> true;
+            case READABLE -> false;
+        };
+    }
 
-    static void check(int interest) {
-        if (interest <= 0 || interest > (Interest.READABLE | Interest.WRITABLE)) {
-            throw new IllegalArgumentException("$interest is not a combination of `Interest` constants");
+    Interest or(Interest other) {
+        return Interest.of(this.readable() || other.readable(), this.writable() || other.writable());
+    }
+
+    static Interest of(boolean readable, boolean writable) {
+        if (readable && writable) {
+            return Interest.READ_WRITE;
         }
+        if (readable) {
+            return Interest.READABLE;
+        }
+        if (writable) {
+            return Interest.WRITABLE;
+        }
+        throw new IllegalArgumentException("an interest must include reading, writing or both");
     }
 }

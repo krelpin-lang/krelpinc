@@ -4,11 +4,11 @@ import std.util.ArrayList;
 import std.util.List;
 
 final class ZoneRules {
-    private List<long> transitions;
-    private List<int> offsets;
-    private List<boolean> daylight;
-    private List<String> names;
-    private Posix? tail;
+    private final List<long> transitions;
+    private final List<int> offsets;
+    private final List<boolean> daylight;
+    private final List<String> names;
+    private final Posix? tail;
 
     private ZoneRules(List<long> transitions, List<int> offsets, List<boolean> daylight, List<String> names, Posix? tail) {
         this.transitions = transitions;
@@ -354,7 +354,7 @@ final class ZoneRules {
     }
 
     private static final class PosixReader {
-        private &String source;
+        private final &String source;
         private int position;
 
         PosixReader(&String source) keeps source {

@@ -49,13 +49,13 @@ error: interfaces cannot implement other interfaces
    |
    = help: use `extends` to inherit from other interfaces
 
-error: interfaces can only have `const` fields
+error: interfaces can only have `static final` fields
   --> tests/ui/parser/declaration_errors.kr:12:12
    |
 12 |     String name;
    |            ^^^^
    |
-   = help: make the field `const`, or move it to a class
+   = help: make the field `static final`, or move it to a class
 
 error: interfaces cannot have constructors
   --> tests/ui/parser/declaration_errors.kr:13:5

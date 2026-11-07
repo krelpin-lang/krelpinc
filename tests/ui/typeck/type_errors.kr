@@ -1,5 +1,5 @@
 class Wallet {
-    static int count = 0;
+    static final int count = 0;
     long cents;
     String? note;
 

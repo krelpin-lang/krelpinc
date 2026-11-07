@@ -10,22 +10,24 @@
 6:1: Ident("class")
 6:7: Ident("Person")
 6:14: OpenBrace
-7:5: Ident("const")
-7:11: Ident("int")
-7:15: Ident("MAX_NAME_LENGTH")
-7:31: Eq
-7:33: Literal(Lit { kind: Integer, symbol: "64", suffix: None })
-7:35: Semi
+7:5: Ident("static")
+7:12: Ident("final")
+7:18: Ident("int")
+7:22: Ident("MAX_NAME_LENGTH")
+7:38: Eq
+7:40: Literal(Lit { kind: Integer, symbol: "64", suffix: None })
+7:42: Semi
 8:5: Ident("static")
-8:12: Ident("AtomicInt")
-8:22: Ident("created")
-8:30: Eq
-8:32: Ident("new")
-8:36: Ident("AtomicInt")
-8:45: OpenParen
-8:46: Literal(Lit { kind: Integer, symbol: "0", suffix: None })
-8:47: CloseParen
-8:48: Semi
+8:12: Ident("final")
+8:18: Ident("AtomicInt")
+8:28: Ident("created")
+8:36: Eq
+8:38: Ident("new")
+8:42: Ident("AtomicInt")
+8:51: OpenParen
+8:52: Literal(Lit { kind: Integer, symbol: "0", suffix: None })
+8:53: CloseParen
+8:54: Semi
 10:5: Ident("String")
 10:12: Ident("name")
 10:16: Semi

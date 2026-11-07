@@ -8,7 +8,7 @@ package std.task;
  * being polled.
  */
 final class Context {
-    private Waker waker;
+    private final Waker waker;
 
     /**
      * Constructs a context for polling a task.

@@ -25,10 +25,10 @@ package std.primitive;
  */
 final class Float implements Comparable<float>, Hashable<float>, Cloneable<float> {
     /** The smallest positive value of a {@code float}. */
-    public const float MIN_VALUE = 1.4e-45f;
+    public static final float MIN_VALUE = 1.4e-45f;
 
     /** The largest finite value of a {@code float}. */
-    public const float MAX_VALUE = 3.4028235e38f;
+    public static final float MAX_VALUE = 3.4028235e38f;
 
     private Float() {}
 

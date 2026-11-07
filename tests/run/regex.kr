@@ -23,7 +23,11 @@ class Main {
         Console.println(Pattern.compile("a+?").matcher("aaa").results());
         Console.println(Pattern.compile("a+").matcher("caaat").results());
         Console.println(Pattern.compile("(?i)hello").matcher("Say HeLLo").find());
-        Console.println(Pattern.compile("^\\w+$", Pattern.MULTILINE).matcher("one\ntwo\nthree").results());
+        Console.println(Pattern.compile("^\\w+$", Pattern.Flag.MULTILINE).matcher("one\ntwo\nthree").results());
+        Pattern loose = Pattern.compile("a.c$", Pattern.Flag.CASE_INSENSITIVE, Pattern.Flag.DOTALL, Pattern.Flag.MULTILINE);
+        Console.println(loose.matcher("xA\nC\nb").find());
+        Console.println(loose.flags());
+        Console.println(Pattern.compile("(?s)x").flags());
         Console.println(Pattern.compile("\\bcat\\b").matcher("cat concat cat.").results());
         Console.println(Pattern.compile("(a|ab)(c|bcd)(d*)").matcher("abcd").matches());
         Console.println(Pattern.compile("(x+x+)+y").matcher("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").find());

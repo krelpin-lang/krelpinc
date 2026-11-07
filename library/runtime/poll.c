@@ -28,12 +28,6 @@
 #include <sys/time.h>
 #endif
 
-/* The interest bits `std.net.Interest` defines. */
-enum {
-    INTEREST_READABLE = 1,
-    INTEREST_WRITABLE = 2,
-};
-
 /* The readiness bits `Poller.poll` decodes into an `Event`. */
 enum {
     READY_READABLE = 1,
@@ -119,13 +113,13 @@ bool kr_poller_create(void **slot) {
     return adopt(slot, epoll_create1(EPOLL_CLOEXEC));
 }
 
-bool kr_net_register(void **slot, void *poller, int32_t token, int32_t interest, bool again) {
+bool kr_net_register(void **slot, void *poller, int32_t token, bool readable, bool writable, bool again) {
     struct epoll_event event;
     memset(&event, 0, sizeof event);
-    if (interest & INTEREST_READABLE) {
+    if (readable) {
         event.events |= EPOLLIN | EPOLLRDHUP;
     }
-    if (interest & INTEREST_WRITABLE) {
+    if (writable) {
         event.events |= EPOLLOUT;
     }
     event.data.u64 = (uint32_t)token;
@@ -183,15 +177,15 @@ bool kr_poller_create(void **slot) {
     return adopt(slot, kqueue());
 }
 
-/* Adds the filters in `interest` and deletes the others. With EV_RECEIPT
+/* Adds the filters asked for and deletes the others. With EV_RECEIPT
  * every change reports its own result, so deleting a filter that was never
  * added (ENOENT) doesn't hide a real failure. */
-static bool change(void *poller, int fd, int32_t token, int32_t interest, bool removing) {
+static bool change(void *poller, int fd, int32_t token, bool readable, bool writable, bool removing) {
     struct kevent changes[2];
     struct kevent results[2];
     void *udata = (void *)(intptr_t)token;
-    bool read = !removing && (interest & INTEREST_READABLE);
-    bool write = !removing && (interest & INTEREST_WRITABLE);
+    bool read = !removing && readable;
+    bool write = !removing && writable;
     EV_SET(&changes[0], fd, EVFILT_READ, (read ? EV_ADD : EV_DELETE) | EV_RECEIPT, 0, 0, udata);
     EV_SET(&changes[1], fd, EVFILT_WRITE, (write ? EV_ADD : EV_DELETE) | EV_RECEIPT, 0, 0, udata);
     int got;
@@ -222,13 +216,13 @@ static bool change(void *poller, int fd, int32_t token, int32_t interest, bool r
     return true;
 }
 
-bool kr_net_register(void **slot, void *poller, int32_t token, int32_t interest, bool again) {
+bool kr_net_register(void **slot, void *poller, int32_t token, bool readable, bool writable, bool again) {
     (void)again;
-    return change(poller, kr_net_fd(*slot), token, interest, false);
+    return change(poller, kr_net_fd(*slot), token, readable, writable, false);
 }
 
 bool kr_net_deregister(void **slot, void *poller) {
-    return change(poller, kr_net_fd(*slot), 0, 0, true);
+    return change(poller, kr_net_fd(*slot), 0, false, false, true);
 }
 
 int32_t kr_poller_poll(void **slot, int64_t millis) {
@@ -280,8 +274,8 @@ bool kr_poller_create(void **slot) {
     return kr_io_fail(ENOSYS);
 }
 
-bool kr_net_register(void **slot, void *poller, int32_t token, int32_t interest, bool again) {
-    (void)slot, (void)poller, (void)token, (void)interest, (void)again;
+bool kr_net_register(void **slot, void *poller, int32_t token, bool readable, bool writable, bool again) {
+    (void)slot, (void)poller, (void)token, (void)readable, (void)writable, (void)again;
     return kr_io_fail(ENOSYS);
 }
 

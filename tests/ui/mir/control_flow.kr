@@ -6,7 +6,7 @@ import std.function.Supplier;
 record Pair(Object first, Object second) {}
 
 class Counter {
-    static int created = 0;
+    static final int created = 0;
     int count;
     int[] slots;
 

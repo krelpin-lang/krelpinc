@@ -1,11 +1,11 @@
 package std.util;
 
 class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
-    private List<K> keys;
-    private List<V> vals;
-    private List<int> left;
-    private List<int> right;
-    private List<int> heights;
+    private final List<K> keys;
+    private final List<V> vals;
+    private final List<int> left;
+    private final List<int> right;
+    private final List<int> heights;
     private int root;
 
     TreeMap() {
@@ -357,7 +357,7 @@ class TreeMap<K extends Comparable<K>, V> implements Map<K, V> {
     }
 
     private static final class Keys<K extends Comparable<K>> borrows src implements Set<&K> {
-        private List<&K> ordered;
+        private final List<&K> ordered;
 
         Keys(List<&K> ordered) keeps ordered {
             this.ordered = ordered;

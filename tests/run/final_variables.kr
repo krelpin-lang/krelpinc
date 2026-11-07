@@ -1,0 +1,68 @@
+import std.util.List;
+
+class Point {
+    final int x;
+    public final String? label;
+
+    Point(int x, boolean named) {
+        this.x = x;
+        if (named) {
+            this.label = "p" + x;
+        } else {
+            this.label = null;
+        }
+    }
+
+    Point(int x) {
+        this(x, false);
+    }
+
+    Point(String text) throws IllegalArgumentException {
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("empty");
+        }
+        this.x = text.length();
+        this.label = text;
+    }
+
+    int x() { return this.x; }
+}
+
+class Main {
+    static int pick(final int n) {
+        final int r;
+        switch (n) {
+            case 0 -> r = 10;
+            case 1 -> r = 20;
+            default -> r = 30;
+        }
+        final int s;
+        if (n > 0) {
+            s = 1;
+        } else {
+            s = 2;
+        }
+        final int t;
+        try {
+            t = n * 2;
+        } catch (final Exception e) {
+            return -1;
+        }
+        return r + s + t;
+    }
+
+    static void main() {
+        for (final String w : List.of("a", "b")) {
+            Console.println(w);
+        }
+        while (true) {
+            final int k = 1;
+            Console.println(k);
+            break;
+        }
+        Console.println(pick(0) + " " + pick(1) + " " + pick(5));
+        Point p = new Point(4, true);
+        Console.println(p.x() + " " + p.label);
+        Console.println(new Point(7).x() + " " + new Point("abc").label);
+    }
+}

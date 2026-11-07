@@ -16,10 +16,10 @@ package std.lang;
  */
 final class Math {
     /** The ratio of a circle's circumference to its diameter. */
-    public const double PI = 3.141592653589793;
+    public static final double PI = 3.141592653589793;
 
     /** The base of the natural logarithm. */
-    public const double E = 2.718281828459045;
+    public static final double E = 2.718281828459045;
 
     private Math() {}
 

@@ -16,8 +16,8 @@ enum Category {
 }
 
 class Item implements Priced {
-    static AtomicInt created = new AtomicInt(0);
-    const int MAX_NAME = 32;
+    static final AtomicInt created = new AtomicInt(0);
+    static final int MAX_NAME = 32;
 
     String name;
     Category category;

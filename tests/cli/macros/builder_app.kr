@@ -10,7 +10,7 @@ class User {
     private int age;
     @Default(false)
     private boolean admin;
-    private static int created = 0;
+    private static final int created = 0;
 
     @Trace
     String describe() {

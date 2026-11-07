@@ -9,7 +9,7 @@ import std.util.List;
 
 // A waker that counts how often it is woken.
 class CountingWaker implements Waker {
-    public static AtomicInt WOKEN = new AtomicInt(0);
+    public static final AtomicInt WOKEN = new AtomicInt(0);
 
     CountingWaker() {}
 

@@ -19,4 +19,4 @@ nothing ready: 0
 sent at once: true
 token 9 readable: true
 got ping from the sender: true
-0 is not a combination of `Interest` constants
+an interest must include reading, writing or both

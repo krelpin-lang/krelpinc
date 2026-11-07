@@ -30,16 +30,16 @@ import std.util.List;
  * @see Member
  */
 final class Item {
-    private TokenStream docs;
-    private List<Attribute> attributes;
-    private TokenStream head;
-    private ItemKind kind;
-    private Token name;
-    private Token open;
+    private final TokenStream docs;
+    private final List<Attribute> attributes;
+    private final TokenStream head;
+    private final ItemKind kind;
+    private final Token name;
+    private final Token open;
     private TokenStream constants;
     private List<Member> members;
-    private List<Member> components;
-    private Token close;
+    private final List<Member> components;
+    private final Token close;
 
     private Item(TokenStream docs, List<Attribute> attributes, TokenStream head, ItemKind kind,
             Token name, Token open, Token close) {

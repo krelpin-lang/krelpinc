@@ -1,0 +1,148 @@
+error: `final` field `x` might already have been assigned
+  --> tests/ui/typeck/final_assignment.kr:11:18
+   |
+ 4 |     final int x;
+   |               - `x` is declared `final` here
+...
+11 |             this.x = 2;
+   |                  ^
+   |
+   = note: a `final` field is assigned exactly once
+
+error: cannot assign twice to `final` field `y`
+  --> tests/ui/typeck/final_assignment.kr:13:14
+   |
+ 6 |     final int y = 3;
+   |               - `y` is given its value here
+...
+13 |         this.y = 4;
+   |              ^
+   |
+   = help: remove `final` from `y` to change it
+
+error: this constructor doesn't always give `final` field `label` a value
+ --> tests/ui/typeck/final_assignment.kr:8:5
+  |
+5 |     final String? label;
+  |                   ----- `label` is declared `final` here
+...
+8 |     Point(int x, boolean twice) {
+  |     ^^^^^
+  |
+  = help: assign `this.label = ...` on every path through the constructor
+
+error: this constructor doesn't always give `final` field `label` a value
+  --> tests/ui/typeck/final_assignment.kr:19:13
+   |
+ 5 |     final String? label;
+   |                   ----- `label` is declared `final` here
+...
+19 |             return;
+   |             ^^^^^^^
+   |
+   = help: assign `this.label = ...` on every path through the constructor
+
+error: cannot assign twice to `final` variable `x`
+  --> tests/ui/typeck/final_assignment.kr:21:9
+   |
+16 |     Point(final int x) {
+   |                     - `x` is given its value here
+...
+21 |         x = 3;
+   |         ^
+   |
+   = help: remove `final` from `x` to change it
+
+error: this constructor doesn't always give `final` field `x` a value
+  --> tests/ui/typeck/final_assignment.kr:16:5
+   |
+ 4 |     final int x;
+   |               - `x` is declared `final` here
+...
+16 |     Point(final int x) {
+   |     ^^^^^
+   |
+   = help: assign `this.x = ...` on every path through the constructor
+
+error: `final` field `x` is already given its value by `this(...)`
+  --> tests/ui/typeck/final_assignment.kr:26:14
+   |
+ 4 |     final int x;
+   |               - `x` is declared `final` here
+...
+26 |         this.x = 9;
+   |              ^
+   |
+   = note: the constructor called with `this(...)` assigns every field
+
+error: `final` field `count` is never given a value
+  --> tests/ui/typeck/final_assignment.kr:31:15
+   |
+31 |     final int count;
+   |               ^^^^^ a `final` field is assigned exactly once
+   |
+   = help: give it an initial value or assign it in a constructor
+
+error: cannot assign twice to `final` variable `a`
+  --> tests/ui/typeck/final_assignment.kr:37:9
+   |
+36 |         final int a = 1;
+   |                   - `a` is given its value here
+37 |         a = 2;
+   |         ^
+   |
+   = help: remove `final` from `a` to change it
+
+error: `final` variable `b` might already have been assigned
+  --> tests/ui/typeck/final_assignment.kr:42:9
+   |
+38 |         final int b;
+   |                   - `b` is declared `final` here
+...
+42 |         b = 2;
+   |         ^
+   |
+   = note: a `final` variable is assigned exactly once
+
+error: `final` variable `c` might be assigned in a loop
+  --> tests/ui/typeck/final_assignment.kr:45:13
+   |
+43 |         final int c;
+   |                   - `c` is declared `final` here
+...
+45 |             c = 1;
+   |             ^
+   |
+   = note: a `final` variable is assigned exactly once
+
+error: cannot assign twice to `final` variable `i`
+  --> tests/ui/typeck/final_assignment.kr:47:38
+   |
+47 |         for (final int i = 0; i < 3; i++) {
+   |                        - `i` is given its value here
+   |                                      ^
+   |
+   = help: remove `final` from `i` to change it
+
+error: cannot assign twice to `final` variable `s`
+  --> tests/ui/typeck/final_assignment.kr:50:13
+   |
+49 |         for (final String s : List.of("a")) {
+   |                           - `s` is given its value here
+50 |             s = "b";
+   |             ^
+   |
+   = help: remove `final` from `s` to change it
+
+error: cannot assign to `final` variable `d` inside a lambda
+  --> tests/ui/typeck/final_assignment.kr:53:30
+   |
+52 |         final int d;
+   |                   - `d` is declared `final` here
+53 |         Runnable r = () -> { d = 1; };
+   |                              ^
+   |
+   = note: a lambda can run any number of times, after the code around it
+
+error: aborting due to 14 previous errors
+

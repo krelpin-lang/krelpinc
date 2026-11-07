@@ -4,83 +4,47 @@ import std.util.ArrayList;
 import std.util.List;
 
 final class Pattern {
-    public const int CASE_INSENSITIVE = 2;
-    public const int MULTILINE = 8;
-    public const int DOTALL = 32;
-
-    private const int CHAR = 0;
-    private const int ANY = 1;
-    private const int CLASS = 2;
-    private const int SPLIT = 3;
-    private const int JUMP = 4;
-    private const int SAVE = 5;
-    private const int MATCH = 6;
-    private const int LINE_START = 7;
-    private const int LINE_END = 8;
-    private const int WORD_EDGE = 9;
-    private const int NOT_WORD_EDGE = 10;
-    private const int TEXT_START = 11;
-    private const int TEXT_END = 12;
-
-    private const int N_CHAR = 0;
-    private const int N_ANY = 1;
-    private const int N_CLASS = 2;
-    private const int N_ASSERT = 3;
-    private const int N_GROUP = 4;
-    private const int N_CONCAT = 5;
-    private const int N_ALTERNATE = 6;
-    private const int N_REPEAT = 7;
-
-    private String source;
-    private int flags;
-    private char[] text;
+    private final String source;
+    private boolean caseInsensitive;
+    private boolean multiline;
+    private boolean dotAll;
+    private final char[] text;
     private int at;
     private int groups;
-    private List<String> names;
-    private List<int> nameGroups;
-    private List<CharClass> classes;
-    private List<int> kinds;
-    private List<int> firsts;
-    private List<int> seconds;
-    private List<int> thirds;
-    private List<List<int>> children;
-    private List<int> ops;
-    private List<int> targets;
-    private List<int> others;
+    private final List<String> names;
+    private final List<int> nameGroups;
+    private final List<CharClass> classes;
+    private final List<Node> nodes;
+    private final List<Inst> program;
 
-    private Pattern(String regex, int flags) {
+    private Pattern(String regex, &Flag[] flags) {
         this.text = regex.chars();
         this.source = regex;
-        this.flags = flags;
+        this.caseInsensitive = false;
+        this.multiline = false;
+        this.dotAll = false;
+        for (int index = 0; index < flags.length; index++) {
+            this.enable(flags[index]);
+        }
         this.at = 0;
         this.groups = 0;
         this.names = new ArrayList<>();
         this.nameGroups = new ArrayList<>();
         this.classes = new ArrayList<>();
-        this.kinds = new ArrayList<>();
-        this.firsts = new ArrayList<>();
-        this.seconds = new ArrayList<>();
-        this.thirds = new ArrayList<>();
-        this.children = new ArrayList<>();
-        this.ops = new ArrayList<>();
-        this.targets = new ArrayList<>();
-        this.others = new ArrayList<>();
+        this.nodes = new ArrayList<>();
+        this.program = new ArrayList<>();
         int root = this.parseAlternation();
         if (this.at < this.text.length) {
             throw this.error("unmatched closing ')'");
         }
-        this.emit(Pattern.SAVE, 0, 0);
+        this.program.add(Inst.Save(0));
         this.emitNode(root);
-        this.emit(Pattern.SAVE, 1, 0);
-        this.emit(Pattern.MATCH, 0, 0);
+        this.program.add(Inst.Save(1));
+        this.program.add(Inst.Match);
     }
 
-    static Pattern compile(String regex) {
-        return new Pattern(regex, 0);
-    }
-
-    static Pattern compile(String regex, int flags) {
-        return new Pattern(regex, flags);
+    static Pattern compile(String regex, Flag... flags) {
+        return new Pattern(regex, &flags);
     }
 
     static boolean matches(String regex, &String input) {
@@ -104,8 +68,18 @@ final class Pattern {
         return this.source;
     }
 
-    int flags() {
-        return this.flags;
+    List<Flag> flags() {
+        List<Flag> enabled = new ArrayList<>();
+        if (this.caseInsensitive) {
+            enabled.add(Flag.CASE_INSENSITIVE);
+        }
+        if (this.multiline) {
+            enabled.add(Flag.MULTILINE);
+        }
+        if (this.dotAll) {
+            enabled.add(Flag.DOTALL);
+        }
+        return enabled;
     }
 
     Matcher matcher(&String input) borrows this {
@@ -140,8 +114,12 @@ final class Pattern {
         return this.source;
     }
 
-    private boolean has(int flag) {
-        return (this.flags & flag) != 0;
+    private mut void enable(Flag flag) {
+        switch (flag) {
+            case CASE_INSENSITIVE -> this.caseInsensitive = true;
+            case MULTILINE -> this.multiline = true;
+            case DOTALL -> this.dotAll = true;
+        }
     }
 
     private PatternSyntaxException error(String description) {
@@ -163,18 +141,9 @@ final class Pattern {
         }
         return false;
     }
-
-    private mut int node(int kind, int first, int second, int third, List<int> kids) {
-        this.kinds.add(kind);
-        this.firsts.add(first);
-        this.seconds.add(second);
-        this.thirds.add(third);
-        this.children.add(kids);
-        return this.kinds.size() - 1;
-    }
-
-    private mut int leaf(int kind, int first) {
-        return this.node(kind, first, 0, 0, new ArrayList<>());
+    private mut int add(Node node) {
+        this.nodes.add(node);
+        return this.nodes.size() - 1;
     }
 
     private mut int parseAlternation() {
@@ -186,7 +155,7 @@ final class Pattern {
         if (branches.size() == 1) {
             return branches.get(0);
         }
-        return this.node(Pattern.N_ALTERNATE, 0, 0, 0, branches);
+        return this.add(Node.Alternate(branches));
     }
 
     private mut int parseConcat() {
@@ -197,7 +166,7 @@ final class Pattern {
                 items.add(item);
             }
         }
-        return this.node(Pattern.N_CONCAT, 0, 0, 0, items);
+        return this.add(Node.Concat(items));
     }
 
     private mut int parseRepeat() {
@@ -241,9 +210,7 @@ final class Pattern {
             if (this.more() && this.peek() == '+') {
                 throw this.error("possessive quantifiers are not supported");
             }
-            List<int> kids = new ArrayList<>();
-            kids.add(atom);
-            return this.node(Pattern.N_REPEAT, min, max, lazy ? 1 : 0, kids);
+            return this.add(Node.Repeat(atom, min, max, lazy));
         }
         return atom;
     }
@@ -269,19 +236,19 @@ final class Pattern {
         }
         if (c == '[') {
             this.at++;
-            return this.leaf(Pattern.N_CLASS, this.parseClass());
+            return this.add(Node.CharSet(this.parseClass()));
         }
         if (c == '.') {
             this.at++;
-            return this.leaf(Pattern.N_ANY, 0);
+            return this.add(Node.Any);
         }
         if (c == '^') {
             this.at++;
-            return this.leaf(Pattern.N_ASSERT, Pattern.LINE_START);
+            return this.add(Node.Anchor(Assertion.LINE_START));
         }
         if (c == '$') {
             this.at++;
-            return this.leaf(Pattern.N_ASSERT, Pattern.LINE_END);
+            return this.add(Node.Anchor(Assertion.LINE_END));
         }
         if (c == '\\') {
             this.at++;
@@ -291,7 +258,7 @@ final class Pattern {
             throw this.error("dangling meta character '$c'");
         }
         this.at++;
-        return this.leaf(Pattern.N_CHAR, (int) c);
+        return this.add(Node.Literal(c));
     }
 
     private mut int parseGroup() {
@@ -320,11 +287,11 @@ final class Pattern {
                 while (this.more() && this.peek() != ')' && this.peek() != ':') {
                     char flag = this.peek();
                     if (flag == 'i') {
-                        this.flags = this.flags | Pattern.CASE_INSENSITIVE;
+                        this.caseInsensitive = true;
                     } else if (flag == 's') {
-                        this.flags = this.flags | Pattern.DOTALL;
+                        this.dotAll = true;
                     } else if (flag == 'm') {
-                        this.flags = this.flags | Pattern.MULTILINE;
+                        this.multiline = true;
                     } else {
                         throw this.error("unknown inline flag '$flag'");
                     }
@@ -345,9 +312,7 @@ final class Pattern {
         if (!this.accept(')')) {
             throw this.error("unclosed group");
         }
-        List<int> kids = new ArrayList<>();
-        kids.add(inner);
-        return this.node(Pattern.N_GROUP, group, 0, 0, kids);
+        return this.add(Node.Group(group, inner));
     }
 
     private mut int parseEscape() {
@@ -357,27 +322,27 @@ final class Pattern {
         char c = this.peek();
         this.at++;
         if (c == 'b') {
-            return this.leaf(Pattern.N_ASSERT, Pattern.WORD_EDGE);
+            return this.add(Node.Anchor(Assertion.WORD_EDGE));
         }
         if (c == 'B') {
-            return this.leaf(Pattern.N_ASSERT, Pattern.NOT_WORD_EDGE);
+            return this.add(Node.Anchor(Assertion.NOT_WORD_EDGE));
         }
         if (c == 'A') {
-            return this.leaf(Pattern.N_ASSERT, Pattern.TEXT_START);
+            return this.add(Node.Anchor(Assertion.TEXT_START));
         }
         if (c == 'z' || c == 'Z') {
-            return this.leaf(Pattern.N_ASSERT, Pattern.TEXT_END);
+            return this.add(Node.Anchor(Assertion.TEXT_END));
         }
         if ("dDwWsS".contains(c)) {
             CharClass set = new CharClass();
             Pattern.addShorthand(&mut set, c);
             this.classes.add(set);
-            return this.leaf(Pattern.N_CLASS, this.classes.size() - 1);
+            return this.add(Node.CharSet(this.classes.size() - 1));
         }
         if (c.isDigit()) {
             throw this.error("back references are not supported");
         }
-        return this.leaf(Pattern.N_CHAR, this.escapedChar(c));
+        return this.add(Node.Literal((char) this.escapedChar(c)));
     }
 
     private mut int escapedChar(char c) {
@@ -494,91 +459,75 @@ final class Pattern {
         return this.classes.size() - 1;
     }
 
-    private mut int emit(int op, int target, int other) {
-        this.ops.add(op);
-        this.targets.add(target);
-        this.others.add(other);
-        return this.ops.size() - 1;
-    }
-
-    private mut void emitNode(int node) {
-        int kind = this.kinds.get(node);
-        int first = this.firsts.get(node);
-        if (kind == Pattern.N_CHAR) {
-            int code = first;
-            if (this.has(Pattern.CASE_INSENSITIVE)) {
-                code = (int) ((char) code).toLowerCase();
-            }
-            this.emit(Pattern.CHAR, code, 0);
-        } else if (kind == Pattern.N_ANY) {
-            this.emit(Pattern.ANY, 0, 0);
-        } else if (kind == Pattern.N_CLASS) {
-            this.emit(Pattern.CLASS, first, 0);
-        } else if (kind == Pattern.N_ASSERT) {
-            this.emit(first, 0, 0);
-        } else if (kind == Pattern.N_GROUP) {
-            if (first >= 0) {
-                this.emit(Pattern.SAVE, 2 * first, 0);
-            }
-            this.emitNode(this.children.get(node).get(0));
-            if (first >= 0) {
-                this.emit(Pattern.SAVE, 2 * first + 1, 0);
-            }
-        } else if (kind == Pattern.N_CONCAT) {
-            int count = this.children.get(node).size();
-            for (int index = 0; index < count; index++) {
-                this.emitNode(this.children.get(node).get(index));
-            }
-        } else if (kind == Pattern.N_ALTERNATE) {
-            int count = this.children.get(node).size();
-            List<int> jumps = new ArrayList<>();
-            for (int index = 0; index < count; index++) {
-                int branch = this.children.get(node).get(index);
-                if (index == count - 1) {
-                    this.emitNode(branch);
-                } else {
-                    int split = this.emit(Pattern.SPLIT, this.ops.size() + 1, 0);
-                    this.emitNode(branch);
-                    jumps.add(this.emit(Pattern.JUMP, 0, 0));
-                    this.others.set(split, this.ops.size());
+    private mut void emitNode(int index) {
+        Node node = this.nodes.get(index).clone();
+        switch (node) {
+            case Literal(char c) -> this.program.add(Inst.Char(this.caseInsensitive ? c.toLowerCase() : c));
+            case Any -> this.program.add(Inst.Any);
+            case CharSet(int set) -> this.program.add(Inst.CharSet(set));
+            case Anchor(Assertion kind) -> this.program.add(Inst.Check(kind));
+            case Group(int group, int inner) -> {
+                if (group >= 0) {
+                    this.program.add(Inst.Save(2 * group));
+                }
+                this.emitNode(inner);
+                if (group >= 0) {
+                    this.program.add(Inst.Save(2 * group + 1));
                 }
             }
-            for (&int jump : jumps) {
-                this.targets.set(jump, this.ops.size());
+            case Concat(List<int> items) -> {
+                for (int item : items) {
+                    this.emitNode(item);
+                }
             }
-        } else {
-            this.emitRepeat(node);
+            case Alternate(List<int> branches) -> this.emitAlternation(&branches);
+            case Repeat(int body, int min, int max, boolean lazy) -> this.emitRepeat(body, min, max, lazy);
         }
     }
 
-    private mut void emitRepeat(int node) {
-        int min = this.firsts.get(node);
-        int max = this.seconds.get(node);
-        boolean lazy = this.thirds.get(node) == 1;
-        int body = this.children.get(node).get(0);
+    private mut void emitAlternation(&List<int> branches) {
+        List<int> jumps = new ArrayList<>();
+        int last = branches.size() - 1;
+        for (int index = 0; index < last; index++) {
+            int split = this.placeholder();
+            this.emitNode(branches.get(index));
+            jumps.add(this.placeholder());
+            this.program.set(split, Inst.Split(split + 1, this.program.size()));
+        }
+        this.emitNode(branches.get(last));
+        for (int jump : jumps) {
+            this.program.set(jump, Inst.Jump(this.program.size()));
+        }
+    }
+
+    private mut void emitRepeat(int body, int min, int max, boolean lazy) {
         for (int index = 0; index < min; index++) {
             this.emitNode(body);
         }
         if (max < 0) {
-            int split = this.emit(Pattern.SPLIT, 0, 0);
+            int split = this.placeholder();
             this.emitNode(body);
-            this.emit(Pattern.JUMP, split, 0);
-            this.branch(split, split + 1, this.ops.size(), lazy);
+            this.program.add(Inst.Jump(split));
+            this.program.set(split, Pattern.branch(split + 1, this.program.size(), lazy));
             return;
         }
         List<int> splits = new ArrayList<>();
         for (int index = min; index < max; index++) {
-            splits.add(this.emit(Pattern.SPLIT, 0, 0));
+            splits.add(this.placeholder());
             this.emitNode(body);
         }
-        for (&int split : splits) {
-            this.branch(split, split + 1, this.ops.size(), lazy);
+        for (int split : splits) {
+            this.program.set(split, Pattern.branch(split + 1, this.program.size(), lazy));
         }
     }
 
-    private mut void branch(int split, int body, int exit, boolean lazy) {
-        this.targets.set(split, lazy ? exit : body);
-        this.others.set(split, lazy ? body : exit);
+    private mut int placeholder() {
+        this.program.add(Inst.Match);
+        return this.program.size() - 1;
+    }
+
+    private static Inst branch(int body, int exit, boolean lazy) {
+        return lazy ? Inst.Split(exit, body) : Inst.Split(body, exit);
     }
 
     private int[]? run(&char[] input, int start, boolean wholeInput, &mut boolean[] visited) {
@@ -599,86 +548,74 @@ final class Pattern {
             }
             int pc = first;
             int at = second;
-            while (true) {
+            boolean alive = true;
+            while (alive) {
                 int seen = pc * (length + 1) + at;
                 if (visited[seen]) {
                     break;
                 }
                 visited[seen] = true;
-                int op = this.ops.get(pc);
-                if (op == Pattern.CHAR) {
-                    if (at >= length || !this.same(input[at], this.targets.get(pc))) {
-                        break;
+                switch (this.program.get(pc)) {
+                    case Char(char expected) -> {
+                        alive = at < length && this.same(input[at], expected);
+                        pc++;
+                        at++;
                     }
-                    pc++;
-                    at++;
-                } else if (op == Pattern.ANY) {
-                    if (at >= length || (input[at] == '\n' && !this.has(Pattern.DOTALL))) {
-                        break;
+                    case Any -> {
+                        alive = at < length && (input[at] != '\n' || this.dotAll);
+                        pc++;
+                        at++;
                     }
-                    pc++;
-                    at++;
-                } else if (op == Pattern.CLASS) {
-                    if (at >= length || !this.classes.get(this.targets.get(pc)).matches(input[at], this.has(Pattern.CASE_INSENSITIVE))) {
-                        break;
+                    case CharSet(int set) -> {
+                        alive = at < length && this.classes.get(set).matches(input[at], this.caseInsensitive);
+                        pc++;
+                        at++;
                     }
-                    pc++;
-                    at++;
-                } else if (op == Pattern.SPLIT) {
-                    stack.add(this.others.get(pc));
-                    stack.add(at);
-                    pc = this.targets.get(pc);
-                } else if (op == Pattern.JUMP) {
-                    pc = this.targets.get(pc);
-                } else if (op == Pattern.SAVE) {
-                    int slot = this.targets.get(pc);
-                    stack.add(-slot - 1);
-                    stack.add(slots[slot]);
-                    slots[slot] = at;
-                    pc++;
-                } else if (op == Pattern.MATCH) {
-                    if (wholeInput && at != length) {
-                        break;
+                    case Split(int preferred, int alternative) -> {
+                        stack.add(alternative);
+                        stack.add(at);
+                        pc = preferred;
                     }
-                    return slots;
-                } else if (op == Pattern.LINE_START) {
-                    if (!(at == 0 || (this.has(Pattern.MULTILINE) && input[at - 1] == '\n'))) {
-                        break;
+                    case Jump(int target) -> pc = target;
+                    case Save(int slot) -> {
+                        stack.add(-slot - 1);
+                        stack.add(slots[slot]);
+                        slots[slot] = at;
+                        pc++;
                     }
-                    pc++;
-                } else if (op == Pattern.LINE_END) {
-                    if (!(at == length || (this.has(Pattern.MULTILINE) && input[at] == '\n'))) {
-                        break;
+                    case Check(Assertion kind) -> {
+                        alive = this.holds(kind, input, at);
+                        pc++;
                     }
-                    pc++;
-                } else if (op == Pattern.TEXT_START) {
-                    if (at != 0) {
-                        break;
+                    case Match -> {
+                        if (!wholeInput || at == length) {
+                            return slots;
+                        }
+                        alive = false;
                     }
-                    pc++;
-                } else if (op == Pattern.TEXT_END) {
-                    if (at != length) {
-                        break;
-                    }
-                    pc++;
-                } else {
-                    boolean before = at > 0 && Pattern.isWord(input[at - 1]);
-                    boolean after = at < length && Pattern.isWord(input[at]);
-                    if ((before != after) != (op == Pattern.WORD_EDGE)) {
-                        break;
-                    }
-                    pc++;
                 }
             }
         }
         return null;
     }
 
-    private boolean same(char c, int expected) {
-        if ((int) c == expected) {
-            return true;
-        }
-        return this.has(Pattern.CASE_INSENSITIVE) && (int) c.toLowerCase() == expected;
+    private boolean holds(Assertion kind, &char[] input, int at) {
+        int length = input.length;
+        return switch (kind) {
+            case LINE_START -> at == 0 || (this.multiline && input[at - 1] == '\n');
+            case LINE_END -> at == length || (this.multiline && input[at] == '\n');
+            case TEXT_START -> at == 0;
+            case TEXT_END -> at == length;
+            case WORD_EDGE, NOT_WORD_EDGE -> {
+                boolean before = at > 0 && Pattern.isWord(input[at - 1]);
+                boolean after = at < length && Pattern.isWord(input[at]);
+                yield (before != after) == (kind == Assertion.WORD_EDGE);
+            }
+        };
+    }
+
+    private boolean same(char c, char expected) {
+        return c == expected || (this.caseInsensitive && c.toLowerCase() == expected);
     }
 
     private static boolean isWord(char c) {
@@ -695,9 +632,9 @@ final class Pattern {
     }
 
     static final class Matcher borrows src {
-        private &Pattern pattern;
-        private String input;
-        private char[] chars;
+        private final &Pattern pattern;
+        private final String input;
+        private final char[] chars;
         private int[] slots;
         private boolean matched;
         private int next;
@@ -820,7 +757,7 @@ final class Pattern {
 
         private mut boolean attempt(int from, boolean whole, boolean scan) {
             int length = this.chars.length;
-            boolean[] visited = new boolean[this.pattern.ops.size() * (length + 1)];
+            boolean[] visited = new boolean[this.pattern.program.size() * (length + 1)];
             int start = from;
             while (start <= length) {
                 int[]? found = this.pattern.run(&this.chars, start, whole, &mut visited);
@@ -893,8 +830,8 @@ final class Pattern {
     }
 
     private static final class CharClass {
-        private List<int> lows;
-        private List<int> highs;
+        private final List<int> lows;
+        private final List<int> highs;
         private boolean negated;
 
         CharClass() {
@@ -964,5 +901,42 @@ final class Pattern {
             }
             return false;
         }
+    }
+
+    enum Flag {
+        CASE_INSENSITIVE,
+        MULTILINE,
+        DOTALL
+    }
+
+    private enum Assertion {
+        LINE_START,
+        LINE_END,
+        WORD_EDGE,
+        NOT_WORD_EDGE,
+        TEXT_START,
+        TEXT_END
+    }
+
+    private enum Node {
+        Literal(char c),
+        Any,
+        CharSet(int index),
+        Anchor(Assertion kind),
+        Group(int index, int inner),
+        Concat(List<int> items),
+        Alternate(List<int> branches),
+        Repeat(int body, int min, int max, boolean lazy)
+    }
+
+    private enum Inst {
+        Char(char c),
+        Any,
+        CharSet(int index),
+        Split(int preferred, int alternative),
+        Jump(int target),
+        Save(int slot),
+        Check(Assertion kind),
+        Match
     }
 }

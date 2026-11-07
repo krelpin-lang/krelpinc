@@ -18,8 +18,8 @@ import std.util.List;
  * @see Item#members
  */
 final class Member {
-    private TokenStream docs;
-    private List<Attribute> attributes;
+    private final TokenStream docs;
+    private final List<Attribute> attributes;
     private TokenStream rest;
     private MemberKind kind;
     private int modifiersEnd;
@@ -86,8 +86,7 @@ final class Member {
     /**
      * Returns whether this member is an instance field.
      *
-     * @return {@code true} for a field that is neither {@code static} nor
-     *         {@code const}
+     * @return {@code true} for a field that is not {@code static}
      */
     boolean isField() {
         return this.kind == MemberKind.FIELD && !this.isStatic();
@@ -134,10 +133,10 @@ final class Member {
     /**
      * Returns whether this member is static.
      *
-     * @return {@code true} if the member is {@code static} or {@code const}
+     * @return {@code true} if the member is {@code static}
      */
     boolean isStatic() {
-        return this.hasModifier("static") || this.hasModifier("const");
+        return this.hasModifier("static");
     }
 
     /**
@@ -381,7 +380,7 @@ final class Member {
 
     private static boolean isModifier(Token token) {
         return token.isIdent("public") || token.isIdent("protected")
-            || token.isIdent("private") || token.isIdent("static") || token.isIdent("const")
+            || token.isIdent("private") || token.isIdent("static")
             || token.isIdent("final") || token.isIdent("abstract") || token.isIdent("mut")
             || token.isIdent("move");
     }

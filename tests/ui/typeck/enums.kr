@@ -7,7 +7,7 @@ enum Shape {
     Rect(double width, double height),
     Empty;
 
-    const double PI = 3.14159;
+    static final double PI = 3.14159;
 
     static Shape square(double side) {
         return Rect(side, side);

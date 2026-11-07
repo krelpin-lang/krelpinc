@@ -1,8 +1,8 @@
 package std.math;
 
 final class BigDecimal implements Comparable<BigDecimal>, Hashable<BigDecimal>, Cloneable<BigDecimal> {
-    private BigInteger unscaled;
-    private int scale;
+    private final BigInteger unscaled;
+    private final int scale;
 
     BigDecimal(String text) {
         char[] chars = text.chars();

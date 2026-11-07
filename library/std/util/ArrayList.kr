@@ -83,7 +83,7 @@ class ArrayList<T> implements List<T> {
     }
 
     private static final class Values<T> borrows src implements Iterator<T> {
-        private &ArrayList<T> list;
+        private final &ArrayList<T> list;
         private int next;
 
         Values(&ArrayList<T> list) keeps list {

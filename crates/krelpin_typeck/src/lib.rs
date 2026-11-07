@@ -6,6 +6,7 @@ mod closure;
 mod coerce;
 mod exceptions;
 mod expr;
+mod finals;
 mod inherit;
 mod init;
 mod lang_items;

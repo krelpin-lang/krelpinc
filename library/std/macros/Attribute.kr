@@ -12,9 +12,9 @@ package std.macros;
  * @see Member#attributes
  */
 final class Attribute {
-    private Token name;
-    private TokenStream tokens;
-    private TokenStream args;
+    private final Token name;
+    private final TokenStream tokens;
+    private final TokenStream args;
 
     private Attribute(Token name, TokenStream tokens, TokenStream args) {
         this.name = name;

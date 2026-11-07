@@ -442,7 +442,7 @@ impl FnCtxt<'_, '_> {
 
     fn static_const(&self, def: DefId, name: Ident) -> Option<Ty> {
         let field = self.tcx.sig(def).fields.get(&name.name)?;
-        if !matches!(field.storage, FieldStorage::Const(_)) {
+        if !matches!(field.storage, FieldStorage::Static(_)) {
             return None;
         }
         self.check_vis(field.vis, field.owner, true, "field", name);

@@ -18,10 +18,10 @@ package std.primitive;
  */
 final class Char implements Comparable<char>, Hashable<char>, Cloneable<char> {
     /** The minimum value of a {@code char}, {@code U+0000}. */
-    public const char MIN_VALUE = '\u{0}';
+    public static final char MIN_VALUE = '\u{0}';
 
     /** The maximum value of a {@code char}, {@code U+10FFFF}. */
-    public const char MAX_VALUE = '\u{10FFFF}';
+    public static final char MAX_VALUE = '\u{10FFFF}';
 
     private Char() {}
 

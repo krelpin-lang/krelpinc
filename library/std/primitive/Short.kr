@@ -16,10 +16,10 @@ package std.primitive;
  */
 final class Short implements Comparable<short>, Hashable<short>, Cloneable<short> {
     /** The minimum value of a {@code short}, -2<sup>15</sup>. */
-    public const short MIN_VALUE = -32768;
+    public static final short MIN_VALUE = -32768;
 
     /** The maximum value of a {@code short}, 2<sup>15</sup> - 1 (32767). */
-    public const short MAX_VALUE = 32767;
+    public static final short MAX_VALUE = 32767;
 
     private Short() {}
 

@@ -24,8 +24,8 @@ import std.util.Map;
  * Build such names with {@link #ident}, as above.
  */
 final class Quote {
-    private String template;
-    private Map<String, TokenStream> values;
+    private final String template;
+    private final Map<String, TokenStream> values;
 
     /**
      * Constructs a quote from a template, with no placeholders set.
@@ -145,5 +145,5 @@ final class Quote {
         return out;
     }
 
-    private const String MARKER = "__krelpin_quote_";
+    private static final String MARKER = "__krelpin_quote_";
 }

@@ -21,7 +21,7 @@ import std.util.List;
  * }</pre>
  */
 final class TokenStream implements Iterable<Token> {
-    private List<Token> tokens;
+    private final List<Token> tokens;
 
     /** Constructs an empty token stream. */
     TokenStream() {

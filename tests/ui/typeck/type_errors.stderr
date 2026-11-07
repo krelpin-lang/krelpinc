@@ -12,7 +12,7 @@ error: missing return statement
    |
    = help: add a `return` statement, or `throw` an exception
 
-error: cannot assign to `static` field `count`
+error: cannot assign to `static final` field `count`
   --> tests/ui/typeck/type_errors.kr:22:16
    |
 22 |         Wallet.count++;

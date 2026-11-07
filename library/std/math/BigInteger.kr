@@ -4,10 +4,10 @@ import std.util.ArrayList;
 import std.util.List;
 
 final class BigInteger implements Comparable<BigInteger>, Hashable<BigInteger>, Cloneable<BigInteger> {
-    private const long BASE = 1000000000L;
+    private static final long BASE = 1000000000L;
 
-    private int sign;
-    private int[] digits;
+    private final int sign;
+    private final int[] digits;
 
     BigInteger(String text) {
         this(text, 10);

@@ -11,6 +11,9 @@ world hello bar foo
 [aaa]
 true
 [one, two, three]
+true
+[CASE_INSENSITIVE, MULTILINE, DOTALL]
+[DOTALL]
 [cat, cat]
 true
 false

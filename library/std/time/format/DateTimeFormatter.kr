@@ -43,33 +43,8 @@ final class DateTimeFormatter {
 
     public static final DateTimeFormatter RFC_1123_DATE_TIME = new DateTimeFormatter(DateTimeFormatter.rfc1123(), "RFC_1123_DATE_TIME", null);
 
-    private const int YEAR = 0;
-    private const int MONTH = 1;
-    private const int DAY = 2;
-    private const int DAY_OF_YEAR = 3;
-    private const int HOUR = 4;
-    private const int CLOCK_HOUR = 5;
-    private const int HOUR_OF_AMPM = 6;
-    private const int CLOCK_HOUR_OF_DAY = 7;
-    private const int MINUTE = 8;
-    private const int SECOND = 9;
-    private const int NANO = 10;
-    private const int WEEKDAY = 11;
-    private const int AMPM = 12;
-    private const int FIELDS = 13;
-
-    private const int OFFSET_HH_MM_OPTIONAL = 0;
-    private const int OFFSET_HHMM = 1;
-    private const int OFFSET_HH_COLON_MM = 2;
-    private const int OFFSET_HHMM_SS_OPTIONAL = 3;
-    private const int OFFSET_ID = 4;
-    private const int OFFSET_HHMMSS = 5;
-    private const int OFFSET_HH_COLON_MM_COLON_SS = 6;
-    private const int OFFSET_GMT_SHORT = 7;
-    private const int OFFSET_GMT_FULL = 8;
-
-    private List<Part> parts;
-    private String pattern;
+    private final List<Part> parts;
+    private final String pattern;
     private ZoneId? zone;
 
     private DateTimeFormatter(List<Part> parts, String pattern, ZoneId? zone) {
@@ -164,10 +139,10 @@ final class DateTimeFormatter {
                     out.append(text.clone());
                     yield null;
                 }
-                case Value(int field, int width, int maxWidth) -> {
+                case Value(Field field, int width, int maxWidth) -> {
                     long value = DateTimeFormatter.valueOf(field, moment);
                     if (value == long.MIN_VALUE) {
-                        yield DateTimeFormatter.fieldName(field);
+                        yield field.displayName();
                     }
                     out.append(DateTimeFormatter.pad(value, width));
                     yield null;
@@ -190,10 +165,10 @@ final class DateTimeFormatter {
                     }
                     yield null;
                 }
-                case Name(int field, TextStyle style) -> {
+                case Name(Field field, TextStyle style) -> {
                     (LocalDate)? date = moment.date();
                     (LocalTime)? time = moment.time();
-                    if (field == DateTimeFormatter.AMPM) {
+                    if (field == Field.AMPM) {
                         if (time == null) {
                             yield "AmPmOfDay";
                         }
@@ -201,9 +176,9 @@ final class DateTimeFormatter {
                         yield null;
                     }
                     if (date == null) {
-                        yield DateTimeFormatter.fieldName(field);
+                        yield field.displayName();
                     }
-                    if (field == DateTimeFormatter.MONTH) {
+                    if (field == Field.MONTH) {
                         out.append(date.month().displayName(style));
                     } else {
                         out.append(date.dayOfWeek().displayName(style));
@@ -224,7 +199,7 @@ final class DateTimeFormatter {
                     }
                     yield null;
                 }
-                case Offset(int style, String zero) -> {
+                case Offset(OffsetStyle style, String zero) -> {
                     (ZoneOffset)? offset = moment.offset();
                     if (offset == null) {
                         yield "OffsetSeconds";
@@ -282,7 +257,7 @@ final class DateTimeFormatter {
                     }
                     yield position + expected.length;
                 }
-                case Value(int field, int width, int maxWidth) -> {
+                case Value(Field field, int width, int maxWidth) -> {
                     int limit = adjacent ? width : maxWidth;
                     int end = DateTimeFormatter.digitsEnd(text, position, limit);
                     if (end - position < width) {
@@ -298,7 +273,7 @@ final class DateTimeFormatter {
                         if (end - cursor != 2) {
                             yield -(cursor + 1);
                         }
-                        parsed.set(DateTimeFormatter.YEAR, 2000L + DateTimeFormatter.number(text, cursor, end));
+                        parsed.set(Field.YEAR, 2000L + DateTimeFormatter.number(text, cursor, end));
                         yield end;
                     }
                     boolean negative = false;
@@ -311,11 +286,11 @@ final class DateTimeFormatter {
                         yield -(cursor + 1);
                     }
                     long year = DateTimeFormatter.number(text, cursor, end);
-                    parsed.set(DateTimeFormatter.YEAR, negative ? -year : year);
+                    parsed.set(Field.YEAR, negative ? -year : year);
                     yield end;
                 }
-                case Name(int field, TextStyle style) -> {
-                    int count = field == DateTimeFormatter.MONTH ? 12 : (field == DateTimeFormatter.WEEKDAY ? 7 : 2);
+                case Name(Field field, TextStyle style) -> {
+                    int count = field == Field.MONTH ? 12 : (field == Field.WEEKDAY ? 7 : 2);
                     int best = -1;
                     int bestLength = 0;
                     for (int candidate = 0; candidate < count; candidate++) {
@@ -328,7 +303,7 @@ final class DateTimeFormatter {
                     if (best < 0) {
                         yield -(position + 1);
                     }
-                    parsed.set(field, field == DateTimeFormatter.AMPM ? (long) best : (long) (best + 1));
+                    parsed.set(field, field == Field.AMPM ? (long) best : (long) (best + 1));
                     yield position + bestLength;
                 }
                 case Fraction(int minWidth, int maxWidth, boolean point) -> {
@@ -351,10 +326,10 @@ final class DateTimeFormatter {
                     for (int scale = digits; scale < 9; scale++) {
                         value *= 10L;
                     }
-                    parsed.set(DateTimeFormatter.NANO, value);
+                    parsed.set(Field.NANO, value);
                     yield end;
                 }
-                case Offset(int style, String zero) -> {
+                case Offset(OffsetStyle style, String zero) -> {
                     int end = DateTimeFormatter.scanOffset(text, position, style, &zero, parsed);
                     yield end;
                 }
@@ -406,63 +381,45 @@ final class DateTimeFormatter {
 
     private static boolean isNumeric(&Part part) {
         return switch (part) {
-            case Value(int field, int width, int maxWidth) -> true;
+            case Value(Field field, int width, int maxWidth) -> true;
             case Year(int width, boolean signed) -> true;
             case Fraction(int minWidth, int maxWidth, boolean point) -> !point;
             default -> false;
         };
     }
 
-    private static long valueOf(int field, &Moment moment) {
+    private static long valueOf(Field field, &Moment moment) {
         (LocalDate)? date = moment.date();
         (LocalTime)? time = moment.time();
-        if (field == DateTimeFormatter.MONTH || field == DateTimeFormatter.DAY || field == DateTimeFormatter.DAY_OF_YEAR) {
+        if (field == Field.MONTH || field == Field.DAY || field == Field.DAY_OF_YEAR) {
             if (date == null) {
                 return long.MIN_VALUE;
             }
-            if (field == DateTimeFormatter.MONTH) {
+            if (field == Field.MONTH) {
                 return (long) date.monthValue();
             }
-            return field == DateTimeFormatter.DAY ? (long) date.dayOfMonth() : (long) date.dayOfYear();
+            return field == Field.DAY ? (long) date.dayOfMonth() : (long) date.dayOfYear();
         }
         if (time == null) {
             return long.MIN_VALUE;
         }
         int hour = time.hour();
         return switch (field) {
-            case 4 -> (long) hour;
-            case 5 -> (long) (hour % 12 == 0 ? 12 : hour % 12);
-            case 6 -> (long) (hour % 12);
-            case 7 -> (long) (hour == 0 ? 24 : hour);
-            case 8 -> (long) time.minute();
-            case 9 -> (long) time.second();
+            case HOUR -> (long) hour;
+            case CLOCK_HOUR -> (long) (hour % 12 == 0 ? 12 : hour % 12);
+            case HOUR_OF_AMPM -> (long) (hour % 12);
+            case CLOCK_HOUR_OF_DAY -> (long) (hour == 0 ? 24 : hour);
+            case MINUTE -> (long) time.minute();
+            case SECOND -> (long) time.second();
             default -> (long) time.nano();
         };
     }
 
-    private static String fieldName(int field) {
-        return switch (field) {
-            case 0 -> "YearOfEra";
-            case 1 -> "MonthOfYear";
-            case 2 -> "DayOfMonth";
-            case 3 -> "DayOfYear";
-            case 4 -> "HourOfDay";
-            case 5 -> "ClockHourOfAmPm";
-            case 6 -> "HourOfAmPm";
-            case 7 -> "ClockHourOfDay";
-            case 8 -> "MinuteOfHour";
-            case 9 -> "SecondOfMinute";
-            case 10 -> "NanoOfSecond";
-            case 11 -> "DayOfWeek";
-            default -> "AmPmOfDay";
-        };
-    }
-
-    private static String nameOf(int field, int index, TextStyle style) {
-        if (field == DateTimeFormatter.MONTH) {
+    private static String nameOf(Field field, int index, TextStyle style) {
+        if (field == Field.MONTH) {
             return Month.of(index + 1).displayName(style);
         }
-        if (field == DateTimeFormatter.WEEKDAY) {
+        if (field == Field.WEEKDAY) {
             return DayOfWeek.of(index + 1).displayName(style);
         }
         return index == 0 ? "AM" : "PM";
@@ -498,7 +455,7 @@ final class DateTimeFormatter {
         return kept;
     }
 
-    private static String offsetText(int total, int style, &String zero) {
+    private static String offsetText(int total, OffsetStyle style, &String zero) {
         if (total == 0 && !zero.isEmpty()) {
             return zero.clone();
         }
@@ -507,14 +464,14 @@ final class DateTimeFormatter {
         int minutes = magnitude / 60 % 60;
         int seconds = magnitude % 60;
         String sign = total < 0 ? "-" : "+";
-        if (style == DateTimeFormatter.OFFSET_GMT_SHORT || style == DateTimeFormatter.OFFSET_GMT_FULL) {
+        if (style.gmt()) {
             if (total == 0) {
                 return "GMT";
             }
             StringBuilder text = new StringBuilder();
             text.append("GMT");
             text.append(sign);
-            if (style == DateTimeFormatter.OFFSET_GMT_SHORT) {
+            if (style == OffsetStyle.GMT_SHORT) {
                 text.append("$hours");
                 if (minutes != 0 || seconds != 0) {
                     text.append(":" + DateTimeFormatter.pad((long) minutes, 2));
@@ -527,25 +484,25 @@ final class DateTimeFormatter {
             }
             return text.toString();
         }
-        boolean colon = style == DateTimeFormatter.OFFSET_HH_COLON_MM || style == DateTimeFormatter.OFFSET_ID || style == DateTimeFormatter.OFFSET_HH_COLON_MM_COLON_SS;
+        boolean colon = style.colon();
         String separator = colon ? ":" : "";
         StringBuilder text = new StringBuilder();
         text.append(sign);
         text.append(DateTimeFormatter.pad((long) hours, 2));
-        boolean showMinutes = style != DateTimeFormatter.OFFSET_HH_MM_OPTIONAL || minutes != 0 || seconds != 0;
+        boolean showMinutes = style != OffsetStyle.HH_MM_OPTIONAL || minutes != 0 || seconds != 0;
         if (showMinutes) {
             text.append(separator + DateTimeFormatter.pad((long) minutes, 2));
         }
-        boolean showSeconds = style == DateTimeFormatter.OFFSET_HHMMSS || style == DateTimeFormatter.OFFSET_HH_COLON_MM_COLON_SS || ((style == DateTimeFormatter.OFFSET_HHMM_SS_OPTIONAL || style == DateTimeFormatter.OFFSET_ID) && seconds != 0);
+        boolean showSeconds = style == OffsetStyle.HHMMSS || style == OffsetStyle.HH_COLON_MM_COLON_SS || ((style == OffsetStyle.HHMM_SS_OPTIONAL || style == OffsetStyle.ID) && seconds != 0);
         if (showSeconds) {
             text.append(separator + DateTimeFormatter.pad((long) seconds, 2));
         }
         return text.toString();
     }
 
-    private static int scanOffset(&char[] text, int start, int style, &String zero, &mut Parsed parsed) {
+    private static int scanOffset(&char[] text, int start, OffsetStyle style, &String zero, &mut Parsed parsed) {
         int position = start;
-        if (style == DateTimeFormatter.OFFSET_GMT_SHORT || style == DateTimeFormatter.OFFSET_GMT_FULL) {
+        if (style.gmt()) {
             if (!DateTimeFormatter.matchesAt(text, position, &"GMT")) {
                 return -(position + 1);
             }
@@ -585,14 +542,10 @@ final class DateTimeFormatter {
         }
         int sign = text[position] == '-' ? -1 : 1;
         position++;
-        boolean colon = style == DateTimeFormatter.OFFSET_HH_COLON_MM || style == DateTimeFormatter.OFFSET_ID || style == DateTimeFormatter.OFFSET_HH_COLON_MM_COLON_SS;
+        boolean colon = style.colon();
         int[] values = new int[] { 0, 0, 0 };
-        int required = switch (style) {
-            case 0 -> 1;
-            case 1, 2, 3, 4 -> 2;
-            default -> 3;
-        };
-        int allowed = style == DateTimeFormatter.OFFSET_HH_MM_OPTIONAL || style == DateTimeFormatter.OFFSET_HHMM || style == DateTimeFormatter.OFFSET_HH_COLON_MM ? 2 : 3;
+        int required = style.requiredUnits();
+        int allowed = style.allowedUnits();
         for (int unit = 0; unit < allowed; unit++) {
             int cursor = position;
             if (unit > 0 && colon) {
@@ -714,21 +667,21 @@ final class DateTimeFormatter {
         List<Part> parts = new ArrayList<>();
         parts.add(Part.Year(4, true));
         parts.add(Part.Text("-"));
-        parts.add(Part.Value(DateTimeFormatter.MONTH, 2, 2));
+        parts.add(Part.Value(Field.MONTH, 2, 2));
         parts.add(Part.Text("-"));
-        parts.add(Part.Value(DateTimeFormatter.DAY, 2, 2));
+        parts.add(Part.Value(Field.DAY, 2, 2));
         return parts;
     }
 
     private static List<Part> isoTime() {
         List<Part> seconds = new ArrayList<>();
         seconds.add(Part.Text(":"));
-        seconds.add(Part.Value(DateTimeFormatter.SECOND, 2, 2));
+        seconds.add(Part.Value(Field.SECOND, 2, 2));
         seconds.add(Part.Fraction(0, 9, true));
         List<Part> parts = new ArrayList<>();
-        parts.add(Part.Value(DateTimeFormatter.HOUR, 2, 2));
+        parts.add(Part.Value(Field.HOUR, 2, 2));
         parts.add(Part.Text(":"));
-        parts.add(Part.Value(DateTimeFormatter.MINUTE, 2, 2));
+        parts.add(Part.Value(Field.MINUTE, 2, 2));
         parts.add(Part.Section(seconds));
         return parts;
     }
@@ -744,10 +697,10 @@ final class DateTimeFormatter {
         List<Part> parts = base;
         if (optional) {
             List<Part> offset = new ArrayList<>();
-            offset.add(Part.Offset(DateTimeFormatter.OFFSET_ID, "Z"));
+            offset.add(Part.Offset(OffsetStyle.ID, "Z"));
             parts.add(Part.Section(offset));
         } else {
-            parts.add(Part.Offset(DateTimeFormatter.OFFSET_ID, "Z"));
+            parts.add(Part.Offset(OffsetStyle.ID, "Z"));
         }
         return parts;
     }
@@ -768,7 +721,7 @@ final class DateTimeFormatter {
 
     private static List<Part> isoDateTimeZoned() {
         List<Part> zone = new ArrayList<>();
-        zone.add(Part.Offset(DateTimeFormatter.OFFSET_ID, "Z"));
+        zone.add(Part.Offset(OffsetStyle.ID, "Z"));
         zone.add(Part.Section(DateTimeFormatter.regionSuffix()));
         List<Part> parts = DateTimeFormatter.isoDateTime();
         parts.add(Part.Section(zone));
@@ -779,65 +732,150 @@ final class DateTimeFormatter {
         List<Part> parts = new ArrayList<>();
         parts.add(Part.Year(4, true));
         parts.add(Part.Text("-"));
-        parts.add(Part.Value(DateTimeFormatter.DAY_OF_YEAR, 3, 3));
+        parts.add(Part.Value(Field.DAY_OF_YEAR, 3, 3));
         return DateTimeFormatter.withOffset(parts, true);
     }
 
     private static List<Part> isoInstant() {
         List<Part> parts = DateTimeFormatter.isoDate();
         parts.add(Part.Text("T"));
-        parts.add(Part.Value(DateTimeFormatter.HOUR, 2, 2));
+        parts.add(Part.Value(Field.HOUR, 2, 2));
         parts.add(Part.Text(":"));
-        parts.add(Part.Value(DateTimeFormatter.MINUTE, 2, 2));
+        parts.add(Part.Value(Field.MINUTE, 2, 2));
         parts.add(Part.Text(":"));
-        parts.add(Part.Value(DateTimeFormatter.SECOND, 2, 2));
+        parts.add(Part.Value(Field.SECOND, 2, 2));
         parts.add(Part.Fraction(-1, 9, true));
-        parts.add(Part.Offset(DateTimeFormatter.OFFSET_ID, "Z"));
+        parts.add(Part.Offset(OffsetStyle.ID, "Z"));
         return parts;
     }
 
     private static List<Part> basicDate() {
         List<Part> offset = new ArrayList<>();
-        offset.add(Part.Offset(DateTimeFormatter.OFFSET_HHMM_SS_OPTIONAL, "Z"));
+        offset.add(Part.Offset(OffsetStyle.HHMM_SS_OPTIONAL, "Z"));
         List<Part> parts = new ArrayList<>();
         parts.add(Part.Year(4, true));
-        parts.add(Part.Value(DateTimeFormatter.MONTH, 2, 2));
-        parts.add(Part.Value(DateTimeFormatter.DAY, 2, 2));
+        parts.add(Part.Value(Field.MONTH, 2, 2));
+        parts.add(Part.Value(Field.DAY, 2, 2));
         parts.add(Part.Section(offset));
         return parts;
     }
 
     private static List<Part> rfc1123() {
         List<Part> weekday = new ArrayList<>();
-        weekday.add(Part.Name(DateTimeFormatter.WEEKDAY, TextStyle.SHORT));
+        weekday.add(Part.Name(Field.WEEKDAY, TextStyle.SHORT));
         weekday.add(Part.Text(", "));
         List<Part> seconds = new ArrayList<>();
         seconds.add(Part.Text(":"));
-        seconds.add(Part.Value(DateTimeFormatter.SECOND, 2, 2));
+        seconds.add(Part.Value(Field.SECOND, 2, 2));
         List<Part> parts = new ArrayList<>();
         parts.add(Part.Section(weekday));
-        parts.add(Part.Value(DateTimeFormatter.DAY, 1, 2));
+        parts.add(Part.Value(Field.DAY, 1, 2));
         parts.add(Part.Text(" "));
-        parts.add(Part.Name(DateTimeFormatter.MONTH, TextStyle.SHORT));
+        parts.add(Part.Name(Field.MONTH, TextStyle.SHORT));
         parts.add(Part.Text(" "));
         parts.add(Part.Year(4, false));
         parts.add(Part.Text(" "));
-        parts.add(Part.Value(DateTimeFormatter.HOUR, 2, 2));
+        parts.add(Part.Value(Field.HOUR, 2, 2));
         parts.add(Part.Text(":"));
-        parts.add(Part.Value(DateTimeFormatter.MINUTE, 2, 2));
+        parts.add(Part.Value(Field.MINUTE, 2, 2));
         parts.add(Part.Section(seconds));
         parts.add(Part.Text(" "));
-        parts.add(Part.Offset(DateTimeFormatter.OFFSET_HHMM, "GMT"));
+        parts.add(Part.Offset(OffsetStyle.HHMM, "GMT"));
         return parts;
+    }
+
+    private enum Field {
+        YEAR,
+        MONTH,
+        DAY,
+        DAY_OF_YEAR,
+        HOUR,
+        CLOCK_HOUR,
+        HOUR_OF_AMPM,
+        CLOCK_HOUR_OF_DAY,
+        MINUTE,
+        SECOND,
+        NANO,
+        WEEKDAY,
+        AMPM;
+
+        String displayName() {
+            return switch (this) {
+                case YEAR -> "YearOfEra";
+                case MONTH -> "MonthOfYear";
+                case DAY -> "DayOfMonth";
+                case DAY_OF_YEAR -> "DayOfYear";
+                case HOUR -> "HourOfDay";
+                case CLOCK_HOUR -> "ClockHourOfAmPm";
+                case HOUR_OF_AMPM -> "HourOfAmPm";
+                case CLOCK_HOUR_OF_DAY -> "ClockHourOfDay";
+                case MINUTE -> "MinuteOfHour";
+                case SECOND -> "SecondOfMinute";
+                case NANO -> "NanoOfSecond";
+                case WEEKDAY -> "DayOfWeek";
+                case AMPM -> "AmPmOfDay";
+            };
+        }
+    }
+
+    private enum OffsetStyle {
+        HH_MM_OPTIONAL,
+        HHMM,
+        HH_COLON_MM,
+        HHMM_SS_OPTIONAL,
+        ID,
+        HHMMSS,
+        HH_COLON_MM_COLON_SS,
+        GMT_SHORT,
+        GMT_FULL;
+
+        static OffsetStyle ofLetters(int count) {
+            return switch (count) {
+                case 1 -> OffsetStyle.HH_MM_OPTIONAL;
+                case 2 -> OffsetStyle.HHMM;
+                case 3 -> OffsetStyle.HH_COLON_MM;
+                case 4 -> OffsetStyle.HHMM_SS_OPTIONAL;
+                default -> OffsetStyle.ID;
+            };
+        }
+
+        boolean gmt() {
+            return switch (this) {
+                case GMT_SHORT, GMT_FULL -> true;
+                default -> false;
+            };
+        }
+
+        boolean colon() {
+            return switch (this) {
+                case HH_COLON_MM, ID, HH_COLON_MM_COLON_SS -> true;
+                default -> false;
+            };
+        }
+
+        int requiredUnits() {
+            return switch (this) {
+                case HH_MM_OPTIONAL -> 1;
+                case HHMM, HH_COLON_MM, HHMM_SS_OPTIONAL, ID -> 2;
+                default -> 3;
+            };
+        }
+
+        int allowedUnits() {
+            return switch (this) {
+                case HH_MM_OPTIONAL, HHMM, HH_COLON_MM -> 2;
+                default -> 3;
+            };
+        }
     }
 
     private enum Part {
         Text(String text),
-        Value(int field, int width, int maxWidth),
+        Value(Field field, int width, int maxWidth),
         Year(int width, boolean signed),
-        Name(int field, TextStyle style),
+        Name(Field field, TextStyle style),
         Fraction(int minWidth, int maxWidth, boolean point),
-        Offset(int style, String zero),
+        Offset(OffsetStyle style, String zero),
         Region(boolean regionOnly),
         ZoneName(boolean full),
         Section(List<Part> parts)
@@ -846,8 +884,8 @@ final class DateTimeFormatter {
     private record Moment(LocalDate? date, LocalTime? time, ZoneOffset? offset, String? zone, boolean region, String? zoneName) {}
 
     private static final class PatternReader {
-        private &String pattern;
-        private char[] chars;
+        private final &String pattern;
+        private final char[] chars;
         private int position;
 
         PatternReader(&String pattern) keeps pattern {
@@ -929,35 +967,35 @@ final class DateTimeFormatter {
                     if (count > 5) {
                         this.tooMany(c);
                     }
-                    yield count <= 2 ? Part.Value(DateTimeFormatter.MONTH, count, 2) : Part.Name(DateTimeFormatter.MONTH, PatternReader.style(count));
+                    yield count <= 2 ? Part.Value(Field.MONTH, count, 2) : Part.Name(Field.MONTH, PatternReader.style(count));
                 }
-                case 'd' -> Part.Value(DateTimeFormatter.DAY, this.width(c, count, 2), 2);
+                case 'd' -> Part.Value(Field.DAY, this.width(c, count, 2), 2);
                 case 'D' -> {
                     if (count > 3) {
                         this.tooMany(c);
                     }
-                    yield Part.Value(DateTimeFormatter.DAY_OF_YEAR, count, 3);
+                    yield Part.Value(Field.DAY_OF_YEAR, count, 3);
                 }
                 case 'E' -> {
                     if (count > 5) {
                         this.tooMany(c);
                     }
-                    yield Part.Name(DateTimeFormatter.WEEKDAY, PatternReader.style(count));
+                    yield Part.Name(Field.WEEKDAY, PatternReader.style(count));
                 }
                 case 'a' -> {
                     if (count > 1) {
                         this.tooMany(c);
                     }
-                    yield Part.Name(DateTimeFormatter.AMPM, TextStyle.SHORT);
+                    yield Part.Name(Field.AMPM, TextStyle.SHORT);
                 }
-                case 'H' -> Part.Value(DateTimeFormatter.HOUR, this.width(c, count, 2), 2);
-                case 'h' -> Part.Value(DateTimeFormatter.CLOCK_HOUR, this.width(c, count, 2), 2);
-                case 'K' -> Part.Value(DateTimeFormatter.HOUR_OF_AMPM, this.width(c, count, 2), 2);
-                case 'k' -> Part.Value(DateTimeFormatter.CLOCK_HOUR_OF_DAY, this.width(c, count, 2), 2);
-                case 'm' -> Part.Value(DateTimeFormatter.MINUTE, this.width(c, count, 2), 2);
-                case 's' -> Part.Value(DateTimeFormatter.SECOND, this.width(c, count, 2), 2);
+                case 'H' -> Part.Value(Field.HOUR, this.width(c, count, 2), 2);
+                case 'h' -> Part.Value(Field.CLOCK_HOUR, this.width(c, count, 2), 2);
+                case 'K' -> Part.Value(Field.HOUR_OF_AMPM, this.width(c, count, 2), 2);
+                case 'k' -> Part.Value(Field.CLOCK_HOUR_OF_DAY, this.width(c, count, 2), 2);
+                case 'm' -> Part.Value(Field.MINUTE, this.width(c, count, 2), 2);
+                case 's' -> Part.Value(Field.SECOND, this.width(c, count, 2), 2);
                 case 'S' -> Part.Fraction(count, count, false);
-                case 'n' -> Part.Value(DateTimeFormatter.NANO, count, 9);
+                case 'n' -> Part.Value(Field.NANO, count, 9);
                 case 'V' -> {
                     if (count != 2) {
                         throw new IllegalArgumentException("Pattern letter count must be 2: V");
@@ -975,22 +1013,22 @@ final class DateTimeFormatter {
                         this.tooMany(c);
                     }
                     String zero = c == 'X' ? "Z" : "";
-                    yield Part.Offset(count - 1, zero);
+                    yield Part.Offset(OffsetStyle.ofLetters(count), zero);
                 }
                 case 'Z' -> {
                     if (count > 5) {
                         this.tooMany(c);
                     }
                     if (count == 4) {
-                        yield Part.Offset(DateTimeFormatter.OFFSET_GMT_FULL, "");
+                        yield Part.Offset(OffsetStyle.GMT_FULL, "");
                     }
-                    yield count == 5 ? Part.Offset(DateTimeFormatter.OFFSET_ID, "Z") : Part.Offset(DateTimeFormatter.OFFSET_HHMM, "");
+                    yield count == 5 ? Part.Offset(OffsetStyle.ID, "Z") : Part.Offset(OffsetStyle.HHMM, "");
                 }
                 case 'O' -> {
                     if (count != 1 && count != 4) {
                         throw new IllegalArgumentException("Pattern letter count must be 1 or 4: O");
                     }
-                    yield Part.Offset(count == 1 ? DateTimeFormatter.OFFSET_GMT_SHORT : DateTimeFormatter.OFFSET_GMT_FULL, "");
+                    yield Part.Offset(count == 1 ? OffsetStyle.GMT_SHORT : OffsetStyle.GMT_FULL, "");
                 }
                 default -> throw new IllegalArgumentException("Unknown pattern letter: $c");
             };
@@ -1017,28 +1055,24 @@ final class DateTimeFormatter {
     }
 
     static final class Parsed {
-        private String text;
-        private List<long> fields;
-        private List<boolean> present;
+        private final String text;
+        private List<long?> values;
         private int? offset;
         private ZoneId? zone;
 
         private Parsed(String text) {
             this.text = text;
-            this.fields = new ArrayList<>();
-            this.present = new ArrayList<>();
-            for (int field = 0; field < DateTimeFormatter.FIELDS; field++) {
-                this.fields.add(0L);
-                this.present.add(false);
+            this.values = new ArrayList<>();
+            for (int index = 0; index < Field.values().length; index++) {
+                this.values.add(null);
             }
             this.offset = null;
             this.zone = null;
         }
 
-        private Parsed(String text, List<long> fields, List<boolean> present, int? offset, ZoneId? zone) {
+        private Parsed(String text, List<long?> values, int? offset, ZoneId? zone) {
             this.text = text;
-            this.fields = fields;
-            this.present = present;
+            this.values = values;
             this.offset = offset;
             this.zone = zone;
         }
@@ -1138,16 +1172,23 @@ final class DateTimeFormatter {
             if (this.zone instanceof ZoneId zone) {
                 copy = zone.clone();
             }
-            return new Parsed(this.text.clone(), this.fields.clone(), this.present.clone(), this.offset, copy);
+            return new Parsed(this.text.clone(), this.values.clone(), this.offset, copy);
         }
 
         String toString() {
             return "Parsed[${this.text}]";
         }
 
-        private mut void set(int field, long value) {
-            this.fields.set(field, value);
-            this.present.set(field, true);
+        private mut void set(Field field, long value) {
+            this.values.set(field.ordinal(), value);
+        }
+
+        private boolean has(Field field) {
+            return this.values.get(field.ordinal()) != null;
+        }
+
+        private long value(Field field) {
+            return this.values.get(field.ordinal()) ?: 0L;
         }
 
         private mut void setOffset(int seconds) {
@@ -1165,8 +1206,7 @@ final class DateTimeFormatter {
         }
 
         private mut void restore(&Parsed saved) {
-            this.fields = saved.fields.clone();
-            this.present = saved.present.clone();
+            this.values = saved.values.clone();
             this.offset = saved.offset;
             this.zone = null;
             if (saved.zone instanceof ZoneId zone) {
@@ -1175,22 +1215,22 @@ final class DateTimeFormatter {
         }
 
         private LocalDate date() {
-            if (!this.present.get(DateTimeFormatter.YEAR)) {
+            if (!this.has(Field.YEAR)) {
                 throw this.missing("LocalDate");
             }
-            int year = this.checked(DateTimeFormatter.YEAR, (long) LocalDate.MIN_YEAR, (long) LocalDate.MAX_YEAR, "Year");
+            int year = this.checked(Field.YEAR, (long) LocalDate.MIN_YEAR, (long) LocalDate.MAX_YEAR, "Year");
             LocalDate date;
-            if (this.present.get(DateTimeFormatter.MONTH) && this.present.get(DateTimeFormatter.DAY)) {
-                int month = this.checked(DateTimeFormatter.MONTH, 1L, 12L, "MonthOfYear");
-                int day = this.checked(DateTimeFormatter.DAY, 1L, 31L, "DayOfMonth");
+            if (this.has(Field.MONTH) && this.has(Field.DAY)) {
+                int month = this.checked(Field.MONTH, 1L, 12L, "MonthOfYear");
+                int day = this.checked(Field.DAY, 1L, 31L, "DayOfMonth");
                 date = LocalDate.of(year, month, day);
-            } else if (this.present.get(DateTimeFormatter.DAY_OF_YEAR)) {
-                date = LocalDate.ofYearDay(year, this.checked(DateTimeFormatter.DAY_OF_YEAR, 1L, 366L, "DayOfYear"));
+            } else if (this.has(Field.DAY_OF_YEAR)) {
+                date = LocalDate.ofYearDay(year, this.checked(Field.DAY_OF_YEAR, 1L, 366L, "DayOfYear"));
             } else {
                 throw this.missing("LocalDate");
             }
-            if (this.present.get(DateTimeFormatter.WEEKDAY)) {
-                DayOfWeek parsed = DayOfWeek.of((int) this.fields.get(DateTimeFormatter.WEEKDAY));
+            if (this.has(Field.WEEKDAY)) {
+                DayOfWeek parsed = DayOfWeek.of((int) this.value(Field.WEEKDAY));
                 if (parsed != date.dayOfWeek()) {
                     throw new DateTimeException("Conflict found: Field DayOfWeek ${parsed.value()} differs from DayOfWeek ${date.dayOfWeek().value()} derived from $date");
                 }
@@ -1200,27 +1240,27 @@ final class DateTimeFormatter {
 
         private LocalTime time() {
             int hour;
-            if (this.present.get(DateTimeFormatter.HOUR)) {
-                hour = this.checked(DateTimeFormatter.HOUR, 0L, 23L, "HourOfDay");
-            } else if (this.present.get(DateTimeFormatter.CLOCK_HOUR_OF_DAY)) {
-                hour = this.checked(DateTimeFormatter.CLOCK_HOUR_OF_DAY, 1L, 24L, "ClockHourOfDay") % 24;
-            } else if (this.present.get(DateTimeFormatter.CLOCK_HOUR) || this.present.get(DateTimeFormatter.HOUR_OF_AMPM)) {
-                if (!this.present.get(DateTimeFormatter.AMPM)) {
+            if (this.has(Field.HOUR)) {
+                hour = this.checked(Field.HOUR, 0L, 23L, "HourOfDay");
+            } else if (this.has(Field.CLOCK_HOUR_OF_DAY)) {
+                hour = this.checked(Field.CLOCK_HOUR_OF_DAY, 1L, 24L, "ClockHourOfDay") % 24;
+            } else if (this.has(Field.CLOCK_HOUR) || this.has(Field.HOUR_OF_AMPM)) {
+                if (!this.has(Field.AMPM)) {
                     throw this.missing("LocalTime");
                 }
-                int base = this.present.get(DateTimeFormatter.CLOCK_HOUR) ? this.checked(DateTimeFormatter.CLOCK_HOUR, 1L, 12L, "ClockHourOfAmPm") % 12 : this.checked(DateTimeFormatter.HOUR_OF_AMPM, 0L, 11L, "HourOfAmPm");
-                hour = base + (this.fields.get(DateTimeFormatter.AMPM) == 1L ? 12 : 0);
+                int base = this.has(Field.CLOCK_HOUR) ? this.checked(Field.CLOCK_HOUR, 1L, 12L, "ClockHourOfAmPm") % 12 : this.checked(Field.HOUR_OF_AMPM, 0L, 11L, "HourOfAmPm");
+                hour = base + (this.value(Field.AMPM) == 1L ? 12 : 0);
             } else {
                 throw this.missing("LocalTime");
             }
-            int minute = this.present.get(DateTimeFormatter.MINUTE) ? this.checked(DateTimeFormatter.MINUTE, 0L, 59L, "MinuteOfHour") : 0;
-            int second = this.present.get(DateTimeFormatter.SECOND) ? this.checked(DateTimeFormatter.SECOND, 0L, 59L, "SecondOfMinute") : 0;
-            int nano = this.present.get(DateTimeFormatter.NANO) ? this.checked(DateTimeFormatter.NANO, 0L, 999999999L, "NanoOfSecond") : 0;
+            int minute = this.has(Field.MINUTE) ? this.checked(Field.MINUTE, 0L, 59L, "MinuteOfHour") : 0;
+            int second = this.has(Field.SECOND) ? this.checked(Field.SECOND, 0L, 59L, "SecondOfMinute") : 0;
+            int nano = this.has(Field.NANO) ? this.checked(Field.NANO, 0L, 999999999L, "NanoOfSecond") : 0;
             return LocalTime.of(hour, minute, second, nano);
         }
 
-        private int checked(int field, long low, long high, String name) {
-            long value = this.fields.get(field);
+        private int checked(Field field, long low, long high, String name) {
+            long value = this.value(field);
             if (value < low || value > high) {
                 throw new DateTimeException("Invalid value for $name (valid values $low - $high): $value");
             }

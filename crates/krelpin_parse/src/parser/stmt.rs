@@ -3,7 +3,7 @@ use krelpin_ast::ast::{
 };
 use krelpin_ast::token::TokenKind;
 use krelpin_errors::Diagnostic;
-use krelpin_span::kw;
+use krelpin_span::{Span, kw};
 
 use super::{PResult, Parser};
 
@@ -82,8 +82,14 @@ impl Parser<'_> {
                 self.expect_semi()?;
                 StmtKind::Continue
             }
+            TokenKind::Ident(kw::Final) => {
+                let final_kw = self.final_before_decl(false)?;
+                let local = self.parse_local(final_kw)?;
+                self.expect_semi()?;
+                StmtKind::Local(local)
+            }
             _ if self.local_decl_ahead(false) => {
-                let local = self.parse_local()?;
+                let local = self.parse_local(None)?;
                 self.expect_semi()?;
                 StmtKind::Local(local)
             }
@@ -101,7 +107,7 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_local(&mut self) -> PResult<Local> {
+    fn parse_local(&mut self, final_kw: Option<Span>) -> PResult<Local> {
         let ty = self.parse_local_ty()?;
         let name = self.parse_ident()?;
         let init = if self.eat(TokenKind::Eq) {
@@ -109,7 +115,26 @@ impl Parser<'_> {
         } else {
             None
         };
-        Ok(Local { ty, name, init })
+        Ok(Local {
+            final_kw,
+            ty,
+            name,
+            init,
+        })
+    }
+
+    fn final_before_decl(&mut self, in_for: bool) -> PResult<Option<Span>> {
+        let final_kw = self.token.span;
+        self.bump();
+        if self.local_decl_ahead(in_for) {
+            return Ok(Some(final_kw));
+        }
+        Err(self.emit(
+            Diagnostic::error("expected a variable declaration after `final`")
+                .with_span(final_kw)
+                .with_label("`final` here marks a variable that is assigned only once")
+                .with_help("write `final Type name = value;`"),
+        ))
     }
 
     fn parse_local_ty(&mut self) -> PResult<Ty> {
@@ -194,8 +219,13 @@ impl Parser<'_> {
         self.expect(TokenKind::OpenParen)?;
 
         let mut init = Vec::new();
-        if self.local_decl_ahead(true) {
-            let lo = self.token.span;
+        let lo = self.token.span;
+        let final_kw = if self.token.is_keyword(kw::Final) {
+            self.final_before_decl(true)?
+        } else {
+            None
+        };
+        if final_kw.is_some() || self.local_decl_ahead(true) {
             let ty = self.parse_local_ty()?;
             let name = self.parse_ident()?;
 
@@ -204,6 +234,7 @@ impl Parser<'_> {
                 self.expect(TokenKind::CloseParen)?;
                 let body = Box::new(self.parse_stmt()?);
                 return Ok(StmtKind::ForEach {
+                    final_kw,
                     ty,
                     name,
                     iter,
@@ -218,6 +249,7 @@ impl Parser<'_> {
             };
             init.push(Stmt {
                 kind: StmtKind::Local(Local {
+                    final_kw,
                     ty,
                     name,
                     init: value,
@@ -313,6 +345,8 @@ impl Parser<'_> {
             let lo = self.token.span;
             self.bump();
             self.expect(TokenKind::OpenParen)?;
+            let final_kw = self.token.span;
+            let final_kw = self.eat_keyword_noexpect(kw::Final).then_some(final_kw);
             let mut tys = vec![self.parse_ty()?];
             while self.eat_noexpect(TokenKind::Or) {
                 tys.push(self.parse_ty()?);
@@ -321,6 +355,7 @@ impl Parser<'_> {
             self.expect(TokenKind::CloseParen)?;
             let body = self.parse_block()?;
             catches.push(Catch {
+                final_kw,
                 tys,
                 name,
                 body,

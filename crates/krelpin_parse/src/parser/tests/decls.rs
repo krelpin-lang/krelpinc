@@ -53,7 +53,7 @@ fn records() {
 fn interfaces() {
     let unit = parse_ok(
         "interface Shape extends Drawable, Comparable<Shape> {\n\
-         \x20   const int SIDES = 0;\n\
+         \x20   static final int SIDES = 0;\n\
          \x20   double area();\n\
          \x20   String describe() { return \"shape\"; }\n\
          }",
@@ -82,7 +82,7 @@ fn enums() {
          \x20   Rect(double width, double height),\n\
          \x20   Empty,\n\
          \x20   ;\n\
-         \x20   const double PI = 3.14;\n\
+         \x20   static final double PI = 3.14;\n\
          \x20   double area() { return 0.0; }\n\
          }",
     );
@@ -162,8 +162,8 @@ fn abstract_and_final() {
 fn shared_fields_keep_their_visibility() {
     let unit = parse_ok(
         "class Counter {\n\
-         \x20   static AtomicInt hidden = new AtomicInt(0);\n\
-         \x20   public static AtomicInt visible = new AtomicInt(0);\n\
+         \x20   static final AtomicInt hidden = new AtomicInt(0);\n\
+         \x20   public static final AtomicInt visible = new AtomicInt(0);\n\
          }",
     );
     let ItemKind::Class(counter) = &unit.items[0].kind else {
@@ -207,7 +207,7 @@ fn declaration_errors() {
 fn member_errors() {
     assert_eq!(
         errors("interface I { int x; }"),
-        ["interfaces can only have `const` fields"]
+        ["interfaces can only have `static final` fields"]
     );
     assert_eq!(
         errors("interface I { I() {} }"),

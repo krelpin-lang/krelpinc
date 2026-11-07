@@ -12,8 +12,8 @@ enum Kind {
 }
 
 class BankAccount implements Account {
-    static AtomicInt opened = new AtomicInt(0);
-    const long OVERDRAFT = 500L;
+    static final AtomicInt opened = new AtomicInt(0);
+    static final long OVERDRAFT = 500L;
 
     String owner;
     Kind kind;

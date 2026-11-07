@@ -1,0 +1,6 @@
+[7, null] [5, null] 5 -1
+false true true false
+true false true
+1 1 none
+2 true false
+[Point[x=1, y=2], null] Point[x=0, y=0] true

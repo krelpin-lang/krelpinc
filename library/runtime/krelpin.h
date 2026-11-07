@@ -95,7 +95,7 @@ KrString *kr_net_local_addr(void **slot);
 bool kr_net_set_timeout(void **slot, int64_t millis, bool writing);
 bool kr_net_set_nonblocking(void **slot, bool on);
 int kr_net_fd(void *handle);
-bool kr_net_register(void **slot, void *poller, int32_t token, int32_t interest, bool again);
+bool kr_net_register(void **slot, void *poller, int32_t token, bool readable, bool writable, bool again);
 bool kr_net_deregister(void **slot, void *poller);
 bool kr_tcp_listener_bind(void **slot, const KrString *address);
 bool kr_tcp_stream_connect(void **slot, const KrString *address);

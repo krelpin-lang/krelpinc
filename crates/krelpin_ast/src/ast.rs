@@ -134,7 +134,6 @@ impl Visibility {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FieldStorage {
     Instance,
-    Const(Span),
     Static(Span),
 }
 
@@ -270,6 +269,7 @@ pub enum MemberKind {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Field {
     pub storage: FieldStorage,
+    pub final_kw: Option<Span>,
     pub ty: Ty,
     pub name: Ident,
     pub init: Option<Expr>,
@@ -330,6 +330,7 @@ pub enum ReceiverKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Param {
+    pub final_kw: Option<Span>,
     pub ty: Ty,
     pub name: Ident,
     pub variadic: bool,
@@ -455,6 +456,7 @@ pub enum StmtKind {
         body: Box<Stmt>,
     },
     ForEach {
+        final_kw: Option<Span>,
         ty: Ty,
         name: Ident,
         iter: Expr,
@@ -479,6 +481,7 @@ pub enum StmtKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Local {
+    pub final_kw: Option<Span>,
     pub ty: Ty,
     pub name: Ident,
     pub init: Option<Expr>,
@@ -514,6 +517,7 @@ pub enum PatKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Catch {
+    pub final_kw: Option<Span>,
     pub tys: Vec<Ty>,
     pub name: Ident,
     pub body: Block,

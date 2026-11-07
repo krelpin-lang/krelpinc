@@ -9,8 +9,8 @@ import std.util.Set;
 record Person(String name, int age) {}
 
 class Counter {
-    public static AtomicInt CREATED = new AtomicInt(0);
-    public const int LIMIT = 3;
+    public static final AtomicInt CREATED = new AtomicInt(0);
+    public static final int LIMIT = 3;
 
     private int value;
 

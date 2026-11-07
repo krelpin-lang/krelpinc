@@ -43,6 +43,7 @@ CompilationUnit {
                                     receiver: None,
                                     params: [
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Array(
                                                     Ty {
@@ -101,6 +102,7 @@ CompilationUnit {
                                     receiver: None,
                                     params: [
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Ref {
                                                     mutable: false,

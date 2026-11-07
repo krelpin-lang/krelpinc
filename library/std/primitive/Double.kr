@@ -25,10 +25,10 @@ package std.primitive;
  */
 final class Double implements Comparable<double>, Hashable<double>, Cloneable<double> {
     /** The smallest positive value of a {@code double}. */
-    public const double MIN_VALUE = 4.9e-324;
+    public static final double MIN_VALUE = 4.9e-324;
 
     /** The largest finite value of a {@code double}. */
-    public const double MAX_VALUE = 1.7976931348623157e308;
+    public static final double MAX_VALUE = 1.7976931348623157e308;
 
     private Double() {}
 

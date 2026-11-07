@@ -65,6 +65,7 @@ pub struct FieldSig {
     pub ty: Ty,
     pub vis: Visibility,
     pub storage: FieldStorage,
+    pub is_final: bool,
     pub owner: DefId,
     pub stateless: bool,
 }
@@ -475,6 +476,7 @@ impl<'a> Tcx<'a> {
                         ty: self.lower_ty(&field.ty),
                         vis,
                         storage: field.storage,
+                        is_final: field.final_kw.is_some(),
                         owner: def_id,
                         stateless: matches!(field.storage, FieldStorage::Static(_))
                             && field.init.as_ref().is_some_and(is_lambda),
@@ -513,6 +515,7 @@ impl<'a> Tcx<'a> {
                 ty: self.lower_ty(&component.ty),
                 vis: Visibility::Private(name.span),
                 storage: FieldStorage::Instance,
+                is_final: true,
                 owner: def,
                 stateless: false,
             });
@@ -554,7 +557,8 @@ impl<'a> Tcx<'a> {
                     name,
                     ty: self_ty.clone(),
                     vis: Visibility::Public(name.span),
-                    storage: FieldStorage::Const(name.span),
+                    storage: FieldStorage::Static(name.span),
+                    is_final: true,
                     owner: def,
                     stateless: false,
                 });
@@ -735,12 +739,20 @@ impl<'a> Tcx<'a> {
         let Ty::Adt { def, args, .. } = bound else {
             return false;
         };
-        [LangItem::Equatable, LangItem::Hashable, LangItem::Cloneable]
+        let Some(item) = [LangItem::Equatable, LangItem::Hashable, LangItem::Cloneable]
             .into_iter()
             .find(|item| self.lang_items.get(*item) == Some(*def))
-            .is_some_and(|item| {
-                args.first() == Some(arg) && self.has_structural_method(env, arg, item)
-            })
+        else {
+            return false;
+        };
+        if args.first() != Some(arg) {
+            return false;
+        }
+        if let Ty::Nullable(inner) = arg {
+            let inner = inner.as_ref();
+            return self.satisfies_bound(env, inner, &self.def_ty(*def, vec![inner.clone()]));
+        }
+        self.has_structural_method(env, arg, item)
     }
 
     fn has_structural_method(&self, env: &ParamEnv, ty: &Ty, item: LangItem) -> bool {

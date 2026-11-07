@@ -1,0 +1,55 @@
+import std.util.List;
+
+class Point {
+    final int x;
+    final String? label;
+    final int y = 3;
+
+    Point(int x, boolean twice) {
+        this.x = x;
+        if (twice) {
+            this.x = 2;
+        }
+        this.y = 4;
+    }
+
+    Point(final int x) {
+        if (x > 0) {
+            this.x = x;
+            return;
+        }
+        x = 3;
+    }
+
+    Point() {
+        this(1, false);
+        this.x = 9;
+    }
+}
+
+class NoCtor {
+    final int count;
+}
+
+class Main {
+    static void main() {
+        final int a = 1;
+        a = 2;
+        final int b;
+        if (a > 0) {
+            b = 1;
+        }
+        b = 2;
+        final int c;
+        while (a < 3) {
+            c = 1;
+        }
+        for (final int i = 0; i < 3; i++) {
+        }
+        for (final String s : List.of("a")) {
+            s = "b";
+        }
+        final int d;
+        Runnable r = () -> { d = 1; };
+    }
+}

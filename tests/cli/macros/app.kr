@@ -10,7 +10,7 @@ class Point {
     private int y = 2;
     @Cfg(feature = "z")
     private int z;
-    private static int count = 0;
+    private static final int count = 0;
 
     Point(int x) {
         this.x = x;
@@ -23,7 +23,7 @@ class Point {
 
     @Getters
     record Pair(int left, int right) {
-        static String tag = "pair";
+        static final String tag = "pair";
     }
 }
 

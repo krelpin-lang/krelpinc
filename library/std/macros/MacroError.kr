@@ -19,7 +19,7 @@ package std.macros;
  * }</pre>
  */
 class MacroError extends RuntimeException {
-    private Span span;
+    private final Span span;
 
     /**
      * Constructs an error reported at the macro invocation.

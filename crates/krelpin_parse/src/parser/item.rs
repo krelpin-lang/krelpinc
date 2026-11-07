@@ -188,22 +188,18 @@ impl Parser<'_> {
         container: Container,
         lo: Span,
     ) -> PResult<Item> {
-        match (container, modifiers.storage) {
-            (Container::Class, FieldStorage::Instance) => {
-                self.emit(
-                    Diagnostic::error("inner classes are not supported")
-                        .with_span(self.token.span)
-                        .with_note(
-                            "a nested class does not keep a hidden reference to an outer object",
-                        )
-                        .with_help(
-                            "mark it `static`, and pass the outer object to its constructor \
-                             if it needs one",
-                        ),
-                );
-            }
-            (_, FieldStorage::Const(_)) => self.reject_storage(modifiers.storage, "types"),
-            _ => {}
+        if container == Container::Class && modifiers.storage == FieldStorage::Instance {
+            self.emit(
+                Diagnostic::error("inner classes are not supported")
+                    .with_span(self.token.span)
+                    .with_note(
+                        "a nested class does not keep a hidden reference to an outer object",
+                    )
+                    .with_help(
+                        "mark it `static`, and pass the outer object to its constructor \
+                         if it needs one",
+                    ),
+            );
         }
         self.parse_item(docs, annotations, modifiers, container, lo)
     }
@@ -634,16 +630,24 @@ impl Parser<'_> {
                         );
                     }
                 }
-                kw::Const | kw::Static => {
-                    let storage = if symbol == kw::Const {
-                        FieldStorage::Const(span)
-                    } else {
-                        FieldStorage::Static(span)
-                    };
+                kw::Const => {
+                    self.emit(
+                        Diagnostic::error("`const` is not a Krelpin modifier")
+                            .with_span(span)
+                            .with_help("declare a constant with `static final`"),
+                    );
                     if modifiers.storage == FieldStorage::Instance {
-                        modifiers.storage = storage;
+                        modifiers.storage = FieldStorage::Static(span);
+                    }
+                    if modifiers.inheritance.final_kw.is_none() {
+                        modifiers.inheritance.final_kw = Some(span);
+                    }
+                }
+                kw::Static => {
+                    if modifiers.storage == FieldStorage::Instance {
+                        modifiers.storage = FieldStorage::Static(span);
                     } else {
-                        self.error(span, "only one of `const` and `static` can be used");
+                        self.error(span, "duplicate `static` modifier");
                     }
                 }
                 kw::Abstract | kw::Final => {
@@ -695,19 +699,13 @@ impl Parser<'_> {
     }
 
     fn reject_storage(&self, storage: FieldStorage, what: &str) {
-        let (keyword, span) = match storage {
-            FieldStorage::Instance => return,
-            FieldStorage::Const(span) => ("const", span),
-            FieldStorage::Static(span) => ("static", span),
-        };
-        let allowed = match storage {
-            FieldStorage::Static(_) => "fields and methods",
-            _ => "fields",
+        let FieldStorage::Static(span) = storage else {
+            return;
         };
         self.emit(
-            Diagnostic::error(format!("`{keyword}` cannot be used on {what}"))
+            Diagnostic::error(format!("`static` cannot be used on {what}"))
                 .with_span(span)
-                .with_help(format!("`{keyword}` is only allowed on {allowed}")),
+                .with_help("`static` is only allowed on fields, methods and nested types"),
         );
     }
 
@@ -880,7 +878,8 @@ impl Parser<'_> {
         };
         self.reject_receiver(modifiers.receiver, "fields");
         self.reject_async(modifiers, "fields");
-        self.parse_field(storage, ty, name).map(MemberKind::Field)
+        self.parse_field(storage, modifiers.inheritance.final_kw, ty, name)
+            .map(MemberKind::Field)
     }
 
     fn validate_member(
@@ -901,13 +900,26 @@ impl Parser<'_> {
                 if let Some(span) = abstract_kw {
                     self.error(span, "`abstract` cannot be used on fields");
                 }
-                if container == Container::Interface
-                    && !matches!(field.storage, FieldStorage::Const(_))
+                if container == Container::Interface && field.storage == FieldStorage::Instance {
+                    self.emit(
+                        Diagnostic::error("interfaces can only have `static final` fields")
+                            .with_span(field.name.span)
+                            .with_help("make the field `static final`, or move it to a class"),
+                    );
+                } else if let FieldStorage::Static(span) = field.storage
+                    && final_kw.is_none()
                 {
                     self.emit(
-                        Diagnostic::error("interfaces can only have `const` fields")
-                            .with_span(field.name.span)
-                            .with_help("make the field `const`, or move it to a class"),
+                        Diagnostic::error(format!(
+                            "static field `{}` must be `final`",
+                            field.name.name
+                        ))
+                        .with_span(span)
+                        .with_note("a `static` field is shared by every thread, so it never changes")
+                        .with_help(
+                            "write `static final`; to share changing state, store an `AtomicInt` \
+                             or a `Mutex<T>` in it",
+                        ),
                     );
                 }
                 if container == Container::Enum && field.storage == FieldStorage::Instance {

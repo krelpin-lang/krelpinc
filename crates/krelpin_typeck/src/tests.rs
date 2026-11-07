@@ -204,7 +204,7 @@ fn class_and_instance_members() {
     let src = |code: &str| {
         format!(
             "class Account {{\n\
-             \x20   const int LIMIT = 100;\n\
+             \x20   static final int LIMIT = 100;\n\
              \x20   int balance;\n\
              \x20   int total() {{ return this.balance; }}\n\
              \x20   static int limit() {{ return Account.LIMIT; }}\n\
@@ -313,13 +313,13 @@ fn constructors() {
 }
 
 #[test]
-fn static_and_const_fields_cannot_be_assigned() {
+fn static_fields_cannot_be_assigned() {
     let src = |code: &str| {
         format!(
             "class Counter {{\n\
-             \x20   const int MAX = 10;\n\
-             \x20   static int count = 0;\n\
-             \x20   static AtomicInt created = new AtomicInt(0);\n\
+             \x20   static final int MAX = 10;\n\
+             \x20   static final int count = 0;\n\
+             \x20   static final AtomicInt created = new AtomicInt(0);\n\
              \x20   void run() {{ {code} }}\n\
              }}"
         )
@@ -329,15 +329,48 @@ fn static_and_const_fields_cannot_be_assigned() {
     ));
     assert_eq!(
         errors(&src("Counter.count = 1;")),
-        ["cannot assign to `static` field `count`"]
+        ["cannot assign to `static final` field `count`"]
     );
     assert_eq!(
         errors(&src("Counter.count++;")),
-        ["cannot assign to `static` field `count`"]
+        ["cannot assign to `static final` field `count`"]
     );
     assert_eq!(
         errors(&src("Counter.MAX = 2;")),
-        ["cannot assign to `const` field `MAX`"]
+        ["cannot assign to `static final` field `MAX`"]
+    );
+}
+
+#[test]
+fn final_fields_are_assigned_only_in_constructors() {
+    let src = |code: &str| {
+        format!(
+            "class Account {{\n\
+             \x20   final String id;\n\
+             \x20   int balance;\n\
+             \x20   Account(String id) {{ this.id = id; this.balance = 0; }}\n\
+             \x20   mut void run(&mut Account other) {{ {code} }}\n\
+             }}"
+        )
+    };
+    ok(&src("this.balance = 5;"));
+    assert_eq!(
+        errors(&src("this.id = \"other\";")),
+        ["cannot assign to `final` field `id`"]
+    );
+    assert_eq!(
+        errors(&src("other.id = \"other\";")),
+        ["cannot assign to `final` field `id`"]
+    );
+    assert_eq!(
+        errors(
+            "class A { final int x; A(&mut A other) { this.x = 1; other.x = 2; } }"
+        ),
+        ["cannot assign to `final` field `x`"]
+    );
+    assert_eq!(
+        errors("class A { final int x = 1; void f() { int y = this.x; } }"),
+        Vec::<String>::new()
     );
 }
 
@@ -660,7 +693,7 @@ fn class_members_of_the_standard_library() {
     );
     assert_eq!(
         in_body("Math.PI = 3.0;"),
-        ["cannot assign to `const` field `PI`"]
+        ["cannot assign to `static final` field `PI`"]
     );
 }
 
@@ -699,11 +732,11 @@ fn exceptions() {
 #[test]
 fn atomics_can_change_through_static_fields() {
     ok("class Counter {\n\
-        \x20   static AtomicInt created = new AtomicInt(0);\n\
+        \x20   static final AtomicInt created = new AtomicInt(0);\n\
         \x20   Counter() { int id = Counter.created.increment(); }\n\
         }");
     assert_eq!(
-        errors("class Counter { static AtomicInt created = new AtomicInt(\"0\"); }"),
+        errors("class Counter { static final AtomicInt created = new AtomicInt(\"0\"); }"),
         ["mismatched types"]
     );
 }
@@ -2013,7 +2046,7 @@ fn fields_that_cannot_be_null_need_a_value() {
         ["field `name` is never given a value"]
     );
     assert_eq!(
-        errors("class A { static String name; }"),
+        errors("class A { static final String name; }"),
         ["static field `name` is never given a value"]
     );
     assert_eq!(
@@ -2026,7 +2059,7 @@ fn fields_that_cannot_be_null_need_a_value() {
         errors("class A { String name; A(boolean b) { if (b) { this.name = \"x\"; } } }"),
         ["this constructor doesn't always give field `name` a value"]
     );
-    ok("class A { String? name; int count; static int total; }");
+    ok("class A { String? name; int count; static final int total; }");
     ok(
         "class A { String name; A(boolean b) { if (b) { this.name = \"x\"; } else { this.name = \"y\"; } } }",
     );
@@ -2039,10 +2072,11 @@ fn fields_that_cannot_be_null_need_a_value() {
 #[test]
 fn inferred_type_arguments_meet_their_bounds() {
     assert_eq!(
-        errors("import std.util.*; class A { void f() { Set<String?> tags = new HashSet(); } }"),
-        ["type `String?` does not satisfy the bound of `T`"]
+        errors("import std.util.*; class B {} class A { void f() { Set<B?> tags = new HashSet(); } }"),
+        ["type `B?` does not satisfy the bound of `T`"]
     );
     ok("import std.util.*; class A { void f() { Set<String> tags = new HashSet(); } }");
+    ok("import std.util.*; class A { void f() { Set<String?> tags = new HashSet(); } }");
 }
 
 #[test]

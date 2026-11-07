@@ -7,8 +7,8 @@ import std.util.ArrayList;
 import std.util.List;
 
 class Main {
-    static AtomicInt HITS = new AtomicInt(0);
-    static Mutex<List<String>> LOG = new Mutex<>(new ArrayList<>());
+    static final AtomicInt HITS = new AtomicInt(0);
+    static final Mutex<List<String>> LOG = new Mutex<>(new ArrayList<>());
 
     static void work(String name) {
         for (int i = 0; i < 1000; i++) {

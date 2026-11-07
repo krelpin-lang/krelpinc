@@ -86,6 +86,7 @@ CompilationUnit {
                             kind: Field(
                                 Field {
                                     storage: Instance,
+                                    final_kw: None,
                                     ty: Ty {
                                         kind: Ref {
                                             mutable: false,
@@ -116,6 +117,7 @@ CompilationUnit {
                             kind: Field(
                                 Field {
                                     storage: Instance,
+                                    final_kw: None,
                                     ty: Ty {
                                         kind: Path {
                                             path: "Map" @ 119..122,
@@ -212,6 +214,7 @@ CompilationUnit {
                                     ),
                                     params: [
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Path {
                                                     path: "K" @ 190..191,
@@ -224,6 +227,7 @@ CompilationUnit {
                                             span: 190..195,
                                         },
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Path {
                                                     path: "String" @ 197..203,

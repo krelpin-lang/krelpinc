@@ -682,6 +682,9 @@ impl<'c, 'a, 'tcx> FnCx<'c, 'a, 'tcx> {
         receiver: &str,
         args: &[Val],
     ) -> String {
+        if let Some(result) = self.dispatch_nullable(selector, receiver_ty, receiver, args) {
+            return result;
+        }
         let base = receiver_ty.non_null().strip_refs().non_null().clone();
         let id = self.cx.selector(selector.clone());
         let statically = self.statically_dispatched(&base);
@@ -744,6 +747,77 @@ impl<'c, 'a, 'tcx> FnCx<'c, 'a, 'tcx> {
         } else {
             self.assign(format!("call {llret} {function}({})", rendered.join(", ")))
         }
+    }
+
+    fn dispatch_nullable(
+        &mut self,
+        selector: &Selector,
+        receiver_ty: &Ty,
+        receiver: &str,
+        args: &[Val],
+    ) -> Option<String> {
+        let Ty::Ref { ty: slot, .. } = receiver_ty else {
+            return None;
+        };
+        let Ty::Nullable(inner) = slot.as_ref() else {
+            return None;
+        };
+        let name = selector.name.as_str();
+        if selector.receiver != ReceiverKind::Ref || !matches!(name, "equals" | "hashCode" | "clone") {
+            return None;
+        }
+        let slot = slot.as_ref().clone();
+        let inner = inner.as_ref().clone();
+        let me = self.lend_nullable_slot(receiver, &slot);
+        let me_null = self.assign(format!("icmp eq ptr {me}, null"));
+        let (result_ty, absent_check, other) = match name {
+            "equals" => {
+                let other = args.first()?;
+                if !matches!(&other.ty, Ty::Ref { ty, .. } if ty.as_ref() == &slot) {
+                    return None;
+                }
+                let you = self.lend_nullable_slot(&other.v, &slot);
+                let you_null = self.assign(format!("icmp eq ptr {you}, null"));
+                let either = self.assign(format!("or i1 {me_null}, {you_null}"));
+                (Ty::BOOLEAN, either, Some((you, you_null)))
+            }
+            "hashCode" => (Ty::INT, me_null.clone(), None),
+            _ => (slot.clone(), me_null.clone(), None),
+        };
+        let result_ll = self.ll(&result_ty);
+        let result = self.alloca(&result_ty);
+        let present = self.label("nonnull");
+        let absent = self.label("null");
+        let done = self.label("nulldone");
+        self.line(format!("br i1 {absent_check}, label %{absent}, label %{present}"));
+        self.start(&present);
+        let value = match name {
+            "equals" => {
+                let (you, _) = other.clone()?;
+                self.call_equals(&me, &you, &inner)
+            }
+            "hashCode" => self.call_hash(&me, &inner),
+            _ => {
+                let copy = self.call_clone(&me, &inner);
+                self.convert(&copy, &inner, &slot)
+            }
+        };
+        self.line(format!("store {result_ll} {value}, ptr {result}"));
+        self.line(format!("br label %{done}"));
+        self.start(&absent);
+        let fallback = match name {
+            "equals" => {
+                let (_, you_null) = other?;
+                self.assign(format!("and i1 {me_null}, {you_null}"))
+            }
+            "hashCode" => "0".to_owned(),
+            _ => self.cx.null_value(&slot),
+        };
+        self.line(format!("store {result_ll} {fallback}, ptr {result}"));
+        self.line(format!("br label %{done}"));
+        self.start(&done);
+        let loaded = self.assign(format!("load {result_ll}, ptr {result}"));
+        Some(self.convert(&loaded, &result_ty, &selector.ret))
     }
 
     pub(crate) fn statically_dispatched(&self, base: &Ty) -> bool {
@@ -1141,7 +1215,7 @@ pub(crate) fn runtime_signature(name: &str) -> &'static str {
         "kr_net_local_addr" => "declare ptr @kr_net_local_addr(ptr)",
         "kr_net_set_timeout" => "declare zeroext i1 @kr_net_set_timeout(ptr, i64, i1 zeroext)",
         "kr_net_set_nonblocking" => "declare zeroext i1 @kr_net_set_nonblocking(ptr, i1 zeroext)",
-        "kr_net_register" => "declare zeroext i1 @kr_net_register(ptr, ptr, i32, i32, i1 zeroext)",
+        "kr_net_register" => "declare zeroext i1 @kr_net_register(ptr, ptr, i32, i1 zeroext, i1 zeroext, i1 zeroext)",
         "kr_net_deregister" => "declare zeroext i1 @kr_net_deregister(ptr, ptr)",
         "kr_poller_create" => "declare zeroext i1 @kr_poller_create(ptr)",
         "kr_poller_close" => "declare void @kr_poller_close(ptr)",

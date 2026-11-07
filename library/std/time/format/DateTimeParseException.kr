@@ -3,8 +3,8 @@ package std.time.format;
 import std.time.DateTimeException;
 
 class DateTimeParseException extends DateTimeException {
-    private String parsedString;
-    private int errorIndex;
+    private final String parsedString;
+    private final int errorIndex;
 
     DateTimeParseException(String message, String parsedString, int errorIndex) {
         super(message);

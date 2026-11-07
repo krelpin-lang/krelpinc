@@ -1,17 +1,17 @@
 error: the `static` field `WORDS` has type `Mutex<List<&String>>`, which may hold references
-  --> tests/ui/typeck/static_field_errors.kr:10:33
+  --> tests/ui/typeck/static_field_errors.kr:10:39
    |
-10 |     static Mutex<List<&String>> WORDS = new Mutex<>(new ArrayList<>());
-   |                                 ^^^^^
+10 |     static final Mutex<List<&String>> WORDS = new Mutex<>(new ArrayList<>());
+   |                                       ^^^^^
    |
    = note: a `static` field lives as long as the program, longer than anything it could borrow
    = help: keep it in a local or an instance field, or store owned values instead of references
 
 error: the `static` field `VIEWS` has type `Mutex<List<View>>`, which may hold references
-  --> tests/ui/typeck/static_field_errors.kr:11:30
+  --> tests/ui/typeck/static_field_errors.kr:11:36
    |
-11 |     static Mutex<List<View>> VIEWS = new Mutex<>(new ArrayList<>());
-   |                              ^^^^^
+11 |     static final Mutex<List<View>> VIEWS = new Mutex<>(new ArrayList<>());
+   |                                    ^^^^^
    |
    = note: a `static` field lives as long as the program, longer than anything it could borrow
    = help: keep it in a local or an instance field, or store owned values instead of references

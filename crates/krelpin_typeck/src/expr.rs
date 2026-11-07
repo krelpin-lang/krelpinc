@@ -1127,6 +1127,13 @@ impl FnCtxt<'_, '_> {
         let right = self.check_expr(rhs);
 
         if op == BinOp::Elvis {
+            let left = match left {
+                Ty::Ref {
+                    mutable: false,
+                    ty,
+                } if matches!(ty.as_ref(), Ty::Nullable(_)) && self.tcx.is_copy(&ty) => *ty,
+                other => other,
+            };
             return match &left {
                 Ty::Nullable(inner) => {
                     self.common_or_error(inner, &right, span, "the sides of `?:`")
@@ -1345,7 +1352,8 @@ impl FnCtxt<'_, '_> {
                 self.assigning = None;
                 self.results.expr_types.insert(expr.span, ty.clone());
                 if let Some(field) = field {
-                    self.check_field_assignable(&field, *name);
+                    let through_this = matches!(base.kind, ExprKind::This);
+                    self.check_field_assignable(&field, *name, through_this);
                 } else if name.name.as_str() == "length"
                     && matches!(
                         self.results.expr_types.get(&base.span).map(Ty::strip_refs),
@@ -1369,7 +1377,7 @@ impl FnCtxt<'_, '_> {
         }
     }
 
-    fn check_field_assignable(&self, field: &FieldSig, name: Ident) {
+    fn check_field_assignable(&self, field: &FieldSig, name: Ident, through_this: bool) {
         match field.storage {
             FieldStorage::Instance if self.tcx.sig(field.owner).kind == AdtKind::Record => self
                 .emit(
@@ -1382,15 +1390,23 @@ impl FnCtxt<'_, '_> {
                     .with_note("the components of a record never change")
                     .with_help("make a changed copy with `with { ... }`"),
                 ),
-            FieldStorage::Instance => {}
-            FieldStorage::Const(_) => {
-                self.error(
-                    name.span,
-                    format!("cannot assign to `const` field `{}`", name.name),
+            FieldStorage::Instance
+                if field.is_final
+                    && !(self.in_ctor && through_this && field.owner == self.owner) =>
+            {
+                self.emit(
+                    Diagnostic::error(format!("cannot assign to `final` field `{}`", name.name))
+                        .with_span(name.span)
+                        .with_note("a `final` field is given its value once, in a constructor")
+                        .with_help(format!(
+                            "remove `final` from `{}` to change it after construction",
+                            name.name
+                        )),
                 );
             }
+            FieldStorage::Instance => {}
             FieldStorage::Static(_) => self.emit(
-                Diagnostic::error(format!("cannot assign to `static` field `{}`", name.name))
+                Diagnostic::error(format!("cannot assign to `static final` field `{}`", name.name))
                     .with_span(name.span)
                     .with_note("a `static` field can be used from many threads at once")
                     .with_help(

@@ -29,30 +29,35 @@ CompilationUnit {
                             vis: Default,
                             inheritance: Inheritance {
                                 abstract_kw: None,
-                                final_kw: None,
+                                final_kw: Some(
+                                    47..52,
+                                ),
                             },
                             kind: Field(
                                 Field {
                                     storage: Static(
                                         40..46,
                                     ),
+                                    final_kw: Some(
+                                        47..52,
+                                    ),
                                     ty: Ty {
                                         kind: Path {
-                                            path: "AtomicInt" @ 47..56,
+                                            path: "AtomicInt" @ 53..62,
                                             args: [],
                                         },
-                                        span: 47..56,
+                                        span: 53..62,
                                     },
-                                    name: "instances" @ 57..66,
+                                    name: "instances" @ 63..72,
                                     init: Some(
                                         Expr {
                                             kind: New {
                                                 ty: Ty {
                                                     kind: Path {
-                                                        path: "AtomicInt" @ 73..82,
+                                                        path: "AtomicInt" @ 79..88,
                                                         args: [],
                                                     },
-                                                    span: 73..82,
+                                                    span: 79..88,
                                                 },
                                                 args: [
                                                     Expr {
@@ -63,16 +68,16 @@ CompilationUnit {
                                                                 suffix: None,
                                                             },
                                                         ),
-                                                        span: 83..84,
+                                                        span: 89..90,
                                                     },
                                                 ],
                                             },
-                                            span: 69..85,
+                                            span: 75..91,
                                         },
                                     ),
                                 },
                             ),
-                            span: 40..86,
+                            span: 40..92,
                         },
                         Member {
                             docs: [],
@@ -85,26 +90,27 @@ CompilationUnit {
                             kind: Field(
                                 Field {
                                     storage: Instance,
+                                    final_kw: None,
                                     ty: Ty {
                                         kind: Path {
-                                            path: "List" @ 92..96,
+                                            path: "List" @ 98..102,
                                             args: [
                                                 Ty {
                                                     kind: Path {
-                                                        path: "Item" @ 97..101,
+                                                        path: "Item" @ 103..107,
                                                         args: [],
                                                     },
-                                                    span: 97..101,
+                                                    span: 103..107,
                                                 },
                                             ],
                                         },
-                                        span: 92..102,
+                                        span: 98..108,
                                     },
-                                    name: "items" @ 103..108,
+                                    name: "items" @ 109..114,
                                     init: None,
                                 },
                             ),
-                            span: 92..109,
+                            span: 98..115,
                         },
                         Member {
                             docs: [],
@@ -117,7 +123,7 @@ CompilationUnit {
                             kind: Constructor(
                                 Constructor {
                                     compact: false,
-                                    name: "Inventory" @ 115..124,
+                                    name: "Inventory" @ 121..130,
                                     params: [],
                                     keeps: [],
                                     throws: [],
@@ -132,31 +138,31 @@ CompilationUnit {
                                                                 kind: Field {
                                                                     expr: Expr {
                                                                         kind: This,
-                                                                        span: 137..141,
+                                                                        span: 143..147,
                                                                     },
-                                                                    name: "items" @ 142..147,
+                                                                    name: "items" @ 148..153,
                                                                     safe: false,
                                                                 },
-                                                                span: 137..147,
+                                                                span: 143..153,
                                                             },
                                                             rhs: Expr {
                                                                 kind: New {
                                                                     ty: Ty {
                                                                         kind: Path {
-                                                                            path: "ArrayList" @ 154..163,
+                                                                            path: "ArrayList" @ 160..169,
                                                                             args: [],
                                                                         },
-                                                                        span: 154..165,
+                                                                        span: 160..171,
                                                                     },
                                                                     args: [],
                                                                 },
-                                                                span: 150..167,
+                                                                span: 156..173,
                                                             },
                                                         },
-                                                        span: 137..167,
+                                                        span: 143..173,
                                                     },
                                                 ),
-                                                span: 137..168,
+                                                span: 143..174,
                                             },
                                             Stmt {
                                                 kind: Expr(
@@ -167,31 +173,31 @@ CompilationUnit {
                                                                     kind: Field {
                                                                         expr: Expr {
                                                                             kind: Name(
-                                                                                "Inventory" @ 177..186,
+                                                                                "Inventory" @ 183..192,
                                                                             ),
-                                                                            span: 177..186,
+                                                                            span: 183..192,
                                                                         },
-                                                                        name: "instances" @ 187..196,
+                                                                        name: "instances" @ 193..202,
                                                                         safe: false,
                                                                     },
-                                                                    span: 177..196,
+                                                                    span: 183..202,
                                                                 },
                                                             ),
-                                                            name: "increment" @ 197..206,
+                                                            name: "increment" @ 203..212,
                                                             args: [],
                                                             safe: false,
                                                         },
-                                                        span: 177..208,
+                                                        span: 183..214,
                                                     },
                                                 ),
-                                                span: 177..209,
+                                                span: 183..215,
                                             },
                                         ],
-                                        span: 127..215,
+                                        span: 133..221,
                                     },
                                 },
                             ),
-                            span: 115..215,
+                            span: 121..221,
                         },
                         Member {
                             docs: [],
@@ -213,14 +219,14 @@ CompilationUnit {
                                             kind: Primitive(
                                                 Int,
                                             ),
-                                            span: 221..224,
+                                            span: 227..230,
                                         },
                                     ),
-                                    name: "total" @ 225..230,
+                                    name: "total" @ 231..236,
                                     receiver: Some(
                                         Receiver {
                                             kind: Ref,
-                                            span: 225..230,
+                                            span: 231..236,
                                         },
                                     ),
                                     params: [],
@@ -234,13 +240,14 @@ CompilationUnit {
                                                 Stmt {
                                                     kind: Local(
                                                         Local {
+                                                            final_kw: None,
                                                             ty: Ty {
                                                                 kind: Primitive(
                                                                     Int,
                                                                 ),
-                                                                span: 243..246,
+                                                                span: 249..252,
                                                             },
-                                                            name: "sum" @ 247..250,
+                                                            name: "sum" @ 253..256,
                                                             init: Some(
                                                                 Expr {
                                                                     kind: Lit(
@@ -250,29 +257,30 @@ CompilationUnit {
                                                                             suffix: None,
                                                                         },
                                                                     ),
-                                                                    span: 253..254,
+                                                                    span: 259..260,
                                                                 },
                                                             ),
                                                         },
                                                     ),
-                                                    span: 243..255,
+                                                    span: 249..261,
                                                 },
                                                 Stmt {
                                                     kind: ForEach {
+                                                        final_kw: None,
                                                         ty: Ty {
                                                             kind: Ref {
                                                                 mutable: false,
                                                                 ty: Ty {
                                                                     kind: Path {
-                                                                        path: "Item" @ 270..274,
+                                                                        path: "Item" @ 276..280,
                                                                         args: [],
                                                                     },
-                                                                    span: 270..274,
+                                                                    span: 276..280,
                                                                 },
                                                             },
-                                                            span: 269..274,
+                                                            span: 275..280,
                                                         },
-                                                        name: "item" @ 275..279,
+                                                        name: "item" @ 281..285,
                                                         iter: Expr {
                                                             kind: Borrow {
                                                                 mutable: false,
@@ -280,15 +288,15 @@ CompilationUnit {
                                                                     kind: Field {
                                                                         expr: Expr {
                                                                             kind: This,
-                                                                            span: 283..287,
+                                                                            span: 289..293,
                                                                         },
-                                                                        name: "items" @ 288..293,
+                                                                        name: "items" @ 294..299,
                                                                         safe: false,
                                                                     },
-                                                                    span: 283..293,
+                                                                    span: 289..299,
                                                                 },
                                                             },
-                                                            span: 282..293,
+                                                            span: 288..299,
                                                         },
                                                         body: Stmt {
                                                             kind: Block(
@@ -303,9 +311,9 @@ CompilationUnit {
                                                                                         ),
                                                                                         lhs: Expr {
                                                                                             kind: Name(
-                                                                                                "sum" @ 309..312,
+                                                                                                "sum" @ 315..318,
                                                                                             ),
-                                                                                            span: 309..312,
+                                                                                            span: 315..318,
                                                                                         },
                                                                                         rhs: Expr {
                                                                                             kind: Binary {
@@ -315,71 +323,71 @@ CompilationUnit {
                                                                                                         receiver: Some(
                                                                                                             Expr {
                                                                                                                 kind: Name(
-                                                                                                                    "item" @ 316..320,
+                                                                                                                    "item" @ 322..326,
                                                                                                                 ),
-                                                                                                                span: 316..320,
+                                                                                                                span: 322..326,
                                                                                                             },
                                                                                                         ),
-                                                                                                        name: "price" @ 321..326,
+                                                                                                        name: "price" @ 327..332,
                                                                                                         args: [],
                                                                                                         safe: false,
                                                                                                     },
-                                                                                                    span: 316..328,
+                                                                                                    span: 322..334,
                                                                                                 },
                                                                                                 rhs: Expr {
                                                                                                     kind: MethodCall {
                                                                                                         receiver: Some(
                                                                                                             Expr {
                                                                                                                 kind: Name(
-                                                                                                                    "item" @ 331..335,
+                                                                                                                    "item" @ 337..341,
                                                                                                                 ),
-                                                                                                                span: 331..335,
+                                                                                                                span: 337..341,
                                                                                                             },
                                                                                                         ),
-                                                                                                        name: "count" @ 336..341,
+                                                                                                        name: "count" @ 342..347,
                                                                                                         args: [],
                                                                                                         safe: false,
                                                                                                     },
-                                                                                                    span: 331..343,
+                                                                                                    span: 337..349,
                                                                                                 },
                                                                                             },
-                                                                                            span: 316..343,
+                                                                                            span: 322..349,
                                                                                         },
                                                                                     },
-                                                                                    span: 309..343,
+                                                                                    span: 315..349,
                                                                                 },
                                                                             ),
-                                                                            span: 309..344,
+                                                                            span: 315..350,
                                                                         },
                                                                     ],
-                                                                    span: 295..354,
+                                                                    span: 301..360,
                                                                 },
                                                             ),
-                                                            span: 295..354,
+                                                            span: 301..360,
                                                         },
                                                     },
-                                                    span: 264..354,
+                                                    span: 270..360,
                                                 },
                                                 Stmt {
                                                     kind: Return(
                                                         Some(
                                                             Expr {
                                                                 kind: Name(
-                                                                    "sum" @ 370..373,
+                                                                    "sum" @ 376..379,
                                                                 ),
-                                                                span: 370..373,
+                                                                span: 376..379,
                                                             },
                                                         ),
                                                     ),
-                                                    span: 363..374,
+                                                    span: 369..380,
                                                 },
                                             ],
-                                            span: 233..380,
+                                            span: 239..386,
                                         },
                                     ),
                                 },
                             ),
-                            span: 221..380,
+                            span: 227..386,
                         },
                         Member {
                             docs: [],
@@ -404,37 +412,38 @@ CompilationUnit {
                                                         mutable: false,
                                                         ty: Ty {
                                                             kind: Path {
-                                                                path: "Item" @ 387..391,
+                                                                path: "Item" @ 393..397,
                                                                 args: [],
                                                             },
-                                                            span: 387..391,
+                                                            span: 393..397,
                                                         },
                                                     },
-                                                    span: 386..391,
+                                                    span: 392..397,
                                                 },
                                             ),
-                                            span: 386..392,
+                                            span: 392..398,
                                         },
                                     ),
-                                    name: "find" @ 393..397,
+                                    name: "find" @ 399..403,
                                     receiver: Some(
                                         Receiver {
                                             kind: Ref,
-                                            span: 393..397,
+                                            span: 399..403,
                                         },
                                     ),
                                     params: [
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Path {
-                                                    path: "String" @ 398..404,
+                                                    path: "String" @ 404..410,
                                                     args: [],
                                                 },
-                                                span: 398..404,
+                                                span: 404..410,
                                             },
-                                            name: "name" @ 405..409,
+                                            name: "name" @ 411..415,
                                             variadic: false,
-                                            span: 398..409,
+                                            span: 404..415,
                                         },
                                     ],
                                     borrows: [],
@@ -450,13 +459,14 @@ CompilationUnit {
                                                             Stmt {
                                                                 kind: Local(
                                                                     Local {
+                                                                        final_kw: None,
                                                                         ty: Ty {
                                                                             kind: Primitive(
                                                                                 Int,
                                                                             ),
-                                                                            span: 426..429,
+                                                                            span: 432..435,
                                                                         },
-                                                                        name: "i" @ 430..431,
+                                                                        name: "i" @ 436..437,
                                                                         init: Some(
                                                                             Expr {
                                                                                 kind: Lit(
@@ -466,12 +476,12 @@ CompilationUnit {
                                                                                         suffix: None,
                                                                                     },
                                                                                 ),
-                                                                                span: 434..435,
+                                                                                span: 440..441,
                                                                             },
                                                                         ),
                                                                     },
                                                                 ),
-                                                                span: 426..435,
+                                                                span: 432..441,
                                                             },
                                                         ],
                                                         cond: Some(
@@ -480,9 +490,9 @@ CompilationUnit {
                                                                     op: Lt,
                                                                     lhs: Expr {
                                                                         kind: Name(
-                                                                            "i" @ 437..438,
+                                                                            "i" @ 443..444,
                                                                         ),
-                                                                        span: 437..438,
+                                                                        span: 443..444,
                                                                     },
                                                                     rhs: Expr {
                                                                         kind: MethodCall {
@@ -491,22 +501,22 @@ CompilationUnit {
                                                                                     kind: Field {
                                                                                         expr: Expr {
                                                                                             kind: This,
-                                                                                            span: 441..445,
+                                                                                            span: 447..451,
                                                                                         },
-                                                                                        name: "items" @ 446..451,
+                                                                                        name: "items" @ 452..457,
                                                                                         safe: false,
                                                                                     },
-                                                                                    span: 441..451,
+                                                                                    span: 447..457,
                                                                                 },
                                                                             ),
-                                                                            name: "size" @ 452..456,
+                                                                            name: "size" @ 458..462,
                                                                             args: [],
                                                                             safe: false,
                                                                         },
-                                                                        span: 441..458,
+                                                                        span: 447..464,
                                                                     },
                                                                 },
-                                                                span: 437..458,
+                                                                span: 443..464,
                                                             },
                                                         ),
                                                         update: [
@@ -515,12 +525,12 @@ CompilationUnit {
                                                                     op: PostInc,
                                                                     expr: Expr {
                                                                         kind: Name(
-                                                                            "i" @ 460..461,
+                                                                            "i" @ 466..467,
                                                                         ),
-                                                                        span: 460..461,
+                                                                        span: 466..467,
                                                                     },
                                                                 },
-                                                                span: 460..463,
+                                                                span: 466..469,
                                                             },
                                                         ],
                                                         body: Stmt {
@@ -530,20 +540,21 @@ CompilationUnit {
                                                                         Stmt {
                                                                             kind: Local(
                                                                                 Local {
+                                                                                    final_kw: None,
                                                                                     ty: Ty {
                                                                                         kind: Ref {
                                                                                             mutable: false,
                                                                                             ty: Ty {
                                                                                                 kind: Path {
-                                                                                                    path: "Item" @ 480..484,
+                                                                                                    path: "Item" @ 486..490,
                                                                                                     args: [],
                                                                                                 },
-                                                                                                span: 480..484,
+                                                                                                span: 486..490,
                                                                                             },
                                                                                         },
-                                                                                        span: 479..484,
+                                                                                        span: 485..490,
                                                                                     },
-                                                                                    name: "item" @ 485..489,
+                                                                                    name: "item" @ 491..495,
                                                                                     init: Some(
                                                                                         Expr {
                                                                                             kind: Borrow {
@@ -554,29 +565,29 @@ CompilationUnit {
                                                                                                             kind: Field {
                                                                                                                 expr: Expr {
                                                                                                                     kind: This,
-                                                                                                                    span: 493..497,
+                                                                                                                    span: 499..503,
                                                                                                                 },
-                                                                                                                name: "items" @ 498..503,
+                                                                                                                name: "items" @ 504..509,
                                                                                                                 safe: false,
                                                                                                             },
-                                                                                                            span: 493..503,
+                                                                                                            span: 499..509,
                                                                                                         },
                                                                                                         index: Expr {
                                                                                                             kind: Name(
-                                                                                                                "i" @ 504..505,
+                                                                                                                "i" @ 510..511,
                                                                                                             ),
-                                                                                                            span: 504..505,
+                                                                                                            span: 510..511,
                                                                                                         },
                                                                                                     },
-                                                                                                    span: 493..506,
+                                                                                                    span: 499..512,
                                                                                                 },
                                                                                             },
-                                                                                            span: 492..506,
+                                                                                            span: 498..512,
                                                                                         },
                                                                                     ),
                                                                                 },
                                                                             ),
-                                                                            span: 479..507,
+                                                                            span: 485..513,
                                                                         },
                                                                         Stmt {
                                                                             kind: If {
@@ -588,25 +599,25 @@ CompilationUnit {
                                                                                                 receiver: Some(
                                                                                                     Expr {
                                                                                                         kind: Name(
-                                                                                                            "item" @ 524..528,
+                                                                                                            "item" @ 530..534,
                                                                                                         ),
-                                                                                                        span: 524..528,
+                                                                                                        span: 530..534,
                                                                                                     },
                                                                                                 ),
-                                                                                                name: "name" @ 529..533,
+                                                                                                name: "name" @ 535..539,
                                                                                                 args: [],
                                                                                                 safe: false,
                                                                                             },
-                                                                                            span: 524..535,
+                                                                                            span: 530..541,
                                                                                         },
                                                                                         rhs: Expr {
                                                                                             kind: Name(
-                                                                                                "name" @ 539..543,
+                                                                                                "name" @ 545..549,
                                                                                             ),
-                                                                                            span: 539..543,
+                                                                                            span: 545..549,
                                                                                         },
                                                                                     },
-                                                                                    span: 524..543,
+                                                                                    span: 530..549,
                                                                                 },
                                                                                 then: Stmt {
                                                                                     kind: Block(
@@ -617,51 +628,51 @@ CompilationUnit {
                                                                                                         Some(
                                                                                                             Expr {
                                                                                                                 kind: Name(
-                                                                                                                    "item" @ 570..574,
+                                                                                                                    "item" @ 576..580,
                                                                                                                 ),
-                                                                                                                span: 570..574,
+                                                                                                                span: 576..580,
                                                                                                             },
                                                                                                         ),
                                                                                                     ),
-                                                                                                    span: 563..575,
+                                                                                                    span: 569..581,
                                                                                                 },
                                                                                             ],
-                                                                                            span: 545..589,
+                                                                                            span: 551..595,
                                                                                         },
                                                                                     ),
-                                                                                    span: 545..589,
+                                                                                    span: 551..595,
                                                                                 },
                                                                                 els: None,
                                                                             },
-                                                                            span: 520..589,
+                                                                            span: 526..595,
                                                                         },
                                                                     ],
-                                                                    span: 465..599,
+                                                                    span: 471..605,
                                                                 },
                                                             ),
-                                                            span: 465..599,
+                                                            span: 471..605,
                                                         },
                                                     },
-                                                    span: 421..599,
+                                                    span: 427..605,
                                                 },
                                                 Stmt {
                                                     kind: Return(
                                                         Some(
                                                             Expr {
                                                                 kind: Null,
-                                                                span: 615..619,
+                                                                span: 621..625,
                                                             },
                                                         ),
                                                     ),
-                                                    span: 608..620,
+                                                    span: 614..626,
                                                 },
                                             ],
-                                            span: 411..626,
+                                            span: 417..632,
                                         },
                                     ),
                                 },
                             ),
-                            span: 386..626,
+                            span: 392..632,
                         },
                         Member {
                             docs: [],
@@ -679,32 +690,33 @@ CompilationUnit {
                                         span: 0..0,
                                     },
                                     ret: Void(
-                                        632..636,
+                                        638..642,
                                     ),
-                                    name: "describe" @ 637..645,
+                                    name: "describe" @ 643..651,
                                     receiver: Some(
                                         Receiver {
                                             kind: Ref,
-                                            span: 637..645,
+                                            span: 643..651,
                                         },
                                     ),
                                     params: [
                                         Param {
+                                            final_kw: None,
                                             ty: Ty {
                                                 kind: Nullable(
                                                     Ty {
                                                         kind: Path {
-                                                            path: "Item" @ 646..650,
+                                                            path: "Item" @ 652..656,
                                                             args: [],
                                                         },
-                                                        span: 646..650,
+                                                        span: 652..656,
                                                     },
                                                 ),
-                                                span: 646..651,
+                                                span: 652..657,
                                             },
-                                            name: "item" @ 652..656,
+                                            name: "item" @ 658..662,
                                             variadic: false,
-                                            span: 646..656,
+                                            span: 652..662,
                                         },
                                     ],
                                     borrows: [],
@@ -717,14 +729,15 @@ CompilationUnit {
                                                 Stmt {
                                                     kind: Local(
                                                         Local {
+                                                            final_kw: None,
                                                             ty: Ty {
                                                                 kind: Path {
-                                                                    path: "String" @ 668..674,
+                                                                    path: "String" @ 674..680,
                                                                     args: [],
                                                                 },
-                                                                span: 668..674,
+                                                                span: 674..680,
                                                             },
-                                                            name: "label" @ 675..680,
+                                                            name: "label" @ 681..686,
                                                             init: Some(
                                                                 Expr {
                                                                     kind: Binary {
@@ -734,16 +747,16 @@ CompilationUnit {
                                                                                 receiver: Some(
                                                                                     Expr {
                                                                                         kind: Name(
-                                                                                            "item" @ 683..687,
+                                                                                            "item" @ 689..693,
                                                                                         ),
-                                                                                        span: 683..687,
+                                                                                        span: 689..693,
                                                                                     },
                                                                                 ),
-                                                                                name: "name" @ 689..693,
+                                                                                name: "name" @ 695..699,
                                                                                 args: [],
                                                                                 safe: true,
                                                                             },
-                                                                            span: 683..695,
+                                                                            span: 689..701,
                                                                         },
                                                                         rhs: Expr {
                                                                             kind: Lit(
@@ -753,15 +766,15 @@ CompilationUnit {
                                                                                     suffix: None,
                                                                                 },
                                                                             ),
-                                                                            span: 699..708,
+                                                                            span: 705..714,
                                                                         },
                                                                     },
-                                                                    span: 683..708,
+                                                                    span: 689..714,
                                                                 },
                                                             ),
                                                         },
                                                     ),
-                                                    span: 668..709,
+                                                    span: 674..715,
                                                 },
                                                 Stmt {
                                                     kind: Switch {
@@ -772,19 +785,19 @@ CompilationUnit {
                                                                         kind: Field {
                                                                             expr: Expr {
                                                                                 kind: This,
-                                                                                span: 726..730,
+                                                                                span: 732..736,
                                                                             },
-                                                                            name: "items" @ 731..736,
+                                                                            name: "items" @ 737..742,
                                                                             safe: false,
                                                                         },
-                                                                        span: 726..736,
+                                                                        span: 732..742,
                                                                     },
                                                                 ),
-                                                                name: "size" @ 737..741,
+                                                                name: "size" @ 743..747,
                                                                 args: [],
                                                                 safe: false,
                                                             },
-                                                            span: 726..743,
+                                                            span: 732..749,
                                                         },
                                                         arms: [
                                                             SwitchArm {
@@ -800,10 +813,10 @@ CompilationUnit {
                                                                                             suffix: None,
                                                                                         },
                                                                                     ),
-                                                                                    span: 764..765,
+                                                                                    span: 770..771,
                                                                                 },
                                                                             ),
-                                                                            span: 764..765,
+                                                                            span: 770..771,
                                                                         },
                                                                     ],
                                                                     guard: None,
@@ -815,12 +828,12 @@ CompilationUnit {
                                                                                 receiver: Some(
                                                                                     Expr {
                                                                                         kind: Name(
-                                                                                            "Console" @ 769..776,
+                                                                                            "Console" @ 775..782,
                                                                                         ),
-                                                                                        span: 769..776,
+                                                                                        span: 775..782,
                                                                                     },
                                                                                 ),
-                                                                                name: "println" @ 777..784,
+                                                                                name: "println" @ 783..790,
                                                                                 args: [
                                                                                     Expr {
                                                                                         kind: Lit(
@@ -830,17 +843,17 @@ CompilationUnit {
                                                                                                 suffix: None,
                                                                                             },
                                                                                         ),
-                                                                                        span: 785..792,
+                                                                                        span: 791..798,
                                                                                     },
                                                                                 ],
                                                                                 safe: false,
                                                                             },
-                                                                            span: 769..793,
+                                                                            span: 775..799,
                                                                         },
                                                                     ),
-                                                                    span: 769..794,
+                                                                    span: 775..800,
                                                                 },
-                                                                span: 759..794,
+                                                                span: 765..800,
                                                             },
                                                             SwitchArm {
                                                                 label: Case {
@@ -855,10 +868,10 @@ CompilationUnit {
                                                                                             suffix: None,
                                                                                         },
                                                                                     ),
-                                                                                    span: 812..813,
+                                                                                    span: 818..819,
                                                                                 },
                                                                             ),
-                                                                            span: 812..813,
+                                                                            span: 818..819,
                                                                         },
                                                                         Pat {
                                                                             kind: Lit(
@@ -870,10 +883,10 @@ CompilationUnit {
                                                                                             suffix: None,
                                                                                         },
                                                                                     ),
-                                                                                    span: 815..816,
+                                                                                    span: 821..822,
                                                                                 },
                                                                             ),
-                                                                            span: 815..816,
+                                                                            span: 821..822,
                                                                         },
                                                                     ],
                                                                     guard: None,
@@ -885,12 +898,12 @@ CompilationUnit {
                                                                                 receiver: Some(
                                                                                     Expr {
                                                                                         kind: Name(
-                                                                                            "Console" @ 820..827,
+                                                                                            "Console" @ 826..833,
                                                                                         ),
-                                                                                        span: 820..827,
+                                                                                        span: 826..833,
                                                                                     },
                                                                                 ),
-                                                                                name: "println" @ 828..835,
+                                                                                name: "println" @ 834..841,
                                                                                 args: [
                                                                                     Expr {
                                                                                         kind: Lit(
@@ -900,21 +913,21 @@ CompilationUnit {
                                                                                                 suffix: None,
                                                                                             },
                                                                                         ),
-                                                                                        span: 836..841,
+                                                                                        span: 842..847,
                                                                                     },
                                                                                 ],
                                                                                 safe: false,
                                                                             },
-                                                                            span: 820..842,
+                                                                            span: 826..848,
                                                                         },
                                                                     ),
-                                                                    span: 820..843,
+                                                                    span: 826..849,
                                                                 },
-                                                                span: 807..843,
+                                                                span: 813..849,
                                                             },
                                                             SwitchArm {
                                                                 label: Default(
-                                                                    856..863,
+                                                                    862..869,
                                                                 ),
                                                                 body: Stmt {
                                                                     kind: Block(
@@ -927,12 +940,12 @@ CompilationUnit {
                                                                                                 receiver: Some(
                                                                                                     Expr {
                                                                                                         kind: Name(
-                                                                                                            "Console" @ 885..892,
+                                                                                                            "Console" @ 891..898,
                                                                                                         ),
-                                                                                                        span: 885..892,
+                                                                                                        span: 891..898,
                                                                                                     },
                                                                                                 ),
-                                                                                                name: "println" @ 893..900,
+                                                                                                name: "println" @ 899..906,
                                                                                                 args: [
                                                                                                     Expr {
                                                                                                         kind: Lit(
@@ -942,27 +955,27 @@ CompilationUnit {
                                                                                                                 suffix: None,
                                                                                                             },
                                                                                                         ),
-                                                                                                        span: 901..907,
+                                                                                                        span: 907..913,
                                                                                                     },
                                                                                                 ],
                                                                                                 safe: false,
                                                                                             },
-                                                                                            span: 885..908,
+                                                                                            span: 891..914,
                                                                                         },
                                                                                     ),
-                                                                                    span: 885..909,
+                                                                                    span: 891..915,
                                                                                 },
                                                                             ],
-                                                                            span: 867..923,
+                                                                            span: 873..929,
                                                                         },
                                                                     ),
-                                                                    span: 867..923,
+                                                                    span: 873..929,
                                                                 },
-                                                                span: 856..923,
+                                                                span: 862..929,
                                                             },
                                                         ],
                                                     },
-                                                    span: 718..933,
+                                                    span: 724..939,
                                                 },
                                                 Stmt {
                                                     kind: Try {
@@ -975,40 +988,41 @@ CompilationUnit {
                                                                                 receiver: Some(
                                                                                     Expr {
                                                                                         kind: This,
-                                                                                        span: 960..964,
+                                                                                        span: 966..970,
                                                                                     },
                                                                                 ),
-                                                                                name: "save" @ 965..969,
+                                                                                name: "save" @ 971..975,
                                                                                 args: [],
                                                                                 safe: false,
                                                                             },
-                                                                            span: 960..971,
+                                                                            span: 966..977,
                                                                         },
                                                                     ),
-                                                                    span: 960..972,
+                                                                    span: 966..978,
                                                                 },
                                                             ],
-                                                            span: 946..982,
+                                                            span: 952..988,
                                                         },
                                                         catches: [
                                                             Catch {
+                                                                final_kw: None,
                                                                 tys: [
                                                                     Ty {
                                                                         kind: Path {
-                                                                            path: "IOException" @ 990..1001,
+                                                                            path: "IOException" @ 996..1007,
                                                                             args: [],
                                                                         },
-                                                                        span: 990..1001,
+                                                                        span: 996..1007,
                                                                     },
                                                                     Ty {
                                                                         kind: Path {
-                                                                            path: "ParseException" @ 1004..1018,
+                                                                            path: "ParseException" @ 1010..1024,
                                                                             args: [],
                                                                         },
-                                                                        span: 1004..1018,
+                                                                        span: 1010..1024,
                                                                     },
                                                                 ],
-                                                                name: "e" @ 1019..1020,
+                                                                name: "e" @ 1025..1026,
                                                                 body: Block {
                                                                     stmts: [
                                                                         Stmt {
@@ -1018,41 +1032,41 @@ CompilationUnit {
                                                                                         receiver: Some(
                                                                                             Expr {
                                                                                                 kind: Name(
-                                                                                                    "Console" @ 1036..1043,
+                                                                                                    "Console" @ 1042..1049,
                                                                                                 ),
-                                                                                                span: 1036..1043,
+                                                                                                span: 1042..1049,
                                                                                             },
                                                                                         ),
-                                                                                        name: "println" @ 1044..1051,
+                                                                                        name: "println" @ 1050..1057,
                                                                                         args: [
                                                                                             Expr {
                                                                                                 kind: MethodCall {
                                                                                                     receiver: Some(
                                                                                                         Expr {
                                                                                                             kind: Name(
-                                                                                                                "e" @ 1052..1053,
+                                                                                                                "e" @ 1058..1059,
                                                                                                             ),
-                                                                                                            span: 1052..1053,
+                                                                                                            span: 1058..1059,
                                                                                                         },
                                                                                                     ),
-                                                                                                    name: "message" @ 1054..1061,
+                                                                                                    name: "message" @ 1060..1067,
                                                                                                     args: [],
                                                                                                     safe: false,
                                                                                                 },
-                                                                                                span: 1052..1063,
+                                                                                                span: 1058..1069,
                                                                                             },
                                                                                         ],
                                                                                         safe: false,
                                                                                     },
-                                                                                    span: 1036..1064,
+                                                                                    span: 1042..1070,
                                                                                 },
                                                                             ),
-                                                                            span: 1036..1065,
+                                                                            span: 1042..1071,
                                                                         },
                                                                     ],
-                                                                    span: 1022..1075,
+                                                                    span: 1028..1081,
                                                                 },
-                                                                span: 983..1075,
+                                                                span: 989..1081,
                                                             },
                                                         ],
                                                         finally: Some(
@@ -1065,33 +1079,33 @@ CompilationUnit {
                                                                                     receiver: Some(
                                                                                         Expr {
                                                                                             kind: Name(
-                                                                                                "Console" @ 1098..1105,
+                                                                                                "Console" @ 1104..1111,
                                                                                             ),
-                                                                                            span: 1098..1105,
+                                                                                            span: 1104..1111,
                                                                                         },
                                                                                     ),
-                                                                                    name: "println" @ 1106..1113,
+                                                                                    name: "println" @ 1112..1119,
                                                                                     args: [
                                                                                         Expr {
                                                                                             kind: Name(
-                                                                                                "label" @ 1114..1119,
+                                                                                                "label" @ 1120..1125,
                                                                                             ),
-                                                                                            span: 1114..1119,
+                                                                                            span: 1120..1125,
                                                                                         },
                                                                                     ],
                                                                                     safe: false,
                                                                                 },
-                                                                                span: 1098..1120,
+                                                                                span: 1104..1126,
                                                                             },
                                                                         ),
-                                                                        span: 1098..1121,
+                                                                        span: 1104..1127,
                                                                     },
                                                                 ],
-                                                                span: 1084..1131,
+                                                                span: 1090..1137,
                                                             },
                                                         ),
                                                     },
-                                                    span: 942..1131,
+                                                    span: 948..1137,
                                                 },
                                                 Stmt {
                                                     kind: Expr(
@@ -1102,15 +1116,15 @@ CompilationUnit {
                                                                         kind: Field {
                                                                             expr: Expr {
                                                                                 kind: This,
-                                                                                span: 1140..1144,
+                                                                                span: 1146..1150,
                                                                             },
-                                                                            name: "items" @ 1145..1150,
+                                                                            name: "items" @ 1151..1156,
                                                                             safe: false,
                                                                         },
-                                                                        span: 1140..1150,
+                                                                        span: 1146..1156,
                                                                     },
                                                                 ),
-                                                                name: "forEach" @ 1151..1158,
+                                                                name: "forEach" @ 1157..1164,
                                                                 args: [
                                                                     Expr {
                                                                         kind: Lambda {
@@ -1118,8 +1132,8 @@ CompilationUnit {
                                                                             params: [
                                                                                 LambdaParam {
                                                                                     ty: None,
-                                                                                    name: "i" @ 1159..1160,
-                                                                                    span: 1159..1160,
+                                                                                    name: "i" @ 1165..1166,
+                                                                                    span: 1165..1166,
                                                                                 },
                                                                             ],
                                                                             body: Expr(
@@ -1128,72 +1142,72 @@ CompilationUnit {
                                                                                         receiver: Some(
                                                                                             Expr {
                                                                                                 kind: Name(
-                                                                                                    "Console" @ 1164..1171,
+                                                                                                    "Console" @ 1170..1177,
                                                                                                 ),
-                                                                                                span: 1164..1171,
+                                                                                                span: 1170..1177,
                                                                                             },
                                                                                         ),
-                                                                                        name: "println" @ 1172..1179,
+                                                                                        name: "println" @ 1178..1185,
                                                                                         args: [
                                                                                             Expr {
                                                                                                 kind: Cast {
                                                                                                     ty: Ty {
                                                                                                         kind: Path {
-                                                                                                            path: "String" @ 1181..1187,
+                                                                                                            path: "String" @ 1187..1193,
                                                                                                             args: [],
                                                                                                         },
-                                                                                                        span: 1181..1187,
+                                                                                                        span: 1187..1193,
                                                                                                     },
                                                                                                     expr: Expr {
                                                                                                         kind: MethodCall {
                                                                                                             receiver: Some(
                                                                                                                 Expr {
                                                                                                                     kind: Name(
-                                                                                                                        "i" @ 1189..1190,
+                                                                                                                        "i" @ 1195..1196,
                                                                                                                     ),
-                                                                                                                    span: 1189..1190,
+                                                                                                                    span: 1195..1196,
                                                                                                                 },
                                                                                                             ),
-                                                                                                            name: "name" @ 1191..1195,
+                                                                                                            name: "name" @ 1197..1201,
                                                                                                             args: [],
                                                                                                             safe: false,
                                                                                                         },
-                                                                                                        span: 1189..1197,
+                                                                                                        span: 1195..1203,
                                                                                                     },
                                                                                                 },
-                                                                                                span: 1180..1197,
+                                                                                                span: 1186..1203,
                                                                                             },
                                                                                         ],
                                                                                         safe: false,
                                                                                     },
-                                                                                    span: 1164..1198,
+                                                                                    span: 1170..1204,
                                                                                 },
                                                                             ),
                                                                         },
-                                                                        span: 1159..1198,
+                                                                        span: 1165..1204,
                                                                     },
                                                                 ],
                                                                 safe: false,
                                                             },
-                                                            span: 1140..1199,
+                                                            span: 1146..1205,
                                                         },
                                                     ),
-                                                    span: 1140..1200,
+                                                    span: 1146..1206,
                                                 },
                                             ],
-                                            span: 658..1206,
+                                            span: 664..1212,
                                         },
                                     ),
                                 },
                             ),
-                            span: 632..1206,
+                            span: 638..1212,
                         },
                     ],
                 },
             ),
-            span: 18..1208,
+            span: 18..1214,
         },
     ],
     macros: [],
-    span: 0..1209,
+    span: 0..1215,
 }

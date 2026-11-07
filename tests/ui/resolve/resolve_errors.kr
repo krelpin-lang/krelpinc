@@ -1,6 +1,6 @@
 class Account {
     int balance;
-    const int LIMIT = 1000;
+    static final int LIMIT = 1000;
 
     static int total() {
         return this.balance;

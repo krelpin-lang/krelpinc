@@ -7,11 +7,11 @@ import std.util.List;
 record View(&String text) {}
 
 class Main {
-    static Mutex<List<&String>> WORDS = new Mutex<>(new ArrayList<>());
-    static Mutex<List<View>> VIEWS = new Mutex<>(new ArrayList<>());
-    static Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
-    static Runnable HOOK = () -> Console.println("hook");
-    static int LIMIT = 10;
+    static final Mutex<List<&String>> WORDS = new Mutex<>(new ArrayList<>());
+    static final Mutex<List<View>> VIEWS = new Mutex<>(new ArrayList<>());
+    static final Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
+    static final Runnable HOOK = () -> Console.println("hook");
+    static final int LIMIT = 10;
 
     static void main() {
         Console.println(Main.LIMIT);

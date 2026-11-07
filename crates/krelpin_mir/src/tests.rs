@@ -307,7 +307,7 @@ fn every_body_ends_in_a_terminator() {
     let printed = build_str(
         "import std.function.Supplier;\n\
          class A {\n\
-         \x20   static int limit = 3;\n\
+         \x20   static final int limit = 3;\n\
          \x20   static Supplier<int> f() { return () -> 1; }\n\
          }",
     );

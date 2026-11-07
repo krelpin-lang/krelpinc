@@ -760,6 +760,18 @@ impl LoweringCtxt<'_, '_> {
                         negated: op == BinOp::Ne,
                     };
                 }
+                let through = |expr: Expr, other: &Expr| {
+                    if matches!(other.ty, Ty::Null)
+                        && matches!(expr.ty, Ty::Ref { .. })
+                        && matches!(expr.ty.strip_refs(), Ty::Nullable(_))
+                    {
+                        deref_all(expr)
+                    } else {
+                        expr
+                    }
+                };
+                let lhs = through(lhs, &rhs);
+                let rhs = through(rhs, &lhs);
                 promote_operands(lhs, rhs)
             }
             BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => promote_operands(lhs, rhs),
@@ -779,7 +791,17 @@ impl LoweringCtxt<'_, '_> {
                 let amount = rhs.ty.strip_refs().clone();
                 (coerce(lhs, ty), coerce(rhs, &amount))
             }
-            BinOp::Elvis => (lhs, coerce(rhs, ty)),
+            BinOp::Elvis => {
+                let lhs = match &lhs.ty {
+                    Ty::Ref { ty: slot, .. }
+                        if matches!(slot.as_ref(), Ty::Nullable(_)) && self.tcx.is_copy(slot) =>
+                    {
+                        deref_all(lhs)
+                    }
+                    _ => lhs,
+                };
+                (lhs, coerce(rhs, ty))
+            }
             BinOp::And | BinOp::Or => (deref_all(lhs), deref_all(rhs)),
             _ => (lhs, rhs),
         };

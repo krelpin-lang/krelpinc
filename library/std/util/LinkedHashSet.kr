@@ -44,7 +44,7 @@ class LinkedHashSet<T extends Hashable<T>> implements Set<T> {
     private (&T)? slotAt(int index);
 
     private static final class Values<T extends Hashable<T>> borrows src implements Iterator<T> {
-        private &LinkedHashSet<T> set;
+        private final &LinkedHashSet<T> set;
         private int next;
 
         Values(&LinkedHashSet<T> set) keeps set {

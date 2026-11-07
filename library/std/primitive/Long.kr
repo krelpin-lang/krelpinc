@@ -16,13 +16,13 @@ package std.primitive;
  */
 final class Long implements Comparable<long>, Hashable<long>, Cloneable<long> {
     /** The minimum value of a {@code long}, -2<sup>63</sup>. */
-    public const long MIN_VALUE = -9223372036854775808L;
+    public static final long MIN_VALUE = -9223372036854775808L;
 
     /**
      * The maximum value of a {@code long}, 2<sup>63</sup> - 1
      * (9223372036854775807).
      */
-    public const long MAX_VALUE = 9223372036854775807L;
+    public static final long MAX_VALUE = 9223372036854775807L;
 
     private Long() {}
 

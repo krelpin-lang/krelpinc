@@ -1,0 +1,42 @@
+package demo;
+
+import std.util.ArrayList;
+import std.util.HashSet;
+import std.util.List;
+import std.util.Set;
+
+record Point(int x, int y) {}
+
+class Main {
+    static void main() {
+        List<long?> values = new ArrayList<>();
+        values.add(5L);
+        values.add(null);
+        List<long?> copy = values.clone();
+        values.set(0, 7L);
+        Console.println("$values $copy ${copy.get(0) ?: -1L} ${copy.get(1) ?: -1L}");
+        Console.println("${copy.get(0) == null} ${copy.get(1) == null} ${copy.get(0) != null} ${null != copy.get(1)}");
+
+        List<String?> names = new ArrayList<>();
+        names.add("a");
+        names.add(null);
+        List<String?> same = names.clone();
+        List<String?> other = new ArrayList<>();
+        other.add(null);
+        other.add("a");
+        Console.println("${names.equals(&same)} ${names.equals(&other)} ${names.hashCode() == same.hashCode()}");
+        Console.println("${names.indexOf(&null)} ${other.indexOf(&"a")} ${same.get(1) ?: "none"}");
+
+        Set<String?> seen = new HashSet<>();
+        seen.add("x");
+        seen.add(null);
+        seen.add(null);
+        seen.add("x");
+        Console.println("${seen.size()} ${seen.contains(&null)} ${seen.contains(&"y")}");
+
+        List<Point?> points = new ArrayList<>();
+        points.add(new Point(1, 2));
+        points.add(null);
+        Console.println("${points.clone()} ${points.get(1) ?: new Point(0, 0)} ${points.contains(&null)}");
+    }
+}

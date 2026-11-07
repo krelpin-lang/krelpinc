@@ -21,7 +21,7 @@ package std.lang;
  * {@link Error} for failures that should not be caught.
  */
 class Throwable {
-    private String? message;
+    private final String? message;
 
     /** Constructs a throwable with no detail message. */
     Throwable() {

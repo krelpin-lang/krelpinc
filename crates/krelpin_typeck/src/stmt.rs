@@ -87,6 +87,7 @@ impl FnCtxt<'_, '_> {
                 name,
                 iter,
                 body,
+                ..
             } => {
                 let iter_ty = self.check_expr(iter);
                 let elem = self.element_ty(&iter_ty, iter.span);

@@ -16,7 +16,6 @@ use crate::{PackagePath, Res, Resolutions};
 enum StaticContext {
     Method,
     StaticField,
-    ConstField,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -456,6 +455,7 @@ impl<'a> Resolver<'a> {
                 name,
                 iter,
                 body,
+                ..
             } => {
                 self.resolve_expr(iter);
                 self.with_scope(|this| {
@@ -946,9 +946,6 @@ impl<'a> Resolver<'a> {
             Some(StaticContext::StaticField) => {
                 "a `static` field belongs to the class, not to a specific object"
             }
-            Some(StaticContext::ConstField) => {
-                "a `const` field belongs to the class, not to a specific object"
-            }
         };
         self.emit(
             Diagnostic::error(format!("`{keyword}` is not available here"))
@@ -977,7 +974,6 @@ fn member_static_context(kind: &MemberKind) -> Option<StaticContext> {
         MemberKind::Field(field) => match field.storage {
             FieldStorage::Instance => None,
             FieldStorage::Static(_) => Some(StaticContext::StaticField),
-            FieldStorage::Const(_) => Some(StaticContext::ConstField),
         },
         MemberKind::Constructor(_) | MemberKind::Type(_) => None,
         MemberKind::Method(method) => method.receiver.is_none().then_some(StaticContext::Method),

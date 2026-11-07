@@ -36,6 +36,7 @@ pub(crate) struct FnCtxt<'a, 'tcx> {
     /// Whether this is the body of an `async` method, where `await` is
     /// allowed. Lambdas inside it aren't.
     pub(crate) in_async: bool,
+    pub(crate) in_ctor: bool,
     /// The field an assignment is checking as its target, which reports a
     /// record component as unassignable rather than as private.
     pub(crate) assigning: Option<krelpin_span::Span>,
@@ -100,6 +101,7 @@ pub(crate) fn check_units(tcx: &Tcx<'_>, units: &[CompilationUnit]) -> TypeckRes
 
         for member in members {
             let mut fcx = check_member(tcx, owner, member);
+            tcx.check_finals(item, member);
             fcx.report_pending_calls();
             results.extend(fcx.results);
             results.local_types.extend(fcx.locals);
@@ -134,7 +136,7 @@ fn check_member<'a, 'tcx>(tcx: &'a Tcx<'tcx>, owner: DefId, member: &Member) -> 
                 let expected = ty.unwrap_or(Ty::Unknown);
                 fcx.self_ty = if matches!(
                     field.storage,
-                    FieldStorage::Static(_) | FieldStorage::Const(_)
+                    FieldStorage::Static(_)
                 ) {
                     Ty::Unknown
                 } else {
@@ -147,6 +149,7 @@ fn check_member<'a, 'tcx>(tcx: &'a Tcx<'tcx>, owner: DefId, member: &Member) -> 
         MemberKind::Constructor(ctor) => {
             let mut fcx = FnCtxt::new(tcx, owner, Ty::Void);
             fcx.self_ty = receiver_ty(tcx, owner, ReceiverKind::RefMut);
+            fcx.in_ctor = true;
             fcx.exceptions = ExceptionScope::declared(tcx.lower_tys(&ctor.throws));
             fcx.declare_params(&ctor.params);
             fcx.delegation = ctor.body.stmts.first().and_then(|stmt| match &stmt.kind {
@@ -281,6 +284,7 @@ impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
             results: TypeckResults::default(),
             delegation: None,
             in_async: false,
+            in_ctor: false,
             assigning: None,
         }
     }

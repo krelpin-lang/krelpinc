@@ -16,10 +16,10 @@ package std.primitive;
  */
 final class Byte implements Comparable<byte>, Hashable<byte>, Cloneable<byte> {
     /** The minimum value of a {@code byte}, -2<sup>7</sup>. */
-    public const byte MIN_VALUE = -128;
+    public static final byte MIN_VALUE = -128;
 
     /** The maximum value of a {@code byte}, 2<sup>7</sup> - 1 (127). */
-    public const byte MAX_VALUE = 127;
+    public static final byte MAX_VALUE = 127;
 
     private Byte() {}
 

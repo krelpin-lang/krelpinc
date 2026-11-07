@@ -7,8 +7,8 @@ import std.util.List;
 
 class Main {
     static final Runnable HOOK = () -> Console.println("hook");
-    static Runnable LATER = Main.make();
-    static Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
+    static final Runnable LATER = Main.make();
+    static final Mutex<List<Runnable>> TASKS = new Mutex<>(new ArrayList<>());
 
     static Runnable make() {
         return () -> Console.println("made");
