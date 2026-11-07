@@ -9,6 +9,13 @@
 
 #include "krelpin.h"
 
+#if defined(__APPLE__)
+#include <stdlib.h>
+#elif defined(__linux__)
+#include <errno.h>
+#include <sys/random.h>
+#endif
+
 static int saved_argc;
 static char **saved_argv;
 static pthread_mutex_t console_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -295,4 +302,25 @@ void kr_once(_Atomic int32_t *state, void (*init)(void)) {
     while (atomic_load(state) != 2) {
         sched_yield();
     }
+}
+
+void kr_secure_random_fill(KrArray *bytes) {
+#if defined(__APPLE__)
+    arc4random_buf(bytes->data, (size_t)bytes->len);
+#elif defined(__linux__)
+    size_t done = 0;
+    while (done < (size_t)bytes->len) {
+        ssize_t got = getrandom(bytes->data + done, (size_t)bytes->len - done, 0);
+        if (got < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            fprintf(stderr, "fatal: the operating system has no secure random source\n");
+            abort();
+        }
+        done += (size_t)got;
+    }
+#else
+#error "no secure random source for this platform"
+#endif
 }

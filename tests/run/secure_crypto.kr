@@ -1,0 +1,59 @@
+import std.crypto.ConstantTime;
+import std.crypto.HmacSha256;
+import std.crypto.SecureRandom;
+import std.util.HashSet;
+import std.util.Hex;
+import std.util.Set;
+
+class Main {
+    static void main() {
+        byte[] key = Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
+        Console.println(Hex.encode(&HmacSha256.mac(&key, "Hi There")));
+        Console.println(Hex.encode(&HmacSha256.mac(&"Jefe".bytes(), "what do ya want for nothing?")));
+        byte[] longKey = new byte[131];
+        for (int i = 0; i < 131; i++) {
+            longKey[i] = (byte) 0xaa;
+        }
+        Console.println(Hex.encode(&HmacSha256.mac(&longKey, "Test Using Larger Than Block-Size Key - Hash Key First")));
+        HmacSha256 streaming = new HmacSha256(&"Jefe".bytes());
+        streaming.update("what do ya want ");
+        streaming.update("for nothing?");
+        byte[] first = streaming.digest();
+        streaming.update("what do ya want for nothing?");
+        byte[] second = streaming.digest();
+        Console.println(ConstantTime.isEqual(&first, &second));
+        byte[] tag = HmacSha256.mac(&key, "message");
+        Console.println(HmacSha256.verify(&key, &"message".bytes(), &tag) + " " + HmacSha256.verify(&key, &"messagE".bytes(), &tag));
+        Console.println(ConstantTime.isEqual(&"abc".bytes(), &"abd".bytes()) + " " + ConstantTime.isEqual(&"abc".bytes(), &"ab".bytes()));
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i < 1000; i++) {
+            seen.add(SecureRandom.token(16));
+        }
+        Console.println(seen.size() + " " + SecureRandom.token(16).length() + " " + SecureRandom.bytes(0).length);
+        int[] counts = new int[6];
+        for (int i = 0; i < 60000; i++) {
+            counts[SecureRandom.nextInt(6)] += 1;
+        }
+        boolean even = true;
+        for (int i = 0; i < 6; i++) {
+            if (counts[i] < 9000 || counts[i] > 11000) {
+                even = false;
+            }
+        }
+        Console.println(even);
+        byte[] buffer = new byte[32];
+        SecureRandom.nextBytes(&mut buffer);
+        int zeros = 0;
+        for (int i = 0; i < 32; i++) {
+            if (buffer[i] == (byte) 0) {
+                zeros++;
+            }
+        }
+        Console.println(zeros < 8);
+        try {
+            SecureRandom.nextInt(0);
+        } catch (IllegalArgumentException e) {
+            Console.println(e.getMessage());
+        }
+    }
+}

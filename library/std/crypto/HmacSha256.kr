@@ -1,0 +1,64 @@
+package std.crypto;
+
+final class HmacSha256 {
+    private static final int BLOCK = 64;
+
+    private final byte[] outerKey;
+    private final byte[] innerKey;
+    private final Sha256 inner;
+
+    HmacSha256(&byte[] key) {
+        byte[] block = new byte[HmacSha256.BLOCK];
+        if (key.length > HmacSha256.BLOCK) {
+            byte[] hashed = Sha256.hash(key);
+            for (int index = 0; index < hashed.length; index++) {
+                block[index] = hashed[index];
+            }
+        } else {
+            for (int index = 0; index < key.length; index++) {
+                block[index] = key[index];
+            }
+        }
+        byte[] outer = new byte[HmacSha256.BLOCK];
+        byte[] innerPad = new byte[HmacSha256.BLOCK];
+        for (int index = 0; index < HmacSha256.BLOCK; index++) {
+            outer[index] = (byte) (block[index] ^ 0x5c);
+            innerPad[index] = (byte) (block[index] ^ 0x36);
+        }
+        this.outerKey = outer;
+        this.innerKey = innerPad;
+        this.inner = new Sha256();
+        this.inner.update(&this.innerKey);
+    }
+
+    static byte[] mac(&byte[] key, &byte[] message) {
+        HmacSha256 hmac = new HmacSha256(key);
+        hmac.update(message);
+        return hmac.digest();
+    }
+
+    static byte[] mac(&byte[] key, String message) {
+        return HmacSha256.mac(key, &message.bytes());
+    }
+
+    static boolean verify(&byte[] key, &byte[] message, &byte[] tag) {
+        return ConstantTime.isEqual(&HmacSha256.mac(key, message), tag);
+    }
+
+    mut void update(&byte[] data) {
+        this.inner.update(data);
+    }
+
+    mut void update(String text) {
+        this.inner.update(text);
+    }
+
+    mut byte[] digest() {
+        byte[] innerHash = this.inner.digest();
+        this.inner.update(&this.innerKey);
+        Sha256 outer = new Sha256();
+        outer.update(&this.outerKey);
+        outer.update(&innerHash);
+        return outer.digest();
+    }
+}

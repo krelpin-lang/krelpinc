@@ -1,0 +1,53 @@
+package std.crypto;
+
+import std.util.Base64;
+
+final class SecureRandom {
+    private SecureRandom() {}
+
+    static void nextBytes(&mut byte[] bytes) {
+        SecureRandom.fillRaw(bytes);
+    }
+
+    static byte[] bytes(int count) {
+        if (count < 0) {
+            throw new IllegalArgumentException("the count can't be negative, but it is $count");
+        }
+        byte[] bytes = new byte[count];
+        SecureRandom.fillRaw(&mut bytes);
+        return bytes;
+    }
+
+    static long nextLong() {
+        byte[] bytes = SecureRandom.bytes(8);
+        long value = 0L;
+        for (int index = 0; index < 8; index++) {
+            value = (value << 8) | ((long) bytes[index] & 0xFFL);
+        }
+        return value;
+    }
+
+    static int nextInt() {
+        return (int) (SecureRandom.nextLong() >>> 32);
+    }
+
+    static int nextInt(int bound) {
+        if (bound <= 0) {
+            throw new IllegalArgumentException("the bound must be positive, but it is $bound");
+        }
+        long limit = long.MAX_VALUE - long.MAX_VALUE % bound;
+        while (true) {
+            long candidate = SecureRandom.nextLong() >>> 1;
+            if (candidate < limit) {
+                return (int) (candidate % bound);
+            }
+        }
+    }
+
+    static String token(int byteCount) {
+        return Base64.encodeUrl(&SecureRandom.bytes(byteCount));
+    }
+
+    @Intrinsic
+    private static void fillRaw(&mut byte[] bytes);
+}

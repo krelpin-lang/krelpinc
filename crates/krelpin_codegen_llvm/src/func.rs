@@ -1318,6 +1318,7 @@ pub(crate) fn runtime_signature(name: &str) -> &'static str {
         "kr_mutex_wait_millis" => "declare zeroext i1 @kr_mutex_wait_millis(ptr, i64)",
         "kr_mutex_notify" => "declare void @kr_mutex_notify(ptr)",
         "kr_mutex_notify_all" => "declare void @kr_mutex_notify_all(ptr)",
+        "kr_secure_random_fill" => "declare void @kr_secure_random_fill(ptr)",
         "kr_rwlock_new" => "declare ptr @kr_rwlock_new()",
         "kr_rwlock_read" => "declare void @kr_rwlock_read(ptr)",
         "kr_rwlock_write" => "declare void @kr_rwlock_write(ptr)",

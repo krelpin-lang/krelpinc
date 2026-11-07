@@ -1,0 +1,16 @@
+package std.crypto;
+
+final class ConstantTime {
+    private ConstantTime() {}
+
+    static boolean isEqual(&byte[] a, &byte[] b) {
+        if (a.length != b.length) {
+            return false;
+        }
+        int difference = 0;
+        for (int index = 0; index < a.length; index++) {
+            difference |= a[index] ^ b[index];
+        }
+        return difference == 0;
+    }
+}

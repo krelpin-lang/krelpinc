@@ -69,6 +69,7 @@ lang_items! {
     Mutex: "std.sync.Mutex",
     MutexGuard: "std.sync.Mutex.Guard",
     ReadWriteLock: "std.sync.ReadWriteLock",
+    SecureRandom: "std.crypto.SecureRandom",
     ReadGuard: "std.sync.ReadWriteLock.ReadGuard",
     WriteGuard: "std.sync.ReadWriteLock.WriteGuard",
     AtomicBool: "std.sync.AtomicBool",

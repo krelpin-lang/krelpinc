@@ -153,6 +153,12 @@ impl FnCx<'_, '_, '_> {
         if items.is(owner, LangItem::System) {
             return self.system_builtin(name, builtin);
         }
+        if items.is(owner, LangItem::SecureRandom) && name == "fillRaw" {
+            let bytes = self.assign("load ptr, ptr %a0");
+            self.runtime("void", "kr_secure_random_fill", &format!("ptr {bytes}"));
+            self.line("ret void");
+            return true;
+        }
         if builtin.receiver.is_none()
             && builtin.params.is_empty()
             && matches!(name, "lastError" | "lastFailed")

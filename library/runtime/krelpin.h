@@ -226,6 +226,7 @@ void kr_mutex_wait(void *mutex);
 bool kr_mutex_wait_millis(void *mutex, int64_t millis);
 void kr_mutex_notify(void *mutex);
 void kr_mutex_notify_all(void *mutex);
+void kr_secure_random_fill(KrArray *bytes);
 void *kr_rwlock_new(void);
 void kr_rwlock_read(void *lock);
 void kr_rwlock_write(void *lock);
