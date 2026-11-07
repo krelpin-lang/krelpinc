@@ -21,7 +21,17 @@ impl Tcx<'_> {
             (Ty::Unknown, _) | (_, Ty::Unknown) => true,
             _ if from == to => true,
             (Ty::Null, Ty::Nullable(_)) => true,
-            (Ty::Nullable(from), Ty::Nullable(to)) => assignable(from, to),
+            (Ty::Nullable(from), Ty::Nullable(to)) => {
+                let converts_while_lending = match to.as_ref() {
+                    Ty::Ref { ty: inner, .. } => {
+                        !matches!(from.as_ref(), Ty::Ref { .. })
+                            && from != inner
+                            && !inner.is_unknown()
+                    }
+                    _ => false,
+                };
+                !converts_while_lending && assignable(from, to)
+            }
             (Ty::Nullable(_) | Ty::Null, _) => false,
             (from, Ty::Nullable(to)) => assignable(from, to),
             (Ty::Primitive(from), Ty::Primitive(to)) => widens(*from, *to),

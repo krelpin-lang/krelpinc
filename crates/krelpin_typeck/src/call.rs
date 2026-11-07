@@ -67,6 +67,22 @@ impl FnCtxt<'_, '_> {
         }
     }
 
+    /// Whether a value that can't be copied can be lent to a `&T` parameter,
+    /// so `Console.println(list)` borrows `list` instead of taking it.
+    fn lends(&self, expr: &Expr, actual: &Ty, expected: &Ty) -> bool {
+        let Ty::Ref {
+            mutable: false,
+            ty: inner,
+        } = expected.non_null()
+        else {
+            return false;
+        };
+        !is_closure(expr)
+            && !matches!(actual, Ty::Ref { .. } | Ty::Null | Ty::Unknown)
+            && !self.tcx.is_copy(actual)
+            && self.accepts(expr, actual, inner)
+    }
+
     fn accepts_exact(&self, expr: &Expr, actual: &Ty, expected: &Ty) -> bool {
         match self.closure_fits(expr, expected) {
             Some(fits) => fits,
@@ -312,6 +328,7 @@ impl FnCtxt<'_, '_> {
             return Ty::Unknown;
         };
 
+        let applicable = self.prefer_lending(applicable, arg_tys, phase);
         let Some(chosen) = self.most_specific(&applicable, args.len(), phase) else {
             let unknown_arg = args.iter().zip(arg_tys).any(|(arg, ty)| {
                 !is_closure(arg) && !self.is_diamond(arg) && ty.references_unknown()
@@ -624,11 +641,36 @@ impl FnCtxt<'_, '_> {
                 .all(|(index, (arg, ty))| {
                     let expected = candidate.param(index, phase);
                     if copying {
-                        self.accepts(arg, ty, &expected)
+                        self.accepts(arg, ty, &expected) || self.lends(arg, ty, &expected)
                     } else {
-                        self.accepts_exact(arg, ty, &expected)
+                        self.accepts_exact(arg, ty, &expected) || self.lends(arg, ty, &expected)
                     }
                 })
+    }
+
+    /// When one overload takes a value that can't be copied and another
+    /// borrows it, the borrowing one wins, so `Console.println(list)` leaves
+    /// `list` usable.
+    fn prefer_lending<'c>(
+        &self,
+        mut applicable: Vec<&'c Candidate>,
+        arg_tys: &[Ty],
+        phase: Phase,
+    ) -> Vec<&'c Candidate> {
+        for (index, ty) in arg_tys.iter().enumerate() {
+            if matches!(ty, Ty::Ref { .. } | Ty::Null | Ty::Unknown) || self.tcx.is_copy(ty) {
+                continue;
+            }
+            let borrows = |candidate: &Candidate| {
+                matches!(candidate.param(index, phase).non_null(), Ty::Ref { .. })
+            };
+            if applicable.iter().any(|candidate| borrows(candidate))
+                && applicable.iter().any(|candidate| !borrows(candidate))
+            {
+                applicable.retain(|candidate| borrows(candidate));
+            }
+        }
+        applicable
     }
 
     fn most_specific<'c>(

@@ -79,7 +79,7 @@ error: cannot assign to `text` because it is borrowed
 95 |         text = "b";
    |         ^^^^^^^^^^ `text` is assigned here while it is borrowed
 96 |         Console.println(future);
-   |         ----------------------- the borrow is used later here
+   |                         ------ the borrow is used later here
 
 error: aborting due to 8 previous errors
 

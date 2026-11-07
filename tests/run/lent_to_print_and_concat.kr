@@ -1,0 +1,24 @@
+import std.util.ArrayList;
+import std.util.BitSet;
+import std.util.List;
+
+record Bag(List<int> items) {}
+
+class Main {
+    static void main() {
+        BitSet bits = new BitSet();
+        bits.set(2);
+        String text = "start";
+        text += bits;
+        text += " $bits ${bits}";
+        Console.println(text);
+        List<int> items = new ArrayList<>();
+        items.add(1);
+        Bag bag = new Bag(items);
+        Console.println("bag " + bag);
+        Console.println(bag);
+        Console.println(bag.items().size() + " " + bits.cardinality());
+        Console.print(bits);
+        Console.println(new BitSet());
+    }
+}

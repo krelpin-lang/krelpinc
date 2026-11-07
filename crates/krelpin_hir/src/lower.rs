@@ -629,6 +629,9 @@ impl LoweringCtxt<'_, '_> {
                     (Some(_), Ty::Primitive(from), Ty::Primitive(to)) if widens(*from, *to) => {
                         coerce(value, &place.ty)
                     }
+                    (Some(BinOp::Add), _, _) if self.tcx.is_string(place.ty.strip_refs()) => {
+                        self.lend_place(value)
+                    }
                     (Some(_), _, _) => value,
                 };
                 ExprKind::Assign {
@@ -808,12 +811,39 @@ impl LoweringCtxt<'_, '_> {
                 (lhs, coerce(rhs, ty))
             }
             BinOp::And | BinOp::Or => (deref_all(lhs), deref_all(rhs)),
+            BinOp::Add if self.tcx.is_string(ty) => (self.lend_place(lhs), self.lend_place(rhs)),
             _ => (lhs, rhs),
         };
         ExprKind::Binary {
             op,
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
+        }
+    }
+
+    /// A variable or field joined into a string is lent rather than moved,
+    /// so `"bits " + bits` leaves `bits` usable.
+    fn lend_place(&self, expr: Expr) -> Expr {
+        let is_place = matches!(
+            expr.kind,
+            ExprKind::Local(_)
+                | ExprKind::Field { .. }
+                | ExprKind::Static { .. }
+                | ExprKind::Index { .. }
+        );
+        if !is_place || matches!(expr.ty, Ty::Ref { .. }) || self.tcx.is_copy(&expr.ty) {
+            return expr;
+        }
+        Expr {
+            ty: Ty::Ref {
+                mutable: false,
+                ty: Box::new(expr.ty.clone()),
+            },
+            span: expr.span,
+            kind: ExprKind::Borrow {
+                mutable: false,
+                expr: Box::new(expr),
+            },
         }
     }
 

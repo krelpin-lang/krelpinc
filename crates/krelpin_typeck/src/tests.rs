@@ -714,6 +714,27 @@ fn console_prints_values_and_borrows() {
 }
 
 #[test]
+fn values_that_cannot_be_copied_are_lent_to_borrowing_parameters() {
+    assert_eq!(
+        errors(
+            "import std.util.ArrayList;\nimport std.util.List;\n\
+             class A { static void show(&Object? value) {} \
+             static void f() { List<int> items = new ArrayList<>(); \
+             A.show(items); A.show(items); Console.println(items); Console.println(items); \
+             String text = \"items \" + items; text += items; int n = items.size(); } }"
+        ),
+        Vec::<String>::new()
+    );
+    assert_eq!(
+        errors(
+            "class A { static void show(&Object? value) {} \
+             static void f() { String? maybe = null; A.show(maybe); } }"
+        ),
+        ["mismatched types"]
+    );
+}
+
+#[test]
 fn exceptions() {
     body_ok(
         "try { throw new IllegalArgumentException(\"bad\"); } \
