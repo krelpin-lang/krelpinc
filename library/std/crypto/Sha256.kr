@@ -38,10 +38,29 @@ final class Sha256 {
     }
 
     mut void update(&byte[] data) {
-        for (int index = 0; index < data.length; index++) {
-            this.push(data[index]);
+        int index = 0;
+        while (index < data.length) {
+            if (this.filled == 0 && data.length - index >= 64) {
+                this.loadData(data, index);
+                this.compress();
+                index += 64;
+            } else {
+                this.push(data[index]);
+                index++;
+            }
         }
         this.length += (long) data.length;
+    }
+
+    mut void copyFrom(&Sha256 other) {
+        for (int index = 0; index < 8; index++) {
+            this.state[index] = other.state[index];
+        }
+        for (int index = 0; index < other.filled; index++) {
+            this.block[index] = other.block[index];
+        }
+        this.filled = other.filled;
+        this.length = other.length;
     }
 
     mut void update(String text) {
@@ -86,18 +105,32 @@ final class Sha256 {
         this.block[this.filled] = value;
         this.filled++;
         if (this.filled == 64) {
+            this.loadBlock();
             this.compress();
             this.filled = 0;
         }
     }
 
-    private mut void compress() {
+    private mut void loadBlock() {
         for (int index = 0; index < 16; index++) {
             this.words[index] = ((this.block[index * 4] & 0xFF) << 24)
                 | ((this.block[index * 4 + 1] & 0xFF) << 16)
                 | ((this.block[index * 4 + 2] & 0xFF) << 8)
                 | (this.block[index * 4 + 3] & 0xFF);
         }
+    }
+
+    private mut void loadData(&byte[] data, int offset) {
+        for (int index = 0; index < 16; index++) {
+            int at = offset + index * 4;
+            this.words[index] = ((data[at] & 0xFF) << 24)
+                | ((data[at + 1] & 0xFF) << 16)
+                | ((data[at + 2] & 0xFF) << 8)
+                | (data[at + 3] & 0xFF);
+        }
+    }
+
+    private mut void compress() {
         for (int index = 16; index < 64; index++) {
             int early = this.words[index - 15];
             int late = this.words[index - 2];

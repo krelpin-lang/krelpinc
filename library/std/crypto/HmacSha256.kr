@@ -3,8 +3,8 @@ package std.crypto;
 final class HmacSha256 {
     private static final int BLOCK = 64;
 
-    private final byte[] outerKey;
-    private final byte[] innerKey;
+    private final Sha256 innerStart;
+    private final Sha256 outerStart;
     private final Sha256 inner;
     private final Sha256 outer;
 
@@ -26,10 +26,12 @@ final class HmacSha256 {
             outer[index] = (byte) (block[index] ^ 0x5c);
             innerPad[index] = (byte) (block[index] ^ 0x36);
         }
-        this.outerKey = outer;
-        this.innerKey = innerPad;
+        this.innerStart = new Sha256();
+        this.innerStart.update(&innerPad);
+        this.outerStart = new Sha256();
+        this.outerStart.update(&outer);
         this.inner = new Sha256();
-        this.inner.update(&this.innerKey);
+        this.inner.copyFrom(&this.innerStart);
         this.outer = new Sha256();
     }
 
@@ -57,8 +59,8 @@ final class HmacSha256 {
 
     mut byte[] digest() {
         byte[] innerHash = this.inner.digest();
-        this.inner.update(&this.innerKey);
-        this.outer.update(&this.outerKey);
+        this.inner.copyFrom(&this.innerStart);
+        this.outer.copyFrom(&this.outerStart);
         this.outer.update(&innerHash);
         return this.outer.digest();
     }
