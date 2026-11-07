@@ -138,7 +138,7 @@ impl Parser<'_> {
         self.parse_ident()
     }
 
-    fn parse_generic_args(&mut self) -> PResult<Vec<Ty>> {
+    pub(crate) fn parse_generic_args(&mut self) -> PResult<Vec<Ty>> {
         if !self.eat_noexpect(TokenKind::Lt) {
             return Ok(Vec::new());
         }

@@ -444,9 +444,19 @@ impl<'a, 'tcx> Checker<'a, 'tcx> {
         }
         let ty = self.tys.place_ty(&path_place(&moved.path));
         if !ty.is_unknown() {
-            diagnostic = diagnostic.with_note(format!(
-                "`{moved_name}` has type `{ty}`, which is moved instead of copied"
-            ));
+            diagnostic = match self.tys.tcx.uncopyable_part(&ty) {
+                Some((part, part_ty)) => diagnostic
+                    .with_note(format!(
+                        "`{moved_name}` has type `{ty}`, which is moved instead of copied \
+                         because `{part}` in it has type `{part_ty}`, which can't be copied"
+                    ))
+                    .with_help(format!(
+                        "borrow it with `&{moved_name}`, or keep a copy with `{moved_name}.clone()`"
+                    )),
+                None => diagnostic.with_note(format!(
+                    "`{moved_name}` has type `{ty}`, which is moved instead of copied"
+                )),
+            };
         }
         self.emit(span, diagnostic);
     }

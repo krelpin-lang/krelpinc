@@ -1,0 +1,19 @@
+error: `Op.Add` is a case of the enum `Op`, not a type
+  --> tests/ui/resolve/construction_errors.kr:10:23
+   |
+10 |         Op o = new Op.Add(1, 2);
+   |                       ^^^
+   |
+   = note: the cases of an enum are written without `new`
+   = help: write `Op.Add(...)` without `new`
+
+error: `Point` is a record, not a method
+  --> tests/ui/resolve/construction_errors.kr:11:19
+   |
+11 |         Point p = Point(1, 2);
+   |                   ^^^^^ a record is created with `new`
+   |
+   = help: write `new Point(...)`
+
+error: aborting due to 2 previous errors
+

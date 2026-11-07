@@ -1,0 +1,13 @@
+error: borrow of moved value: `a`
+ --> tests/ui/borrowck/moved_record.kr:9:25
+  |
+8 |         Team b = a;
+  |                  - value moved here
+9 |         Console.println(a.name());
+  |                         ^^^^^^^^ value borrowed here after move
+  |
+  = note: `a` has type `Team`, which is moved instead of copied because `members` in it has type `List<String>`, which can't be copied
+  = help: borrow it with `&a`, or keep a copy with `a.clone()`
+
+error: aborting due to 1 previous error
+

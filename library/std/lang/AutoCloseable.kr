@@ -1,0 +1,5 @@
+package std.lang;
+
+interface AutoCloseable {
+    mut void close();
+}

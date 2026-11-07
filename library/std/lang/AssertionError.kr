@@ -1,0 +1,7 @@
+package std.lang;
+
+class AssertionError extends Error {
+    AssertionError(String message) {
+        super(message);
+    }
+}

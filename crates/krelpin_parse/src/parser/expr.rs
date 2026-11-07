@@ -290,10 +290,16 @@ impl Parser<'_> {
                 TokenKind::Dot | TokenKind::QuestionDot => {
                     let safe = self.token.kind == TokenKind::QuestionDot;
                     self.bump();
+                    let type_args = self.parse_generic_args()?;
                     let name = self.parse_ident()?;
+                    if !type_args.is_empty() && self.token.kind != TokenKind::OpenParen {
+                        self.expected.push(Expected::Token(TokenKind::OpenParen));
+                        return Err(self.unexpected());
+                    }
                     if self.token.kind == TokenKind::OpenParen {
                         ExprKind::MethodCall {
                             receiver: Some(Box::new(expr)),
+                            type_args,
                             name,
                             args: self.parse_args()?,
                             safe,
@@ -309,6 +315,7 @@ impl Parser<'_> {
                 TokenKind::OpenParen => match expr.kind {
                     ExprKind::Name(name) => ExprKind::MethodCall {
                         receiver: None,
+                        type_args: Vec::new(),
                         name,
                         args: self.parse_args()?,
                         safe: false,

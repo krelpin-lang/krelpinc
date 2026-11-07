@@ -287,6 +287,7 @@ CompilationUnit {
                                                                     span: 313..327,
                                                                 },
                                                             ),
+                                                            type_args: [],
                                                             name: "increment" @ 328..337,
                                                             args: [],
                                                             safe: false,
@@ -522,6 +523,7 @@ CompilationUnit {
                                                                                     span: 522..535,
                                                                                 },
                                                                             ),
+                                                                            type_args: [],
                                                                             name: "length" @ 537..543,
                                                                             args: [],
                                                                             safe: true,
@@ -658,6 +660,7 @@ CompilationUnit {
                                                                         span: 645..646,
                                                                     },
                                                                 ),
+                                                                type_args: [],
                                                                 name: "rename" @ 647..653,
                                                                 args: [
                                                                     Expr {
@@ -690,6 +693,7 @@ CompilationUnit {
                                                                         span: 671..678,
                                                                     },
                                                                 ),
+                                                                type_args: [],
                                                                 name: "println" @ 679..686,
                                                                 args: [
                                                                     Expr {
@@ -702,6 +706,7 @@ CompilationUnit {
                                                                                     span: 687..688,
                                                                                 },
                                                                             ),
+                                                                            type_args: [],
                                                                             name: "getName" @ 689..696,
                                                                             args: [],
                                                                             safe: false,

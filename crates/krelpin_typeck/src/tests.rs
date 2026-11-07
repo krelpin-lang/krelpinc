@@ -363,9 +363,7 @@ fn final_fields_are_assigned_only_in_constructors() {
         ["cannot assign to `final` field `id`"]
     );
     assert_eq!(
-        errors(
-            "class A { final int x; A(&mut A other) { this.x = 1; other.x = 2; } }"
-        ),
+        errors("class A { final int x; A(&mut A other) { this.x = 1; other.x = 2; } }"),
         ["cannot assign to `final` field `x`"]
     );
     assert_eq!(
@@ -418,7 +416,7 @@ fn operators() {
         in_body("boolean b = 1 < \"a\";"),
         ["cannot apply `<` to `int` and `String`"]
     );
-    assert_eq!(in_body("boolean b = !5;"), ["cannot apply `!` to `int`"]);
+    assert_eq!(in_body("boolean b = !5;"), ["mismatched types"]);
     assert_eq!(in_body("if (1) {}"), ["mismatched types"]);
     assert_eq!(
         in_body("boolean b = 1 == true;"),
@@ -2072,7 +2070,9 @@ fn fields_that_cannot_be_null_need_a_value() {
 #[test]
 fn inferred_type_arguments_meet_their_bounds() {
     assert_eq!(
-        errors("import std.util.*; class B {} class A { void f() { Set<B?> tags = new HashSet(); } }"),
+        errors(
+            "import std.util.*; class B {} class A { void f() { Set<B?> tags = new HashSet(); } }"
+        ),
         ["type `B?` does not satisfy the bound of `T`"]
     );
     ok("import std.util.*; class A { void f() { Set<String> tags = new HashSet(); } }");

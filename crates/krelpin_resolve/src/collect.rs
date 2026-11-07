@@ -26,6 +26,7 @@ pub struct TypeDef {
     pub unit: usize,
     pub path: Vec<usize>,
     pub parent: Option<DefId>,
+    pub keyword: &'static str,
     pub nested: HashMap<Symbol, DefId>,
     pub fields: HashMap<Symbol, FieldDef>,
     pub methods: HashMap<Symbol, Vec<MethodDef>>,
@@ -129,6 +130,12 @@ fn collect_type(
         unit,
         path: path.clone(),
         parent,
+        keyword: match &item.kind {
+            ItemKind::Class(_) => "class",
+            ItemKind::Record(_) => "record",
+            ItemKind::Interface(_) => "interface",
+            ItemKind::Enum(_) => "enum",
+        },
         nested: HashMap::new(),
         fields: HashMap::new(),
         methods: HashMap::new(),
@@ -311,7 +318,9 @@ fn resolve_nested(table: &ItemTable, segments: &[Ident]) -> Option<DefId> {
             def = table
                 .defs
                 .iter()
-                .find(|candidate| candidate.parent == Some(def) && candidate.name.name == segment.name)?
+                .find(|candidate| {
+                    candidate.parent == Some(def) && candidate.name.name == segment.name
+                })?
                 .def;
         }
         return Some(def);

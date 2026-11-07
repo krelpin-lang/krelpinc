@@ -62,9 +62,11 @@ enum Scope<'h> {
     Loop {
         exit: BasicBlock,
         next: BasicBlock,
+        label: Option<Symbol>,
     },
     Breakable {
         exit: BasicBlock,
+        label: Option<Symbol>,
     },
     Try {
         finally: Option<&'h hir::Block>,
@@ -91,6 +93,7 @@ struct Builder<'a, 'h, 'tcx> {
     current: BasicBlock,
     vars: HashMap<LocalId, Place>,
     scopes: Vec<Scope<'h>>,
+    label: Option<Symbol>,
     closures: usize,
     asyncness: Option<AsyncState>,
 }
@@ -118,6 +121,7 @@ impl<'a, 'h, 'tcx> Builder<'a, 'h, 'tcx> {
             current: BasicBlock::START,
             vars: HashMap::new(),
             scopes: Vec::new(),
+            label: None,
             closures: 0,
             asyncness: None,
         };

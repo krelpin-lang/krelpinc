@@ -21,8 +21,9 @@ fn kind_name(kind: &StmtKind) -> &'static str {
         StmtKind::Return(_) => "return",
         StmtKind::Yield(_) => "yield",
         StmtKind::Throw(_) => "throw",
-        StmtKind::Break => "break",
-        StmtKind::Continue => "continue",
+        StmtKind::Break(_) => "break",
+        StmtKind::Continue(_) => "continue",
+        StmtKind::Labeled { .. } => "labeled",
         StmtKind::Empty => "empty",
     }
 }

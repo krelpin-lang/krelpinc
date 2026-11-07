@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use krelpin_ast::ast::UnOp;
+use krelpin_span::Symbol;
 use krelpin_typeck::{Callee, Tcx, Ty};
 
 use crate::hir::{
@@ -173,8 +174,24 @@ impl Printer<'_, '_> {
             }
             StmtKind::Yield(value) => self.keyword_expr("yield", value),
             StmtKind::Throw(value) => self.keyword_expr("throw", value),
-            StmtKind::Break => self.out.push_str("break;"),
-            StmtKind::Continue => self.out.push_str("continue;"),
+            StmtKind::Break(label) => self.jump("break", *label),
+            StmtKind::Continue(label) => self.jump("continue", *label),
+            StmtKind::Labeled { label, body } => {
+                self.out.push_str(label.as_str());
+                self.out.push_str(": ");
+                self.stmt(body);
+            }
+        }
+    }
+
+    fn jump(&mut self, keyword: &str, label: Option<Symbol>) {
+        match label {
+            Some(label) => {
+                let _ = write!(self.out, "{keyword} {label};");
+            }
+            None => {
+                let _ = write!(self.out, "{keyword};");
+            }
         }
     }
 

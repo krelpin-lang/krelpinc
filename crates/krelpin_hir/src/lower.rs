@@ -391,8 +391,12 @@ impl LoweringCtxt<'_, '_> {
                 StmtKind::Yield(coerce(self.lower_expr(value), &target))
             }
             ast::StmtKind::Throw(value) => StmtKind::Throw(self.lower_expr(value)),
-            ast::StmtKind::Break => StmtKind::Break,
-            ast::StmtKind::Continue => StmtKind::Continue,
+            ast::StmtKind::Break(label) => StmtKind::Break(label.map(|label| label.name)),
+            ast::StmtKind::Continue(label) => StmtKind::Continue(label.map(|label| label.name)),
+            ast::StmtKind::Labeled { label, body } => StmtKind::Labeled {
+                label: label.name,
+                body: Box::new(self.lower_stmt(body)?),
+            },
             ast::StmtKind::Empty => return None,
         };
         Some(Stmt {
@@ -531,6 +535,7 @@ impl LoweringCtxt<'_, '_> {
                 name,
                 args,
                 safe,
+                ..
             } => self.lower_method_call(receiver.as_deref(), name.span, args, *safe),
             ast::ExprKind::Call { callee, args } => match self.callee(callee.span) {
                 Some(found) => {

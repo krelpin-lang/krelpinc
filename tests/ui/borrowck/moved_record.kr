@@ -1,0 +1,11 @@
+import std.util.List;
+
+record Team(String name, List<String> members) {}
+
+class Main {
+    static void main() {
+        Team a = new Team("x", List.of("ada"));
+        Team b = a;
+        Console.println(a.name());
+    }
+}

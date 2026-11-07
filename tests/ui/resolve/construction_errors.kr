@@ -1,0 +1,13 @@
+enum Op {
+    Add(int a, int b),
+    Neg(int a);
+}
+
+record Point(int x, int y) {}
+
+class Main {
+    static void main() {
+        Op o = new Op.Add(1, 2);
+        Point p = Point(1, 2);
+    }
+}

@@ -474,8 +474,12 @@ pub enum StmtKind {
     Return(Option<Expr>),
     Yield(Expr),
     Throw(Expr),
-    Break,
-    Continue,
+    Break(Option<Ident>),
+    Continue(Option<Ident>),
+    Labeled {
+        label: Ident,
+        body: Box<Stmt>,
+    },
     Empty,
 }
 
@@ -545,6 +549,7 @@ pub enum ExprKind {
     },
     MethodCall {
         receiver: Option<Box<Expr>>,
+        type_args: Vec<Ty>,
         name: Ident,
         args: Vec<Expr>,
         safe: bool,

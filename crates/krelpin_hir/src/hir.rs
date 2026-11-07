@@ -124,8 +124,12 @@ pub enum StmtKind {
     Return(Option<Expr>),
     Yield(Expr),
     Throw(Expr),
-    Break,
-    Continue,
+    Break(Option<Symbol>),
+    Continue(Option<Symbol>),
+    Labeled {
+        label: Symbol,
+        body: Box<Stmt>,
+    },
 }
 
 #[derive(Debug)]

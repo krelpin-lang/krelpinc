@@ -146,7 +146,8 @@ fn may_return(stmt: &Stmt) -> bool {
         StmtKind::If { then, els, .. } => {
             may_return(then) || els.as_deref().is_some_and(may_return)
         }
-        StmtKind::While { body, .. }
+        StmtKind::Labeled { body, .. }
+        | StmtKind::While { body, .. }
         | StmtKind::DoWhile { body, .. }
         | StmtKind::For { body, .. }
         | StmtKind::ForEach { body, .. } => may_return(body),

@@ -105,7 +105,8 @@ impl CaptureFinder {
                     self.block(finally);
                 }
             }
-            StmtKind::Return(None) | StmtKind::Break | StmtKind::Continue => {}
+            StmtKind::Labeled { body, .. } => self.stmt(body),
+            StmtKind::Return(None) | StmtKind::Break(_) | StmtKind::Continue(_) => {}
         }
     }
 

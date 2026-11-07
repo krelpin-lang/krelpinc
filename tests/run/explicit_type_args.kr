@@ -1,0 +1,25 @@
+import std.function.Function;
+import std.util.ArrayList;
+import std.util.List;
+
+class Counter {
+    private final int count;
+    Counter(int count) { this.count = count; }
+    <R> R as(Function<int, R> f) { return f.apply(this.count); }
+}
+
+class Main {
+    static <T> T id(T x) { return x; }
+    static <T> List<T> empty() { return new ArrayList<>(); }
+    static <K, V> String pair(K k, V v) { return k + "=" + v; }
+
+    static void main() {
+        Console.println(Main.<String>id("a"));
+        List<String> names = Main.<String>empty();
+        Console.println(names.size());
+        Console.println(Main.<int, String>pair(1, "x"));
+        Console.println(Main.<long?>id(null));
+        Counter c = new Counter(20);
+        Console.println(c.<String>as(x -> "v" + x));
+    }
+}

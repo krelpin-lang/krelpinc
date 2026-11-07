@@ -1,0 +1,10 @@
+error: the label `named` must be followed by a loop or a `switch`
+ --> tests/ui/parser/label_target.kr:3:9
+  |
+3 |         named:
+  |         ^^^^^
+  |
+  = note: `break` and `continue` can only jump to a labeled loop or `switch`
+
+error: aborting due to 1 previous error
+

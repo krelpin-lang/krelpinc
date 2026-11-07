@@ -258,6 +258,33 @@ impl<'a> Tcx<'a> {
         self.is_copy_inner(ty, &mut Vec::new())
     }
 
+    pub fn uncopyable_part(&self, ty: &Ty) -> Option<(Symbol, Ty)> {
+        let Ty::Adt { def, args, .. } = ty.non_null() else {
+            return None;
+        };
+        let sig = self.sig(*def);
+        let subst = self.subst_for(*def, args);
+        let parts: Vec<(Symbol, Ty)> = match sig.kind {
+            AdtKind::Record => sig
+                .components
+                .iter()
+                .filter_map(|name| {
+                    sig.fields
+                        .get(name)
+                        .map(|field| (*name, field.ty.subst(&subst)))
+                })
+                .collect(),
+            AdtKind::Enum => sig
+                .variants
+                .iter()
+                .flat_map(|variant| &variant.fields)
+                .map(|field| (field.name.name, field.ty.subst(&subst)))
+                .collect(),
+            AdtKind::Class | AdtKind::Interface => return None,
+        };
+        parts.into_iter().find(|(_, ty)| !self.is_copy(ty))
+    }
+
     fn is_copy_inner(&self, ty: &Ty, visiting: &mut Vec<DefId>) -> bool {
         match ty {
             Ty::Primitive(_) | Ty::Null | Ty::Void | Ty::Unknown => true,
@@ -363,6 +390,13 @@ impl<'a> Tcx<'a> {
                 self.find_methods(def, &args, name, out);
             }
         }
+    }
+
+    pub fn closes_itself(&self, def: DefId) -> bool {
+        let closeable = self.lang_items.get(LangItem::AutoCloseable);
+        self.supertypes(def)
+            .iter()
+            .any(|(parent, _)| Some(*parent) == closeable)
     }
 
     pub fn supertypes(&self, def: DefId) -> Vec<(DefId, Subst)> {

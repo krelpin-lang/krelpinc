@@ -30,6 +30,7 @@ lang_items! {
     Equatable: "std.lang.Equatable",
     Hashable: "std.lang.Hashable",
     Cloneable: "std.lang.Cloneable",
+    AutoCloseable: "std.lang.AutoCloseable",
     Comparable: "std.lang.Comparable",
     Throwable: "std.lang.Throwable",
     Exception: "std.lang.Exception",

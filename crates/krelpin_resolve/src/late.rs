@@ -38,6 +38,7 @@ struct Resolver<'a> {
     scopes: Vec<HashMap<Symbol, Span>>,
     static_context: Option<StaticContext>,
     jumps: Jumps,
+    labels: Vec<(Ident, bool)>,
 }
 
 pub(crate) fn resolve_bodies(
@@ -61,6 +62,7 @@ pub(crate) fn resolve_bodies(
         scopes: Vec::new(),
         static_context: None,
         jumps: Jumps::default(),
+        labels: Vec::new(),
     };
 
     for (type_def, item) in table.items(units) {
@@ -142,6 +144,7 @@ impl<'a> Resolver<'a> {
             };
             self.scopes.clear();
             self.jumps = Jumps::default();
+            self.labels.clear();
 
             match &member.kind {
                 MemberKind::Field(field) => self.resolve_field(field),
@@ -517,7 +520,23 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(value);
             }
             StmtKind::Throw(value) => self.resolve_expr(value),
-            StmtKind::Break => {
+            StmtKind::Break(Some(label)) => {
+                self.find_label(*label, "break");
+            }
+            StmtKind::Continue(Some(label)) => {
+                if let Some(false) = self.find_label(*label, "continue") {
+                    self.emit(
+                        Diagnostic::error(format!(
+                            "cannot `continue` to the `switch` labeled `{}`",
+                            label.name
+                        ))
+                        .with_span(label.span)
+                        .with_note("`continue` starts the next round of a loop")
+                        .with_help(format!("use `break {}` to leave the `switch`", label.name)),
+                    );
+                }
+            }
+            StmtKind::Break(None) => {
                 if self.jumps.breakable == 0 {
                     self.emit(
                         Diagnostic::error("`break` outside of a loop or switch")
@@ -525,15 +544,57 @@ impl<'a> Resolver<'a> {
                     );
                 }
             }
-            StmtKind::Continue => {
+            StmtKind::Continue(None) => {
                 if self.jumps.loops == 0 {
                     self.emit(
                         Diagnostic::error("`continue` outside of a loop").with_span(stmt.span),
                     );
                 }
             }
+            StmtKind::Labeled { label, body } => {
+                if let Some((outer, _)) = self
+                    .labels
+                    .iter()
+                    .find(|(outer, _)| outer.name == label.name)
+                {
+                    let outer = *outer;
+                    self.emit(
+                        Diagnostic::error(format!("the label `{}` is already in use", label.name))
+                            .with_span(label.span)
+                            .with_secondary(outer.span, "the outer statement has this label")
+                            .with_help("give the inner loop a different label"),
+                    );
+                }
+                let is_loop = !matches!(body.kind, StmtKind::Switch { .. });
+                self.labels.push((*label, is_loop));
+                self.resolve_stmt(body);
+                self.labels.pop();
+            }
             StmtKind::Empty => {}
         }
+    }
+
+    fn find_label(&mut self, label: Ident, jump: &str) -> Option<bool> {
+        let found = self
+            .labels
+            .iter()
+            .rev()
+            .find(|(outer, _)| outer.name == label.name)
+            .map(|(_, is_loop)| *is_loop);
+        if found.is_none() {
+            let mut diagnostic =
+                Diagnostic::error(format!("cannot find the label `{}`", label.name))
+                    .with_span(label.span)
+                    .with_label(format!("`{jump}` needs a loop or `switch` with this label"));
+            if self.labels.is_empty() {
+                diagnostic = diagnostic.with_help(format!(
+                    "put `{}:` before the loop to jump out of",
+                    label.name
+                ));
+            }
+            self.emit(diagnostic);
+        }
+        found
     }
 
     fn resolve_loop_body(&mut self, body: &Stmt) {
@@ -669,15 +730,30 @@ impl<'a> Resolver<'a> {
     fn resolve_nested_types(&mut self, mut def: DefId, rest: &[Ident]) -> Option<DefId> {
         for segment in rest {
             let Some(nested) = self.table.nested(def, segment.name) else {
-                self.emit(
+                let owner = self.table.def(def);
+                let diagnostic = if owner.keyword == "enum"
+                    && (owner.methods.contains_key(&segment.name)
+                        || owner.fields.contains_key(&segment.name))
+                {
                     Diagnostic::error(format!(
-                        "cannot find type `{}` in `{}`",
-                        segment.name,
-                        self.table.def(def).name.name
+                        "`{}.{}` is a case of the enum `{}`, not a type",
+                        owner.name.name, segment.name, owner.name.name
                     ))
                     .with_span(segment.span)
-                    .with_label("not found in this type"),
-                );
+                    .with_note("the cases of an enum are written without `new`")
+                    .with_help(format!(
+                        "write `{}.{}(...)` without `new`",
+                        owner.name.name, segment.name
+                    ))
+                } else {
+                    Diagnostic::error(format!(
+                        "cannot find type `{}` in `{}`",
+                        segment.name, owner.name.name
+                    ))
+                    .with_span(segment.span)
+                    .with_label("not found in this type")
+                };
+                self.emit(diagnostic);
                 return None;
             };
             self.resolutions.record(segment.span, Res::Item(nested));
@@ -766,10 +842,14 @@ impl<'a> Resolver<'a> {
             }
             ExprKind::MethodCall {
                 receiver,
+                type_args,
                 name,
                 args,
                 ..
             } => {
+                for ty in type_args {
+                    self.resolve_ty(ty);
+                }
                 match receiver {
                     Some(receiver) => self.resolve_expr(receiver),
                     None => self.resolve_unqualified_call(*name),
@@ -822,6 +902,7 @@ impl<'a> Resolver<'a> {
             }
             ExprKind::Lambda { params, body, .. } => {
                 let outer_jumps = std::mem::take(&mut self.jumps);
+                let outer_labels = std::mem::take(&mut self.labels);
                 self.with_scope(|this| {
                     for param in params {
                         if let Some(ty) = &param.ty {
@@ -835,6 +916,7 @@ impl<'a> Resolver<'a> {
                     }
                 });
                 self.jumps = outer_jumps;
+                self.labels = outer_labels;
             }
             ExprKind::MethodRef { expr, .. } => self.resolve_expr(expr),
             ExprKind::With { base, fields } => {
@@ -846,6 +928,7 @@ impl<'a> Resolver<'a> {
             ExprKind::Switch { scrutinee, arms } => {
                 self.resolve_expr(scrutinee);
                 let outer_jumps = self.jumps;
+                let outer_labels = std::mem::take(&mut self.labels);
                 self.jumps = Jumps {
                     switch_exprs: outer_jumps.switch_exprs + 1,
                     ..Jumps::default()
@@ -862,6 +945,7 @@ impl<'a> Resolver<'a> {
                     });
                 }
                 self.jumps = outer_jumps;
+                self.labels = outer_labels;
             }
         }
     }
@@ -905,6 +989,20 @@ impl<'a> Resolver<'a> {
 
     fn resolve_unqualified_call(&mut self, name: Ident) {
         let Some(methods) = self.owner.methods.get(&name.name) else {
+            if let Some(Res::Item(def)) = self.lookup_type(name.name) {
+                let keyword = self.table.def(def).keyword;
+                let diagnostic =
+                    Diagnostic::error(format!("`{}` is a {keyword}, not a method", name.name))
+                        .with_span(name.span);
+                self.emit(if matches!(keyword, "class" | "record") {
+                    diagnostic
+                        .with_label(format!("a {keyword} is created with `new`"))
+                        .with_help(format!("write `new {}(...)`", name.name))
+                } else {
+                    diagnostic.with_label("not a method")
+                });
+                return;
+            }
             self.emit(
                 Diagnostic::error(format!("cannot find method `{}` in this scope", name.name))
                     .with_span(name.span)

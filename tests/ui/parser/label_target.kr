@@ -1,0 +1,8 @@
+class Main {
+    static void main() {
+        named:
+        {
+            int x = 1;
+        }
+    }
+}

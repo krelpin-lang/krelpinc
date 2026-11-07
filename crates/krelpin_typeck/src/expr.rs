@@ -121,10 +121,17 @@ impl FnCtxt<'_, '_> {
             } => self.field_access(base, *name, *safe).0,
             ExprKind::MethodCall {
                 receiver,
+                type_args,
                 name,
                 args,
                 safe,
-            } => self.check_method_call(receiver.as_deref(), *name, args, *safe),
+            } => {
+                if !type_args.is_empty() {
+                    let tys = type_args.iter().map(|ty| self.lower_ty(ty)).collect();
+                    self.explicit_type_args.insert(name.span, tys);
+                }
+                self.check_method_call(receiver.as_deref(), *name, args, *safe)
+            }
             ExprKind::Call { callee, args } => {
                 if self.delegation != Some(expr.span) {
                     let keyword = if matches!(callee.kind, ExprKind::Super) {
@@ -623,7 +630,43 @@ impl FnCtxt<'_, '_> {
         if !self.pending_chains.contains_key(&name.span) {
             self.finish_closure_args(args);
         }
+        if name.name.as_str() == "close" && args.is_empty() {
+            self.reject_explicit_close(receiver, name);
+        }
         ty
+    }
+
+    fn reject_explicit_close(&self, receiver: Option<&Expr>, name: Ident) {
+        let owner = match receiver {
+            Some(receiver) if matches!(receiver.kind, ExprKind::Super) => return,
+            Some(receiver) => match self
+                .results
+                .expr_types
+                .get(&receiver.span)
+                .map(Ty::strip_refs)
+            {
+                Some(Ty::Adt { def, .. }) => *def,
+                _ => return,
+            },
+            None => self.owner,
+        };
+        if !self.tcx.closes_itself(owner)
+            && self.tcx.lang_items.get(LangItem::AutoCloseable) != Some(owner)
+        {
+            return;
+        }
+        let what = match receiver {
+            Some(receiver) => format!("`{receiver}`"),
+            None => "this object".to_owned(),
+        };
+        self.emit(
+            Diagnostic::error("`close` cannot be called directly")
+                .with_span(name.span)
+                .with_note(format!(
+                    "{what} is `AutoCloseable`, so `close` runs by itself when it is dropped"
+                ))
+                .with_help("to close it early, end its scope or pass it to a method that takes it"),
+        );
     }
 
     pub(crate) fn finish_chain(&mut self, expr: &Expr, chain: PendingChain, expected: &Ty) {
@@ -998,10 +1041,24 @@ impl FnCtxt<'_, '_> {
                     _ => None,
                 };
                 if let Some(problem) = problem {
-                    self.error(
-                        span,
-                        format!("cannot create an object of {problem} `{name}`"),
-                    );
+                    let diagnostic =
+                        Diagnostic::error(format!("cannot create an object of {problem} `{name}`"))
+                            .with_span(span);
+                    let diagnostic = match sig.variants.first() {
+                        Some(variant) if sig.kind == AdtKind::Enum => {
+                            let case = variant.name.name;
+                            let example = if variant.fields.is_empty() {
+                                format!("{name}.{case}")
+                            } else {
+                                format!("{name}.{case}(...)")
+                            };
+                            diagnostic
+                                .with_note("an enum has only the cases it declares")
+                                .with_help(format!("use one of its cases, like `{example}`"))
+                        }
+                        _ => diagnostic,
+                    };
+                    self.emit(diagnostic);
                     return ty;
                 }
                 let name = Ident::new(*name, span);
@@ -1092,6 +1149,10 @@ impl FnCtxt<'_, '_> {
             UnOp::BitNot => value.is_integral(),
             _ => value.is_numeric(),
         };
+        if !ok && op == UnOp::Not {
+            self.mismatch(operand.span, &Ty::BOOLEAN, &value);
+            return Ty::Unknown;
+        }
         if !ok {
             let symbol = match op {
                 UnOp::Neg => "-",
@@ -1128,10 +1189,11 @@ impl FnCtxt<'_, '_> {
 
         if op == BinOp::Elvis {
             let left = match left {
-                Ty::Ref {
-                    mutable: false,
-                    ty,
-                } if matches!(ty.as_ref(), Ty::Nullable(_)) && self.tcx.is_copy(&ty) => *ty,
+                Ty::Ref { mutable: false, ty }
+                    if matches!(ty.as_ref(), Ty::Nullable(_)) && self.tcx.is_copy(&ty) =>
+                {
+                    *ty
+                }
                 other => other,
             };
             return match &left {
@@ -1406,12 +1468,15 @@ impl FnCtxt<'_, '_> {
             }
             FieldStorage::Instance => {}
             FieldStorage::Static(_) => self.emit(
-                Diagnostic::error(format!("cannot assign to `static final` field `{}`", name.name))
-                    .with_span(name.span)
-                    .with_note("a `static` field can be used from many threads at once")
-                    .with_help(
-                        "store a type that can be changed safely, like `AtomicInt` or `Mutex<T>`",
-                    ),
+                Diagnostic::error(format!(
+                    "cannot assign to `static final` field `{}`",
+                    name.name
+                ))
+                .with_span(name.span)
+                .with_note("a `static` field can be used from many threads at once")
+                .with_help(
+                    "store a type that can be changed safely, like `AtomicInt` or `Mutex<T>`",
+                ),
             ),
         }
     }

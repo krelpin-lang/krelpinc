@@ -138,6 +138,7 @@ impl Parser<'_> {
         Some(Expr {
             kind: ExprKind::MethodCall {
                 receiver: Some(Box::new(receiver)),
+                type_args: Vec::new(),
                 name: Ident {
                     name: Symbol::intern("format"),
                     span: colon_span,

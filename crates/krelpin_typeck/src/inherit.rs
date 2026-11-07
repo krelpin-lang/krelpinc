@@ -15,6 +15,26 @@ impl Tcx<'_> {
         }
         self.check_overrides(def);
         self.check_abstract_methods_implemented(def);
+        self.check_closeable_kind(def, item);
+    }
+
+    fn check_closeable_kind(&self, def: DefId, item: &Item) {
+        let kind = match self.sig(def).kind {
+            AdtKind::Record => "record",
+            AdtKind::Enum => "enum",
+            AdtKind::Class | AdtKind::Interface => return,
+        };
+        if !self.closes_itself(def) {
+            return;
+        }
+        self.dcx.emit(
+            Diagnostic::error(format!("a {kind} cannot be `AutoCloseable`"))
+                .with_span(item.name.span)
+                .with_note(format!(
+                    "a {kind} is a value that is copied or moved, so it has no single owner to close it"
+                ))
+                .with_help("make it a class, or keep the resource in a class field"),
+        );
     }
 
     /// Two methods or constructors of one type with the same name and

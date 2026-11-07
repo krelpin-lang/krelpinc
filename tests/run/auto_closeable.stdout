@@ -1,0 +1,14 @@
+open a
+open b
+close b
+open c
+using
+close c
+open d
+open e
+open f
+end
+close f
+close e
+close d
+close a

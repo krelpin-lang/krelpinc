@@ -98,6 +98,7 @@ impl FnCtxt<'_, '_> {
                 let expr = Expr {
                     kind: ExprKind::MethodCall {
                         receiver: Some(Box::new(chain.base.clone())),
+                        type_args: Vec::new(),
                         name: chain.name,
                         args: chain.args.clone(),
                         safe: chain.safe,
@@ -244,10 +245,32 @@ impl FnCtxt<'_, '_> {
         name: Ident,
         what: &str,
     ) -> Ty {
-        let candidates: Vec<Candidate> = candidates
-            .into_iter()
-            .map(|(method, subst)| self.instantiate(method, subst, arg_tys))
-            .collect();
+        let explicit = self.explicit_type_args.get(&name.span).cloned();
+        let candidates: Vec<Candidate> = match &explicit {
+            Some(explicit) => {
+                let fitting: Vec<(MethodSig, Subst)> = candidates
+                    .iter()
+                    .filter(|(method, _)| method.generics.len() == explicit.len())
+                    .cloned()
+                    .collect();
+                if fitting.is_empty() {
+                    let counts: Vec<usize> = candidates
+                        .iter()
+                        .map(|(method, _)| method.generics.len())
+                        .collect();
+                    self.report_type_arg_count(name, explicit.len(), &counts);
+                    return Ty::Unknown;
+                }
+                fitting
+                    .into_iter()
+                    .map(|(method, subst)| self.instantiate_with(method, subst, explicit))
+                    .collect()
+            }
+            None => candidates
+                .into_iter()
+                .map(|(method, subst)| self.instantiate(method, subst, arg_tys))
+                .collect(),
+        };
         let arity_ok: Vec<&Candidate> = candidates
             .iter()
             .filter(|candidate| {
@@ -479,6 +502,44 @@ impl FnCtxt<'_, '_> {
             self.results.expr_types.insert(arg.span, final_ty);
         }
         (candidate, probed)
+    }
+
+    fn instantiate_with(&self, method: MethodSig, mut subst: Subst, explicit: &[Ty]) -> Candidate {
+        for (param, ty) in method.generics.iter().zip(explicit) {
+            subst.insert(param.name, ty.clone());
+        }
+        Candidate {
+            params: method
+                .params
+                .iter()
+                .map(|param| param.subst(&subst))
+                .collect(),
+            ret: method.ret.subst(&subst),
+            method,
+            subst,
+        }
+    }
+
+    fn report_type_arg_count(&self, name: Ident, given: usize, counts: &[usize]) {
+        let mut counts = counts.to_vec();
+        counts.sort_unstable();
+        counts.dedup();
+        let expected: Vec<String> = counts.iter().map(usize::to_string).collect();
+        let diagnostic = Diagnostic::error(format!(
+            "`{}` takes {} type argument{}, but {given} {} given",
+            name.name,
+            expected.join(" or "),
+            if counts == [1] { "" } else { "s" },
+            if given == 1 { "was" } else { "were" }
+        ))
+        .with_span(name.span);
+        self.emit(if counts == [0] {
+            diagnostic
+                .with_note(format!("`{}` is not generic", name.name))
+                .with_help("remove the type arguments")
+        } else {
+            diagnostic
+        });
     }
 
     fn instantiate(&self, method: MethodSig, mut subst: Subst, arg_tys: &[Ty]) -> Candidate {

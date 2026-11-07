@@ -1,0 +1,56 @@
+error: `close` cannot be called directly
+  --> tests/ui/typeck/language_errors.kr:10:14
+   |
+10 |         this.close();
+   |              ^^^^^
+   |
+   = note: `this` is `AutoCloseable`, so `close` runs by itself when it is dropped
+   = help: to close it early, end its scope or pass it to a method that takes it
+
+error: cannot create an object of an enum `Color`
+  --> tests/ui/typeck/language_errors.kr:24:19
+   |
+24 |         Color c = new Color();
+   |                   ^^^^^^^^^^^
+   |
+   = note: an enum has only the cases it declares
+   = help: use one of its cases, like `Color.RED`
+
+error: `close` cannot be called directly
+  --> tests/ui/typeck/language_errors.kr:26:11
+   |
+26 |         r.close();
+   |           ^^^^^
+   |
+   = note: `r` is `AutoCloseable`, so `close` runs by itself when it is dropped
+   = help: to close it early, end its scope or pass it to a method that takes it
+
+error: mismatched types
+  --> tests/ui/typeck/language_errors.kr:27:16
+   |
+27 |         assert 5;
+   |                ^ expected `boolean`, found `int`
+
+error: `id` takes 1 type argument, but 2 were given
+  --> tests/ui/typeck/language_errors.kr:28:43
+   |
+28 |         Console.println(Main.<String, int>id("a"));
+   |                                           ^^
+
+error: `plain` takes 0 type arguments, but 1 was given
+  --> tests/ui/typeck/language_errors.kr:29:38
+   |
+29 |         Console.println(Main.<String>plain());
+   |                                      ^^^^^
+   |
+   = note: `plain` is not generic
+   = help: remove the type arguments
+
+error: mismatched types
+  --> tests/ui/typeck/language_errors.kr:30:38
+   |
+30 |         Console.println(Main.<int>id("a"));
+   |                                      ^^^ expected `int`, found `String`
+
+error: aborting due to 7 previous errors
+

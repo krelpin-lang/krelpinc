@@ -1,0 +1,39 @@
+import std.util.ArrayList;
+
+class Connection implements AutoCloseable {
+    private final String name;
+    Connection(String name) {
+        this.name = name;
+        Console.println("open " + name);
+    }
+    public mut void close() {
+        Console.println("close " + this.name);
+    }
+}
+
+class Pool extends Connection {
+    Pool(String name) { super(name); }
+}
+
+class Holder {
+    private final Connection inner;
+    Holder(Connection inner) { this.inner = inner; }
+}
+
+class Main {
+    static void use(Connection c) {
+        Console.println("using");
+    }
+    static void main() {
+        Connection a = new Connection("a");
+        {
+            Connection b = new Connection("b");
+        }
+        Main.use(new Connection("c"));
+        AutoCloseable d = new Pool("d");
+        Holder h = new Holder(new Connection("e"));
+        ArrayList<Connection> list = new ArrayList<>();
+        list.add(new Connection("f"));
+        Console.println("end");
+    }
+}

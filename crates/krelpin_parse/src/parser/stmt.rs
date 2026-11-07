@@ -1,9 +1,9 @@
 use krelpin_ast::ast::{
-    Block, Catch, Expr, ExprKind, Local, Stmt, StmtKind, SwitchArm, Ty, TyKind, UnOp,
+    Block, Catch, Expr, ExprKind, Ident, Local, Path, Stmt, StmtKind, SwitchArm, Ty, TyKind, UnOp,
 };
-use krelpin_ast::token::TokenKind;
+use krelpin_ast::token::{Lit, LitKind, TokenKind};
 use krelpin_errors::Diagnostic;
-use krelpin_span::{Span, kw};
+use krelpin_span::{Span, Symbol, kw};
 
 use super::{PResult, Parser};
 
@@ -74,13 +74,46 @@ impl Parser<'_> {
             }
             TokenKind::Ident(kw::Break) => {
                 self.bump();
+                let label = self.parse_jump_label()?;
                 self.expect_semi()?;
-                StmtKind::Break
+                StmtKind::Break(label)
             }
             TokenKind::Ident(kw::Continue) => {
                 self.bump();
+                let label = self.parse_jump_label()?;
                 self.expect_semi()?;
-                StmtKind::Continue
+                StmtKind::Continue(label)
+            }
+            TokenKind::Ident(kw::Assert) => self.parse_assert()?,
+            TokenKind::Ident(_)
+                if is_plain_label(self.look_ahead(0)) && self.look_ahead(1) == TokenKind::Colon =>
+            {
+                let label = self.parse_ident()?;
+                self.bump();
+                let body = self.parse_stmt()?;
+                if !matches!(
+                    body.kind,
+                    StmtKind::While { .. }
+                        | StmtKind::DoWhile { .. }
+                        | StmtKind::For { .. }
+                        | StmtKind::ForEach { .. }
+                        | StmtKind::Switch { .. }
+                ) {
+                    self.emit(
+                        Diagnostic::error(format!(
+                            "the label `{}` must be followed by a loop or a `switch`",
+                            label.name
+                        ))
+                        .with_span(label.span)
+                        .with_note(
+                            "`break` and `continue` can only jump to a labeled loop or `switch`",
+                        ),
+                    );
+                }
+                StmtKind::Labeled {
+                    label,
+                    body: Box::new(body),
+                }
             }
             TokenKind::Ident(kw::Final) => {
                 let final_kw = self.final_before_decl(false)?;
@@ -121,6 +154,115 @@ impl Parser<'_> {
             name,
             init,
         })
+    }
+
+    fn parse_assert(&mut self) -> PResult<StmtKind> {
+        let keyword = self.token.span;
+        self.bump();
+        let first = self.index;
+        let cond = self.parse_expr()?;
+        let source = self.source_of(first, self.index);
+        let message = if self.eat_noexpect(TokenKind::Colon) {
+            Some(self.parse_expr()?)
+        } else {
+            None
+        };
+        self.expect_semi()?;
+        let at = |offset: u32, len: u32| Span::new(keyword.lo + offset, keyword.lo + offset + len);
+        let ident = |name: &str, span: Span| Ident::new(Symbol::intern(name), span);
+        let whole = keyword.to(cond.span);
+        let message = match message {
+            Some(message) => Expr {
+                kind: ExprKind::MethodCall {
+                    type_args: Vec::new(),
+                    receiver: Some(Box::new(Expr {
+                        kind: ExprKind::Name(ident("String", at(0, 1))),
+                        span: at(0, 1),
+                    })),
+                    name: ident("valueOf", at(1, 1)),
+                    args: vec![message],
+                    safe: false,
+                },
+                span: at(0, 2),
+            },
+            None => {
+                let text = format!("assertion failed: {source}")
+                    .replace('\\', "\\\\")
+                    .replace('"', "\\\"");
+                Expr {
+                    kind: ExprKind::Lit(Lit::new(LitKind::Str, Symbol::intern(&text), None)),
+                    span: at(0, 2),
+                }
+            }
+        };
+        let path = Path::new(vec![
+            ident("std", at(2, 1)),
+            ident("lang", at(3, 1)),
+            ident("AssertionError", at(4, 1)),
+        ]);
+        let error = Expr {
+            kind: ExprKind::New {
+                ty: Ty {
+                    kind: TyKind::Path {
+                        path,
+                        args: Vec::new(),
+                    },
+                    span: at(2, 3),
+                },
+                args: vec![message],
+            },
+            span: at(0, 3),
+        };
+        let throw = Stmt {
+            kind: StmtKind::Throw(error),
+            span: at(0, 4),
+        };
+        Ok(StmtKind::If {
+            cond: Expr {
+                kind: ExprKind::Unary {
+                    op: UnOp::Not,
+                    expr: Box::new(cond),
+                },
+                span: whole,
+            },
+            then: Box::new(throw),
+            els: None,
+        })
+    }
+
+    fn source_of(&self, from: usize, to: usize) -> String {
+        let mut text = String::new();
+        let mut glue = true;
+        for token in &self.tokens[from..to] {
+            let piece = match token.kind {
+                TokenKind::Ident(symbol) => symbol.as_str().to_owned(),
+                TokenKind::Literal(lit) => {
+                    let body = lit.symbol.as_str();
+                    let suffix = lit.suffix.map_or("", |suffix| suffix.as_str());
+                    match lit.kind {
+                        LitKind::Str => format!("\"{body}\""),
+                        LitKind::TextBlock => format!("\"\"\"{body}\"\"\""),
+                        LitKind::Char => format!("'{body}'"),
+                        _ => format!("{body}{suffix}"),
+                    }
+                }
+                kind => kind.as_str().unwrap_or("").to_owned(),
+            };
+            let tight = matches!(piece.as_str(), ")" | "]" | "." | "," | "?." | "(" | "[");
+            if !text.is_empty() && !glue && !tight {
+                text.push(' ');
+            }
+            glue = matches!(piece.as_str(), "(" | "[" | "." | "!" | "?." | "&");
+            text.push_str(&piece);
+        }
+        text
+    }
+
+    fn parse_jump_label(&mut self) -> PResult<Option<Ident>> {
+        if is_plain_label(self.token.kind) {
+            return Ok(Some(self.parse_ident()?));
+        }
+        Ok(None)
     }
 
     fn final_before_decl(&mut self, in_for: bool) -> PResult<Option<Span>> {
@@ -393,4 +535,8 @@ fn is_var(ty: &Ty) -> bool {
         }
         _ => false,
     }
+}
+
+fn is_plain_label(kind: TokenKind) -> bool {
+    matches!(kind, TokenKind::Ident(name) if !name.is_keyword())
 }

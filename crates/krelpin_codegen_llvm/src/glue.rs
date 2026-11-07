@@ -1,8 +1,9 @@
+use krelpin_ast::ast::ReceiverKind;
 use krelpin_typeck::{LangItem, Subst, Ty};
 
 use crate::cx::Cx;
 use crate::func::{FnCx, array_ll, define};
-use crate::instance::{Instance, Thunk};
+use crate::instance::{Instance, Selector, Thunk};
 use crate::layout::{PtrKind, Shape, field_offsets, struct_layout};
 
 impl Cx<'_, '_> {
@@ -441,6 +442,9 @@ impl FnCx<'_, '_, '_> {
             let handle = self.assign(format!("load ptr, ptr {handle}"));
             self.runtime("void", "kr_mutex_unlock", &format!("ptr {handle}"));
         }
+        if self.cx.tcx.closes_itself(def) {
+            self.call_close(object, ty);
+        }
         if items.is(def, LangItem::Mutex) {
             let handle = self.native_addr(object, ty, 0);
             let handle = self.assign(format!("load ptr, ptr {handle}"));
@@ -457,6 +461,29 @@ impl FnCx<'_, '_, '_> {
             self.drop_at(&field.ty, &address);
         }
         self.runtime("void", "kr_free", &format!("ptr {object}"));
+    }
+
+    fn call_close(&mut self, object: &str, ty: &Ty) {
+        let slot = self.alloca_ll("ptr");
+        self.line(format!("store ptr {object}, ptr {slot}"));
+        let closeable = self.cx.lang(LangItem::AutoCloseable);
+        let selector = Selector {
+            owner: Ty::Adt {
+                def: closeable,
+                name: self.cx.tcx.sig(closeable).name.name,
+                args: Vec::new(),
+            },
+            name: krelpin_span::Symbol::intern("close"),
+            params: Vec::new(),
+            method_args: Vec::new(),
+            receiver: ReceiverKind::RefMut,
+            ret: Ty::Void,
+        };
+        let receiver = Ty::Ref {
+            mutable: true,
+            ty: Box::new(ty.clone()),
+        };
+        self.dispatch(&selector, &receiver, &slot, &[]);
     }
 
     pub(crate) fn native_addr(&mut self, object: &str, ty: &Ty, slot: usize) -> String {

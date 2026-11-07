@@ -86,12 +86,16 @@ impl fmt::Display for Expr {
             }
             ExprKind::MethodCall {
                 receiver,
+                type_args,
                 name,
                 args,
                 safe,
             } => {
                 if let Some(receiver) = receiver {
                     write!(f, "{receiver}{}", access(*safe))?;
+                }
+                if !type_args.is_empty() {
+                    write!(f, "<{}>", list(type_args))?;
                 }
                 write!(f, "{}({})", name.name, list(args))
             }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use krelpin_ast::ast::{BinOp, Block, Expr, ExprKind, Stmt, StmtKind, UnOp};
 use krelpin_errors::Diagnostic;
 use krelpin_resolve::Res;
-use krelpin_span::Span;
+use krelpin_span::{Span, Symbol};
 
 use crate::check::FnCtxt;
 use crate::lang_items::LangItem;
@@ -153,7 +153,8 @@ impl FnCtxt<'_, '_> {
                 self.check_throw(value);
                 true
             }
-            StmtKind::Break | StmtKind::Continue | StmtKind::Empty => false,
+            StmtKind::Labeled { body, .. } => self.check_stmt(body),
+            StmtKind::Break(_) | StmtKind::Continue(_) | StmtKind::Empty => false,
         }
     }
 
@@ -310,7 +311,7 @@ fn is_true(expr: &Expr) -> bool {
 /// `continue`, so the statements after it in the same block don't run.
 fn jumps_away(stmt: &Stmt) -> bool {
     match &stmt.kind {
-        StmtKind::Break | StmtKind::Continue => true,
+        StmtKind::Break(_) | StmtKind::Continue(_) => true,
         StmtKind::Block(block) => block.stmts.iter().any(jumps_away),
         StmtKind::If {
             then,
@@ -322,25 +323,48 @@ fn jumps_away(stmt: &Stmt) -> bool {
 }
 
 fn contains_break(stmt: &Stmt) -> bool {
+    breaks_out(stmt, &mut Vec::new(), false)
+}
+
+fn breaks_out(stmt: &Stmt, inner: &mut Vec<Symbol>, nested: bool) -> bool {
+    let block = |block: &Block, inner: &mut Vec<Symbol>| {
+        block
+            .stmts
+            .iter()
+            .any(|stmt| breaks_out(stmt, inner, nested))
+    };
     match &stmt.kind {
-        StmtKind::Break => true,
-        StmtKind::Block(block) => block.stmts.iter().any(contains_break),
+        StmtKind::Break(None) => !nested,
+        StmtKind::Break(Some(label)) => !inner.contains(&label.name),
+        StmtKind::Block(body) => block(body, inner),
         StmtKind::If { then, els, .. } => {
-            contains_break(then) || els.as_deref().is_some_and(contains_break)
+            breaks_out(then, inner, nested)
+                || els
+                    .as_deref()
+                    .is_some_and(|els| breaks_out(els, inner, nested))
         }
         StmtKind::Try {
             body,
             catches,
             finally,
         } => {
-            body.stmts.iter().any(contains_break)
-                || catches
-                    .iter()
-                    .any(|catch| catch.body.stmts.iter().any(contains_break))
+            block(body, inner)
+                || catches.iter().any(|catch| block(&catch.body, inner))
                 || finally
                     .as_ref()
-                    .is_some_and(|finally| finally.stmts.iter().any(contains_break))
+                    .is_some_and(|finally| block(finally, inner))
         }
+        StmtKind::Labeled { label, body } => {
+            inner.push(label.name);
+            let found = breaks_out(body, inner, nested);
+            inner.pop();
+            found
+        }
+        StmtKind::While { body, .. }
+        | StmtKind::DoWhile { body, .. }
+        | StmtKind::For { body, .. }
+        | StmtKind::ForEach { body, .. } => breaks_out(body, inner, true),
+        StmtKind::Switch { arms, .. } => arms.iter().any(|arm| breaks_out(&arm.body, inner, true)),
         _ => false,
     }
 }

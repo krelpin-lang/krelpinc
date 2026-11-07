@@ -32,6 +32,7 @@ macro_rules! keywords {
 keywords! {
     reserved {
         Abstract: "abstract",
+        Assert: "assert",
         Async: "async",
         Await: "await",
         Boolean: "boolean",

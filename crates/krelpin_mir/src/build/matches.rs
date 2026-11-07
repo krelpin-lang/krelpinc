@@ -34,7 +34,10 @@ impl<'h> Builder<'_, 'h, '_> {
                 dest: dest.clone(),
                 exit,
             },
-            None => Scope::Breakable { exit },
+            None => Scope::Breakable {
+                exit,
+                label: self.label.take(),
+            },
         };
         self.scopes.push(scope);
 

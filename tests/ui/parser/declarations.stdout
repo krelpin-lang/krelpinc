@@ -171,6 +171,7 @@ CompilationUnit {
                                                                                     span: 166..170,
                                                                                 },
                                                                             ),
+                                                                            type_args: [],
                                                                             name: "sides" @ 171..176,
                                                                             args: [],
                                                                             safe: false,
@@ -555,6 +556,7 @@ CompilationUnit {
                                                                             span: 559..563,
                                                                         },
                                                                     ),
+                                                                    type_args: [],
                                                                     name: "sqrt" @ 564..568,
                                                                     args: [
                                                                         Expr {
@@ -829,6 +831,7 @@ CompilationUnit {
                                                                                     span: 802..806,
                                                                                 },
                                                                             ),
+                                                                            type_args: [],
                                                                             name: "ordinal" @ 807..814,
                                                                             args: [],
                                                                             safe: false,

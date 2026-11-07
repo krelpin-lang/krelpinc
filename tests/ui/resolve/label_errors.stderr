@@ -1,0 +1,30 @@
+error: cannot find the label `missing`
+ --> tests/ui/resolve/label_errors.kr:4:19
+  |
+4 |             break missing;
+  |                   ^^^^^^^ `break` needs a loop or `switch` with this label
+  |
+  = help: put `missing:` before the loop to jump out of
+
+error: cannot `continue` to the `switch` labeled `cases`
+ --> tests/ui/resolve/label_errors.kr:9:26
+  |
+9 |                 continue cases;
+  |                          ^^^^^
+  |
+  = note: `continue` starts the next round of a loop
+  = help: use `break cases` to leave the `switch`
+
+error: the label `rows` is already in use
+  --> tests/ui/resolve/label_errors.kr:14:13
+   |
+12 |         rows:
+   |         ---- the outer statement has this label
+...
+14 |             rows:
+   |             ^^^^
+   |
+   = help: give the inner loop a different label
+
+error: aborting due to 3 previous errors
+

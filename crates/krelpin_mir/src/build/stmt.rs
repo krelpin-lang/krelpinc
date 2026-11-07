@@ -92,14 +92,19 @@ impl<'h> Builder<'_, 'h, '_> {
                 let unwind = self.unwind();
                 self.diverge(TerminatorKind::Throw { value, unwind }, span);
             }
-            StmtKind::Break => {
+            StmtKind::Break(label) => {
                 let (depth, target) = self
                     .scopes
                     .iter()
                     .enumerate()
                     .rev()
                     .find_map(|(depth, scope)| match scope {
-                        Scope::Loop { exit, .. } | Scope::Breakable { exit } => {
+                        Scope::Loop {
+                            exit, label: own, ..
+                        }
+                        | Scope::Breakable { exit, label: own }
+                            if label.is_none() || label == own =>
+                        {
                             Some((depth, *exit))
                         }
                         _ => None,
@@ -108,21 +113,33 @@ impl<'h> Builder<'_, 'h, '_> {
                 self.exit_scopes(depth + 1, span);
                 self.diverge(TerminatorKind::Goto { target }, span);
             }
-            StmtKind::Continue => {
+            StmtKind::Continue(label) => {
                 let (depth, target) = self
                     .scopes
                     .iter()
                     .enumerate()
                     .rev()
                     .find_map(|(depth, scope)| match scope {
-                        Scope::Loop { next, .. } => Some((depth, *next)),
+                        Scope::Loop {
+                            next, label: own, ..
+                        } if label.is_none() || label == own => Some((depth, *next)),
                         _ => None,
                     })
                     .unwrap_or_else(|| unreachable!("`continue` outside a loop"));
                 self.exit_scopes(depth + 1, span);
                 self.diverge(TerminatorKind::Goto { target }, span);
             }
+            StmtKind::Labeled { label, body } => {
+                self.label = Some(*label);
+                self.lower_stmt(body);
+                self.label = None;
+            }
         }
+    }
+
+    fn push_loop(&mut self, exit: BasicBlock, next: BasicBlock) {
+        let label = self.label.take();
+        self.scopes.push(Scope::Loop { exit, next, label });
     }
 
     fn lower_loop(
@@ -142,7 +159,7 @@ impl<'h> Builder<'_, 'h, '_> {
                 };
                 let next = self.new_block();
                 self.current = body_block;
-                self.scopes.push(Scope::Loop { exit, next });
+                self.push_loop(exit, next);
                 self.lower_block(body);
                 self.scopes.pop();
                 self.goto(next, span);
@@ -157,7 +174,7 @@ impl<'h> Builder<'_, 'h, '_> {
                 let body_block = self.goto_new(span);
                 let next = self.new_block();
                 let exit = self.new_block();
-                self.scopes.push(Scope::Loop { exit, next });
+                self.push_loop(exit, next);
                 self.lower_block(body);
                 self.scopes.pop();
                 self.goto(next, span);
@@ -216,7 +233,7 @@ impl<'h> Builder<'_, 'h, '_> {
         let next = self.new_block();
 
         self.current = body_block;
-        self.scopes.push(Scope::Loop { exit, next });
+        self.push_loop(exit, next);
         self.push_block_scope();
         let element = array.project(PlaceElem::Index(index));
         self.bind_element(local, element, elem, span);
@@ -291,7 +308,7 @@ impl<'h> Builder<'_, 'h, '_> {
         let (body_block, exit) = self.branch(Operand::Move(Place::local(has_next)), span);
 
         self.current = body_block;
-        self.scopes.push(Scope::Loop { exit, next: header });
+        self.push_loop(exit, header);
         self.push_block_scope();
         let element = self.temp(&methods.next.ret, span);
         let receiver = self.receiver_operand(

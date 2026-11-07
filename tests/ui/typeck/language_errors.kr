@@ -1,0 +1,32 @@
+enum Color {
+    RED,
+    GREEN;
+}
+
+class Resource implements AutoCloseable {
+    public mut void close() {}
+
+    mut void reset() {
+        this.close();
+    }
+}
+
+class Main {
+    static <T> T id(T x) {
+        return x;
+    }
+
+    static int plain() {
+        return 1;
+    }
+
+    static void main() {
+        Color c = new Color();
+        Resource r = new Resource();
+        r.close();
+        assert 5;
+        Console.println(Main.<String, int>id("a"));
+        Console.println(Main.<String>plain());
+        Console.println(Main.<int>id("a"));
+    }
+}

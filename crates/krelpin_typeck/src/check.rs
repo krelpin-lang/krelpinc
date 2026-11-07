@@ -40,6 +40,7 @@ pub(crate) struct FnCtxt<'a, 'tcx> {
     /// The field an assignment is checking as its target, which reports a
     /// record component as unassignable rather than as private.
     pub(crate) assigning: Option<krelpin_span::Span>,
+    pub(crate) explicit_type_args: HashMap<Span, Vec<Ty>>,
 }
 
 impl Tcx<'_> {
@@ -134,10 +135,7 @@ fn check_member<'a, 'tcx>(tcx: &'a Tcx<'tcx>, owner: DefId, member: &Member) -> 
                     .get(&field.name.name)
                     .map(|f| f.ty.clone());
                 let expected = ty.unwrap_or(Ty::Unknown);
-                fcx.self_ty = if matches!(
-                    field.storage,
-                    FieldStorage::Static(_)
-                ) {
+                fcx.self_ty = if matches!(field.storage, FieldStorage::Static(_)) {
                     Ty::Unknown
                 } else {
                     receiver_ty(tcx, owner, ReceiverKind::RefMut)
@@ -286,6 +284,7 @@ impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
             in_async: false,
             in_ctor: false,
             assigning: None,
+            explicit_type_args: HashMap::new(),
         }
     }
 

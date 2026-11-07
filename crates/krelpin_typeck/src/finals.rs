@@ -61,7 +61,11 @@ impl Flow {
             _ => Flow {
                 live: true,
                 maybe: self.maybe.union(&other.maybe).copied().collect(),
-                definite: self.definite.intersection(&other.definite).copied().collect(),
+                definite: self
+                    .definite
+                    .intersection(&other.definite)
+                    .copied()
+                    .collect(),
             },
         }
     }
@@ -90,7 +94,8 @@ struct Checker<'a, 'tcx> {
     flow: Flow,
     loop_depth: usize,
     lambda_depth: usize,
-    breaks: Vec<Vec<Flow>>,
+    breaks: Vec<(Option<Symbol>, Vec<Flow>)>,
+    label: Option<Symbol>,
     yields: Vec<Vec<Flow>>,
     touched: Vec<Target>,
     ctor: Option<Ctor>,
@@ -106,6 +111,7 @@ impl Tcx<'_> {
             loop_depth: 0,
             lambda_depth: 0,
             breaks: Vec::new(),
+            label: None,
             yields: Vec::new(),
             touched: Vec::new(),
             ctor: None,
@@ -123,7 +129,9 @@ impl Tcx<'_> {
                         let MemberKind::Field(field) = &member.kind else {
                             continue;
                         };
-                        if field.final_kw.is_none() || !matches!(field.storage, FieldStorage::Instance) {
+                        if field.final_kw.is_none()
+                            || !matches!(field.storage, FieldStorage::Instance)
+                        {
                             continue;
                         }
                         let target = Target::Field(field.name.name);
@@ -210,12 +218,15 @@ impl Checker<'_, '_> {
         std::mem::replace(&mut self.flow, entry.clone())
     }
 
-    fn looped(&mut self, run: impl FnOnce(&mut Self)) -> Vec<Flow> {
+    fn looped(&mut self, label: Option<Symbol>, run: impl FnOnce(&mut Self)) -> Vec<Flow> {
         self.loop_depth += 1;
-        self.breaks.push(Vec::new());
+        self.breaks.push((label, Vec::new()));
         run(self);
         self.loop_depth -= 1;
-        self.breaks.pop().unwrap_or_default()
+        self.breaks
+            .pop()
+            .map(|(_, flows)| flows)
+            .unwrap_or_default()
     }
 
     fn stmt(&mut self, stmt: &Stmt) {
@@ -244,14 +255,16 @@ impl Checker<'_, '_> {
                 self.flow = then.join(els);
             }
             StmtKind::While { cond, body } => {
+                let label = self.label.take();
                 self.expr(cond);
                 let entry = self.flow.clone();
-                let breaks = self.looped(|this| this.stmt(body));
+                let breaks = self.looped(label, |this| this.stmt(body));
                 let exit = if is_true(cond) { Flow::dead() } else { entry };
                 self.flow = breaks.into_iter().fold(exit, Flow::join);
             }
             StmtKind::DoWhile { body, cond } => {
-                let breaks = self.looped(|this| {
+                let label = self.label.take();
+                let breaks = self.looped(label, |this| {
                     this.stmt(body);
                     this.expr(cond);
                 });
@@ -268,6 +281,7 @@ impl Checker<'_, '_> {
                 update,
                 body,
             } => {
+                let label = self.label.take();
                 for stmt in init {
                     self.stmt(stmt);
                 }
@@ -275,7 +289,7 @@ impl Checker<'_, '_> {
                     self.expr(cond);
                 }
                 let entry = self.flow.clone();
-                let breaks = self.looped(|this| {
+                let breaks = self.looped(label, |this| {
                     this.stmt(body);
                     for expr in update {
                         this.expr(expr);
@@ -295,18 +309,20 @@ impl Checker<'_, '_> {
                 body,
                 ..
             } => {
+                let label = self.label.take();
                 self.expr(iter);
                 let entry = self.flow.clone();
-                let breaks = self.looped(|this| {
+                let breaks = self.looped(label, |this| {
                     this.declare_local(*final_kw, name.name, name.span, true);
                     this.stmt(body);
                 });
                 self.flow = breaks.into_iter().fold(entry, Flow::join);
             }
             StmtKind::Switch { scrutinee, arms } => {
+                let label = self.label.take();
                 self.expr(scrutinee);
                 let entry = self.flow.clone();
-                self.breaks.push(Vec::new());
+                self.breaks.push((label, Vec::new()));
                 let mut exit = if arms
                     .iter()
                     .any(|arm| matches!(arm.label, CaseLabel::Default(_)))
@@ -322,7 +338,11 @@ impl Checker<'_, '_> {
                     });
                     exit = exit.join(flow);
                 }
-                let breaks = self.breaks.pop().unwrap_or_default();
+                let breaks = self
+                    .breaks
+                    .pop()
+                    .map(|(_, flows)| flows)
+                    .unwrap_or_default();
                 self.flow = breaks.into_iter().fold(exit, Flow::join);
             }
             StmtKind::Try {
@@ -379,13 +399,26 @@ impl Checker<'_, '_> {
                 self.expr(value);
                 self.flow = Flow::dead();
             }
-            StmtKind::Break => {
+            StmtKind::Break(label) => {
                 let flow = std::mem::replace(&mut self.flow, Flow::dead());
-                if let Some(breaks) = self.breaks.last_mut() {
+                let target = match label {
+                    Some(label) => self
+                        .breaks
+                        .iter_mut()
+                        .rev()
+                        .find(|(name, _)| *name == Some(label.name)),
+                    None => self.breaks.last_mut(),
+                };
+                if let Some((_, breaks)) = target {
                     breaks.push(flow);
                 }
             }
-            StmtKind::Continue => self.flow = Flow::dead(),
+            StmtKind::Continue(_) => self.flow = Flow::dead(),
+            StmtKind::Labeled { label, body } => {
+                self.label = Some(label.name);
+                self.stmt(body);
+                self.label = None;
+            }
             StmtKind::Empty => {}
         }
     }
@@ -570,12 +603,12 @@ impl Checker<'_, '_> {
             )
         } else if self.flow.maybe.contains(&target) {
             Some(match var.origin {
-                Origin::Declared => Diagnostic::error(format!(
-                    "cannot assign twice to `final` {what} `{name}`"
-                ))
-                .with_span(at)
-                .with_secondary(var.decl, format!("`{name}` is given its value here"))
-                .with_help(format!("remove `final` from `{name}` to change it")),
+                Origin::Declared => {
+                    Diagnostic::error(format!("cannot assign twice to `final` {what} `{name}`"))
+                        .with_span(at)
+                        .with_secondary(var.decl, format!("`{name}` is given its value here"))
+                        .with_help(format!("remove `final` from `{name}` to change it"))
+                }
                 Origin::Delegated => Diagnostic::error(format!(
                     "`final` field `{name}` is already given its value by `this(...)`"
                 ))
