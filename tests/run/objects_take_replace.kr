@@ -1,0 +1,73 @@
+import std.util.ArrayList;
+import std.util.List;
+
+class Resource implements AutoCloseable {
+    private final String name;
+
+    Resource(String name) {
+        this.name = name;
+    }
+
+    @Override
+    mut void close() {
+        Console.println("close " + this.name);
+    }
+}
+
+record Pair(int left, int right) {}
+
+class Slot {
+    private Resource? held;
+    private List<int> items = new ArrayList<>();
+    private Pair pair = new Pair(1, 2);
+    private int count = 3;
+
+    Slot(Resource held) {
+        this.held = held;
+    }
+
+    mut Resource? swap(Resource? next) {
+        return Objects.replace(&mut this.held, next);
+    }
+
+    mut Resource? take() {
+        return Objects.take(&mut this.held);
+    }
+
+    mut void run(boolean flag) {
+        List<int> fresh = new ArrayList<>();
+        fresh.add(9);
+        List<int> old = Objects.replace(&mut this.items, fresh);
+        Console.println("old " + old.size() + " new " + this.items.get(0));
+        Pair before = Objects.replace(&mut this.pair, new Pair(3, 4));
+        Console.println(before.toString() + " " + this.pair);
+        int was = Objects.replace(&mut this.count, 7);
+        Console.println("count " + was + " -> " + this.count);
+        if (flag) {
+            Resource? gone = Objects.take(&mut this.held);
+            Console.println("taken " + (gone != null) + " left " + (this.held == null));
+        }
+    }
+}
+
+class Main {
+    static void main() {
+        Slot slot = new Slot(new Resource("a"));
+        Resource? old = slot.swap(new Resource("b"));
+        Console.println("swapped");
+        old = null;
+        Console.println("after old");
+        slot.run(true);
+        Console.println("ran");
+        Resource? none = slot.take();
+        Console.println("none " + (none == null));
+        int? number = 5;
+        int? got = Objects.take(&mut number);
+        Console.println("number " + got + " " + (number == null));
+        Slot other = new Slot(new Resource("c"));
+        for (int index = 0; index < 3; index++) {
+            other.swap(new Resource("loop"));
+        }
+        Console.println("end");
+    }
+}

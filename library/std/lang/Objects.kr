@@ -1,0 +1,11 @@
+package std.lang;
+
+final class Objects {
+    private Objects() {}
+
+    @Intrinsic
+    static <T> T replace(&mut T place, T value);
+
+    @Intrinsic
+    static <T> T? take(&mut (T?) place);
+}

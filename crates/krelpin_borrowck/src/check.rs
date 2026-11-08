@@ -341,13 +341,7 @@ impl<'a, 'tcx> Checker<'a, 'tcx> {
             self.report_moved(location, span, place, access, &moved);
             return;
         }
-        if access == Access::Move
-            && path.as_ref().is_none_or(|path| path.indirect)
-            && self
-                .body
-                .refill_after(location.block, location.index)
-                .is_none()
-        {
+        if access == Access::Move && path.as_ref().is_none_or(|path| path.indirect) {
             self.report_move_out(span, place);
             return;
         }
@@ -503,21 +497,18 @@ impl<'a, 'tcx> Checker<'a, 'tcx> {
                 .with_note(format!("`{ty}` values are moved instead of copied"))
                 .with_help("borrow the element instead")
         } else {
-            {
-                let refill = if matches!(ty, Ty::Nullable(_)) {
-                    "null"
-                } else {
-                    "..."
-                };
-                Diagnostic::error(format!("cannot move out of `{name}`, which is borrowed"))
-                    .with_span(span)
-                    .with_label("value moved here")
-                    .with_note(format!("`{ty}` values are moved instead of copied"))
-                    .with_help(format!(
-                        "borrow it instead: `&{name}`, or take it and put a value back \
-                         in the next statement: `{name} = {refill};`"
-                    ))
-            }
+            let take = if matches!(ty, Ty::Nullable(_)) {
+                format!("Objects.take(&mut {name})")
+            } else {
+                format!("Objects.replace(&mut {name}, ...)")
+            };
+            Diagnostic::error(format!("cannot move out of `{name}`, which is borrowed"))
+                .with_span(span)
+                .with_label("value moved here")
+                .with_note(format!("`{ty}` values are moved instead of copied"))
+                .with_help(format!(
+                    "borrow it instead: `&{name}`, or take it out and leave a value in its place: `{take}`"
+                ))
         };
         self.emit(span, diagnostic);
     }

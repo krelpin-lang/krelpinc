@@ -135,6 +135,9 @@ impl FnCx<'_, '_, '_> {
         if items.is(owner, LangItem::Math) {
             return self.math_builtin(name);
         }
+        if items.is(owner, LangItem::Objects) {
+            return self.objects_builtin(name, builtin);
+        }
         if let Some(primitive) = items.primitive_of(owner) {
             return self.primitive_builtin(primitive, name, builtin);
         }
@@ -1617,6 +1620,22 @@ impl FnCx<'_, '_, '_> {
             }
             _ => return false,
         }
+        true
+    }
+
+    fn objects_builtin(&mut self, name: &str, builtin: &Builtin) -> bool {
+        let ty = self.ret_ty.clone();
+        let old = self.load(&ty, "%a0");
+        let value = match name {
+            "replace" => {
+                let given = builtin.arg_ty(1);
+                self.convert("%a1", &given, &ty)
+            }
+            "take" => self.cx.null_value(&ty),
+            _ => return false,
+        };
+        self.store(&ty, &value, "%a0");
+        self.ret(&old, &ty);
         true
     }
 

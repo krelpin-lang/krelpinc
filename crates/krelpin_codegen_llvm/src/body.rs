@@ -169,9 +169,8 @@ impl<'a, 'tcx> Cx<'a, 'tcx> {
         for (index, block) in body.blocks.iter().enumerate() {
             cx.block = index;
             cx.fx.start(&format!("bb{index}"));
-            for (position, statement) in block.statements.iter().enumerate() {
-                let refill = body.is_refill(BasicBlock(index as u32), position);
-                cx.statement(&statement.kind, refill);
+            for statement in &block.statements {
+                cx.statement(&statement.kind);
             }
             cx.terminator(&block.terminator.kind);
         }
@@ -221,7 +220,7 @@ impl<'f, 'c, 'a, 'tcx> BodyCx<'f, 'c, 'a, 'tcx> {
         }
     }
 
-    fn statement(&mut self, kind: &StatementKind, refill: bool) {
+    fn statement(&mut self, kind: &StatementKind) {
         match kind {
             StatementKind::Assign(assign) => {
                 let (place, rvalue) = assign.as_ref();
@@ -231,11 +230,7 @@ impl<'f, 'c, 'a, 'tcx> BodyCx<'f, 'c, 'a, 'tcx> {
                 };
                 let (address, ty) = self.place_addr(place);
                 let converted = self.fx.convert(&value.v, &value.ty, &ty);
-                if refill {
-                    self.fx.store(&ty, &converted, &address);
-                } else {
-                    self.store_owned(&ty, &converted, &address);
-                }
+                self.store_owned(&ty, &converted, &address);
             }
             StatementKind::StorageLive(_) | StatementKind::FakeRead(_) => {}
             StatementKind::StorageDead(local) => {

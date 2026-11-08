@@ -68,8 +68,7 @@ final class Thread {
 
         mut T join() {
             this.joinRaw();
-            T? value = this.result;
-            this.result = null;
+            T? value = Objects.take(&mut this.result);
             if (value == null) {
                 throw new IllegalStateException("the task has no value: it was never started, it threw, or it was already joined");
             }

@@ -44,6 +44,7 @@ lang_items! {
     NumberFormatException: "std.lang.NumberFormatException",
     Console: "std.lang.Console",
     Math: "std.lang.Math",
+    Objects: "std.lang.Objects",
     Thread: "std.lang.Thread",
     ThreadTask: "std.lang.Thread.Task",
     MacroBridge: "std.macros.Bridge",

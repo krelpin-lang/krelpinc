@@ -1,0 +1,16 @@
+swapped
+close a
+after old
+old 0 new 9
+Pair[left=1, right=2] Pair[left=3, right=4]
+count 3 -> 7
+taken true left true
+close b
+ran
+none true
+number 5 true
+close c
+close loop
+end
+close loop
+close loop
