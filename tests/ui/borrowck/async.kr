@@ -2,6 +2,8 @@ import std.task.Context;
 import std.task.Future;
 import std.task.Poll;
 import std.task.Unit;
+import std.util.ArrayList;
+import std.util.List;
 
 class Ready implements Future<Unit> {
     Ready() {}
@@ -15,6 +17,22 @@ class Ready implements Future<Unit> {
 class Tasks {
     // Keeps `task` with no object to keep it in, like an executor's spawn.
     static void detach(Future<Unit> task) keeps task {}
+}
+
+class Runtime {
+    private final List<Task> tasks = new ArrayList<>();
+
+    Runtime() {}
+
+    mut void spawn(Future<Unit> task) keeps task {}
+}
+
+class Task {
+    private final Future<Unit> future;
+
+    Task(Future<Unit> future) keeps future {
+        this.future = future;
+    }
 }
 
 class Main {
@@ -94,6 +112,14 @@ class Main {
         Future<int> future = Main.length(&text);
         text = "b";
         Console.println(future);
+    }
+
+    static void spawnsScopedMutatesWhileAlive() {
+        Runtime runtime = new Runtime();
+        String text = "a";
+        runtime.spawn(Main.show(&text));
+        text = "b";
+        Console.println(runtime);
     }
 
     static void main() {}

@@ -814,7 +814,17 @@ impl<'f, 'c, 'a, 'tcx> BodyCx<'f, 'c, 'a, 'tcx> {
         } else {
             (self.unwrap_narrowed(a), self.unwrap_narrowed(b))
         };
-        let operand_ty = if a.ty == Ty::Null {
+        let operand_ty = if matches!(op, BinOp::Eq | BinOp::Ne) {
+            if matches!(a.ty, Ty::Nullable(_)) {
+                a.ty.clone()
+            } else if matches!(b.ty, Ty::Nullable(_)) {
+                b.ty.clone()
+            } else if a.ty == Ty::Null {
+                b.ty.clone()
+            } else {
+                a.ty.clone()
+            }
+        } else if a.ty == Ty::Null {
             b.ty.clone()
         } else {
             a.ty.clone()
@@ -852,6 +862,70 @@ impl<'f, 'c, 'a, 'tcx> BodyCx<'f, 'c, 'a, 'tcx> {
             }
         };
         let (ty, v) = match op {
+            BinOp::Eq | BinOp::Ne
+                if matches!(self.fx.cx.shape(&operand_ty), Shape::NullableValue(_)) =>
+            {
+                let Shape::NullableValue(inner) = self.fx.cx.shape(&operand_ty) else {
+                    unreachable!()
+                };
+                let inner = inner.as_ref().clone();
+                let a_present = self.fx.assign(format!("extractvalue {ll} {a_v}, 0"));
+                let b_present = self.fx.assign(format!("extractvalue {ll} {b_v}, 0"));
+                let both = self.fx.assign(format!("and i1 {a_present}, {b_present}"));
+                let same_presence =
+                    self.fx.assign(format!("icmp eq i1 {a_present}, {b_present}"));
+                let a_payload = self.fx.assign(format!("extractvalue {ll} {a_v}, 1"));
+                let b_payload = self.fx.assign(format!("extractvalue {ll} {b_v}, 1"));
+                let inner_ll = self.fx.ll(&inner);
+                let inner_float = matches!(
+                    inner,
+                    Ty::Primitive(PrimitiveTy::Float | PrimitiveTy::Double)
+                );
+                let inner_ptr = self.fx.cx.is_ptr(&inner);
+                let equal = if inner_float {
+                    let cmp = self
+                        .fx
+                        .assign(format!("fcmp oeq {inner_ll} {a_payload}, {b_payload}"));
+                    self.fx
+                        .assign(format!("select i1 {both}, i1 {cmp}, i1 {same_presence}"))
+                } else if inner_ptr {
+                    let cmp = self
+                        .fx
+                        .assign(format!("icmp eq ptr {a_payload}, {b_payload}"));
+                    self.fx
+                        .assign(format!("select i1 {both}, i1 {cmp}, i1 {same_presence}"))
+                } else if matches!(self.fx.cx.shape(&inner), Shape::Prim(_)) {
+                    let cmp = self
+                        .fx
+                        .assign(format!("icmp eq {inner_ll} {a_payload}, {b_payload}"));
+                    self.fx
+                        .assign(format!("select i1 {both}, i1 {cmp}, i1 {same_presence}"))
+                } else {
+                    let result = self.fx.alloca_ll("i1");
+                    self.fx
+                        .line(format!("store i1 {same_presence}, ptr {result}"));
+                    let compare = self.fx.label("present");
+                    let done = self.fx.label("compared");
+                    self.fx
+                        .line(format!("br i1 {both}, label %{compare}, label %{done}"));
+                    self.fx.start(&compare);
+                    let a_slot = self.fx.alloca_ll(&inner_ll);
+                    let b_slot = self.fx.alloca_ll(&inner_ll);
+                    self.fx.store(&inner, &a_payload, &a_slot);
+                    self.fx.store(&inner, &b_payload, &b_slot);
+                    let cmp = self.fx.call_equals(&a_slot, &b_slot, &inner);
+                    self.fx.line(format!("store i1 {cmp}, ptr {result}"));
+                    self.fx.line(format!("br label %{done}"));
+                    self.fx.start(&done);
+                    self.fx.assign(format!("load i1, ptr {result}"))
+                };
+                let v = if op == BinOp::Ne {
+                    self.fx.assign(format!("xor i1 {equal}, true"))
+                } else {
+                    equal
+                };
+                (Ty::BOOLEAN, v)
+            }
             BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => {
                 let ll = if pointer {
                     "ptr".to_owned()
