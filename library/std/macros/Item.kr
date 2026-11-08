@@ -176,13 +176,9 @@ final class Item {
                 i++;
             }
         }
-        List<Member> members = new ArrayList<>();
-        while (this.members.size() > 0) {
-            Member member = this.members.remove(0);
-            removed = removed + member.removeAttribute(name);
-            members.add(member);
+        for (int index = 0; index < this.members.size(); index++) {
+            removed = removed + this.members.getMut(index).removeAttribute(name);
         }
-        this.members = members;
         return removed;
     }
 
